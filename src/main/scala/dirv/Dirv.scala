@@ -14,5 +14,14 @@ class Dirv(implicit cfg: Config) extends Module {
   val exu = Module(new Exu)
   //val
 
-  io := DontCare
+  ifu.io.ifu2ext <> io.imem
+  ifu.io.ifu2idu <> idu.io.ifu2idu
+
+  exu.io.inst2ext <> idu.io.inst2ext
+  io.dmem <> exu.io.exu2ext
+
+  if (cfg.dbg) {
+    io.dbg.get.pc := 0x0.U
+    io.dbg.get.fin := exu.io.fin.get
+  }
 }
