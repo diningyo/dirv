@@ -19,6 +19,7 @@ class Mpfr(implicit cfg: Config) extends Module with InstInfo {
       val addr = Input(UInt(rs1Bits.W))
       val data = Input(UInt(cfg.dataBits.W))
     }
+    val fin = if (cfg.dbg) Some(Output(Bool())) else None
   })
 
   val xRegs = RegInit(VecInit(Seq.fill(cfg.arch.regNum-1)(0.U(cfg.addrBits.W))))
@@ -28,5 +29,9 @@ class Mpfr(implicit cfg: Config) extends Module with InstInfo {
 
   when (io.wb.en) {
     xRegs(io.wb.addr-1.U) := io.wb.data
+  }
+
+  if (cfg.dbg) {
+    io.fin.get := (xRegs(3) === 0x1.U)
   }
 }
