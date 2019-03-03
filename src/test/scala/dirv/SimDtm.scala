@@ -3,20 +3,19 @@
 package dirv
 
 import chisel3._
-import chisel3.iotesters.PeekPokeTester
 
+//class SimDtm(hexFile: String)(implicit cfg: Config) extends Module {
 class SimDtm(implicit cfg: Config) extends Module {
   val io = IO(new Bundle {
-
+    val fin = Output(Bool())
   })
 
-  val a = "/home/diningyo/prj/risc-v/dirv/test_run_dir/dirv.DirvMain457984422/test.hex"
-  val mem = Module(new MemModel(a))
+  val hexFile = "/home/diningyo/prj/risc-v/dirv/riscv-tests/isa/rv32ui-p-lw.hex"
+  val mem = Module(new MemModel(hexFile))
   val dut = Module(new Dirv)
 
-  // Temp.
-  io := DontCare
-  dut.io := DontCare
+  //
+  io.fin := dut.io.dbg.get.fin
 
   // connect mem and dut
   mem.io.clk := clock

@@ -8,6 +8,16 @@ import chisel3.iotesters
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 class DirvUnitTester(c: SimDtm) extends PeekPokeTester(c) {
+  val timeOutCycle = 100
+  var i = 0
+
+  while ((i < timeOutCycle) && (peek(c.io.fin) == 0x0)) {
+    println(s"count ${i}")
+    i += 1
+    step(1)
+  }
+
+  expect(c.io.fin, true, "c.io.fin must be true")
 }
 
 /**
