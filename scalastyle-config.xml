@@ -46,7 +46,8 @@
    <parameter name="maxParameters"><![CDATA[8]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.MagicNumberChecker" enabled="true">
+<!-- <check level="warning" class="org.scalastyle.scalariform.MagicNumberChecker" enabled="true"> -->
+ <check level="warning" class="org.scalastyle.scalariform.MagicNumberChecker" enabled="false">
   <parameters>
    <parameter name="ignore"><![CDATA[-1,0,1,2,8,10,16]]></parameter>
   </parameters>
@@ -65,17 +66,19 @@
   </parameters>
   <customMessage>No lines ending with a ;</customMessage>
  </check>
- <check level="warning" class="org.scalastyle.file.RegexChecker" enabled="true">
-  <parameters>
-   <parameter name="regex"><![CDATA[println]]></parameter>
-  </parameters>
+<!--
+<check level="warning" class="org.scalastyle.file.RegexChecker" enabled="true">
+ <parameters>
+  <parameter name="regex"><![CDATA[println]]></parameter>
+ </parameters>
  </check>
+-->
  <check level="warning" class="org.scalastyle.scalariform.NumberOfTypesChecker" enabled="true">
   <parameters>
    <parameter name="maxTypes"><![CDATA[30]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.CyclomaticComplexityChecker" enabled="true">
+ <check level="warning" class="org.scalastyle.scalariform.CyclomaticComplexityChecker" enabled="false">
   <parameters>
    <parameter name="maximum"><![CDATA[10]]></parameter>
   </parameters>
