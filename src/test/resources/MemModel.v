@@ -28,6 +28,9 @@ module MemModel
     ,input [p_DATA_BITS-1:0]  dmem_w_data
     );
 
+    parameter p_IMEM = 1'b0;
+    parameter p_DMEM = 1'b1;
+
     reg [7:0] mem[0:1024*256]; // temp. 256Kbytes
 
     initial begin
@@ -36,15 +39,24 @@ module MemModel
 
     function [p_DATA_BITS-1:0] read
         (
-            input [p_ADDR_BITS-3:0] addr
+            input                   port,
+            input [p_ADDR_BITS-1:0] addr
         );
-        read = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
-    endfunction // read
+
+        reg [p_ADDR_BITS-1:0] rddata;
+        rddata = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
+        if (port) $display("[dmem](addr, rddata) = (0x%08x, 0x%08x)", addr, rddata);
+        else      $display("[imem](addr, rddata) = (0x%08x, 0x%08x)", addr, rddata);
+        read = rddata;
+    endfunction : read // read
 
     // imem side
+    wire imem_read;
+
+    assign imem_read = (imem_cmd == 1'b0);
     assign imem_resp = 1'b0;
     assign imem_r_rddv = imem_req;
-    assign imem_r_data = (imem_cmd == 1'b0) ? read(imem_addr[p_ADDR_BITS-1:2]) : $random;
+    assign imem_r_data = (imem_read && imem_req) ? read(p_IMEM, imem_addr) : $random;
 
 
     // dmem side
@@ -58,7 +70,7 @@ module MemModel
 
     assign dmem_resp = 1'b0;
     assign dmem_r_rddv = dmem_req && dmem_read;
-    assign dmem_r_data  = (dmem_read) ? read(dmem_wdaddr) : $random;
+    assign dmem_r_data  = (dmem_read) ? read(p_DMEM, dmem_wdaddr) : $random;
 
     assign dmem_w_ack = dmem_write;
 
@@ -79,4 +91,4 @@ module MemModel
         end
     end
 
-endmodule // MemModel
+endmodule : MemModel // MemModel
