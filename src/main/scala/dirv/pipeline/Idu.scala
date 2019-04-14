@@ -41,11 +41,17 @@ class Idu(implicit cfg: Config) extends Module with InstInfo {
   val io = IO(new Bundle {
     val ifu2idu = MemIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
     val inst2ext = new Inst()
+    val pc = if (cfg.dbg) Some(Output(UInt(cfg.addrBits.W))) else None
   })
 
 
+
+  val pcReg = RegInit(cfg.initAddr.U)
+
+  pcReg := pcReg + 4.U
+
   io.ifu2idu.cmd := MemCmd.rd
-  io.ifu2idu.addr := 0x0.U
+  io.ifu2idu.addr := pcReg
   io.ifu2idu.req := true.B
 
   val currCmd = Mux(io.ifu2idu.r.get.rddv, io.ifu2idu.r.get.data, 0.U)
@@ -56,6 +62,11 @@ class Idu(implicit cfg: Config) extends Module with InstInfo {
   io.inst2ext.rs1 := currCmd(rs1Msb, rs1Lsb)
   io.inst2ext.rs2 := currCmd(rs2Msb, rs2Lsb)
   io.inst2ext.funct7 := currCmd(funct7Msb, funct7Lsb)
+
+  // debug
+  if (cfg.dbg) {
+    io.pc.get := pcReg
+  }
 
   /*
   if (cfg.arch == RV32E)
