@@ -13,8 +13,8 @@ case object MemRWIO extends MemIOType
 
 object MemCmd {
   val len = 1
-  val wr = 0x0.U
-  val rd = 0x1.U
+  val rd = 0x0.U
+  val wr = 0x1.U
 }
 
 object MemResp {
