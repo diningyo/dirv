@@ -186,7 +186,8 @@ abstract class DirvBaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfi
 /**
   * Test module for RV32I
   */
-class DirvRV32ITester extends DirvBaseTester with ParallelTestExecution {
+//class DirvRV32ITester extends DirvBaseTester with ParallelTestExecution {
+class DirvRV32ITester extends DirvBaseTester {
 
   behavior of dutName
 

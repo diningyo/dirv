@@ -4,14 +4,12 @@ package dirv
 
 import chisel3._
 
-//class SimDtm(hexFile: String)(implicit cfg: Config) extends Module {
-class SimDtm(implicit cfg: Config) extends Module {
+class SimDtm(prgHexFile: String)(implicit cfg: Config) extends Module {
   val io = IO(new Bundle {
     val fin = Output(Bool())
   })
 
-  val hexFile = "/home/diningyo/prj/risc-v/dirv/riscv-tests/isa/rv32ui-p-lw.hex"
-  val mem = Module(new MemModel(hexFile))
+  val mem = Module(new MemModel(prgHexFile))
   val dut = Module(new Dirv)
 
   //
