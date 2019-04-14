@@ -25,7 +25,7 @@ case object RV32E extends RVArch {
 }
 
 case object defaultConfig {
-  val initAddr = BigInt("80000000", 16)
+  val initAddr = BigInt("00010000", 16)
   val rv32Bits = 32
   val addrBits = 32
   val dataBits = 32
