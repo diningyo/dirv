@@ -3,7 +3,8 @@
 package dirv.io
 
 import chisel3._
-import dirv.{defaultConfig, Config}
+import chisel3.util.{Irrevocable, IrrevocableIO}
+import dirv.{Config, defaultConfig}
 
 /**
   * Enumeration for Memory IO type
@@ -61,8 +62,10 @@ class MemBaseIO(addrBits: Int) extends Bundle {
   * @param dataBits data bit width
   */
 class MemR(dataBits: Int) extends Bundle {
+  val valid = Input(Bool())
+  val ready = Output(Bool())
   val data = Input(UInt(dataBits.W))
-  val rddv = Input(Bool())
+  val resp = Input(UInt(MemResp.bits.W))
 
   override def cloneType: MemR.this.type =
     new MemR(dataBits).asInstanceOf[this.type]
@@ -73,9 +76,11 @@ class MemR(dataBits: Int) extends Bundle {
   * @param dataBits data bit width
   */
 class MemW(dataBits: Int) extends Bundle {
+  val valid = Output(Bool())
+  val ready = Input(Bool())
   val strb = Output(UInt((dataBits / 8).W))
   val data = Output(UInt(dataBits.W))
-  val ack = Input(Bool())
+  val resp = Input(UInt(MemResp.bits.W))
 
   override def cloneType: MemW.this.type =
     new MemW(dataBits).asInstanceOf[this.type]
