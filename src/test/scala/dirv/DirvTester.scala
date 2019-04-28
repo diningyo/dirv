@@ -117,11 +117,11 @@ abstract class DirvBaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfi
 
   val defaultArgs = scala.collection.mutable.Map(
     "--generate-vcd-output" -> "off",
-    "--backend-name" -> "treadle",
+    "--backend-name" -> "verilator",
     "--is-verbose" -> false
   )
 
-  val isaTestDir = "src/test/resources/isa/"
+  val isaTestDir = "src/test/resources/riscv-tests/isa/"
 
   /**
     * Get program arguments from ConfigMap
