@@ -8,9 +8,12 @@ import dirv.io.{MemCmd, MemIO}
 
 class Exu(implicit cfg: Config) extends Module{
   val io = IO(new Bundle {
-    val inst2ext = Flipped(new Inst())
-    val exu2ext = MemIO(cfg.dmemIOType, cfg.addrBits, cfg.dataBits)
-    val fin = if (cfg.dbg) Some(Output(Bool())) else None
+    val idu2exu = Flipped(new Idu2ExuIO())
+    val exu2ifu = new Exu2IfuIO()
+    val exu2lsu = new Exu2LsuIO()
+    val inst = if (cfg.dbg) Some(Output(UInt(cfg.arch.xlen.W))) else None
+    val pc = if (cfg.dbg) Some(Output(UInt(cfg.arch.xlen.W))) else None
+    val xregs = if (cfg.dbg) Some(Output(Vec(cfg.arch.regNum, UInt(cfg.arch.xlen.W)))) else None
   })
 
   // Module Instance
@@ -52,6 +55,8 @@ class Exu(implicit cfg: Config) extends Module{
 
   // debug
   if (cfg.dbg) {
-    io.fin.get := mpfr.io.fin.get
+    io.pc.get := currPc
+    io.inst.get := instExe.rawData.get
+    io.xregs.get := mpfr.io.xregs.get
   }
 }

@@ -21,7 +21,8 @@ class Dirv(implicit cfg: Config) extends Module {
   io.dmem <> exu.io.exu2ext
 
   if (cfg.dbg) {
-    io.dbg.get.pc := idu.io.pc.get
-    io.dbg.get.fin := exu.io.fin.get
+    io.dbg.get.inst := exu.io.inst.get
+    io.dbg.get.pc := exu.io.pc.get
+    io.dbg.get.xregs := exu.io.xregs.get
   }
 }
