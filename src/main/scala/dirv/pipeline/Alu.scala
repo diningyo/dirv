@@ -3,27 +3,47 @@
 package dirv.pipeline
 
 import chisel3._
-import chisel3.util.Cat
+import chisel3.util.{Cat, Mux1H, MuxCase}
 import dirv.Config
 
+/**
+  * ALU
+  * @param cfg dirv's configuration parameter.
+  */
 class Alu(implicit cfg: Config) extends Module {
   val io = IO(new Bundle {
-    val inst = Flipped(new Inst())
+    val inst = Input(new InstRV32())
+    val pc = Input(UInt(cfg.dataBits.W))
     val rs1 = Input(UInt(cfg.dataBits.W))
     val rs2 = Input(UInt(cfg.dataBits.W))
-    val aluOut = Output(UInt(cfg.dataBits.W))
+    val result = Output(UInt(cfg.dataBits.W))
   })
 
-  def regInst(): UInt = "b011".U
-  def immInst(): UInt = "b001".U
+  val inst = io.inst
+  val rs1 = Mux(inst.auipc, io.pc, io.rs1)
+  val rs2 = MuxCase(io.rs2, Seq(
+    io.inst.aluImm -> inst.getAluImm,
+    io.inst.auipc -> inst.immU
+  ))
+  val shamt = io.inst.shamt
 
-  val subOpCode = io.inst.opCode(6, 4)
-  val isImm = io.inst.funct7(5)
-  val imm = Cat(io.inst.funct7, io.inst.rs2)
-  val addOrSub = (regInst === subOpCode) && isImm
+  val rv32iAlu = Seq(
+    (inst.addi || inst.add || inst.auipc) -> (rs1 + rs2),
+    (inst.slti || inst.slt) -> (rs1.asSInt() < rs2.asSInt()).asUInt(),
+    (inst.sltiu || inst.sltu) -> (rs1 < rs2),
+    inst.sub -> (rs1 - rs2),
+    (inst.andi || inst.and) -> (rs1 & rs2),
+    (inst.ori || inst.or) -> (rs1 | rs2),
+    (inst.xori || inst.xor) -> (rs1 ^ rs2),
+    (inst.slli || inst.sll) -> (rs1 << shamt)(cfg.arch.xlen - 1, 0),
+    (inst.srli || inst.srl) -> (rs1 >> shamt),
+    (inst.srai || inst.sra) -> (rs1.asSInt() >> shamt).asUInt(),
+    inst.lui -> inst.immU
+  )
 
-  val op1 = io.rs1
-  val op2 = Mux(immInst === subOpCode, imm, io.rs2)
+  val alu = rv32iAlu
 
-  io.aluOut := op1 + op2
+  val aluResult = Mux1H(alu)
+
+  io.result := aluResult
 }
