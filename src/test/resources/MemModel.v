@@ -6,11 +6,15 @@ module MemCtrl
       ,parameter p_DATA_BITS  = 32
       ,parameter p_STRB_BITS  = p_DATA_BITS / 8
       ,parameter p_PORT_NAME  = ""
+      ,parameter p_IF_TYPE    = 1'b1
       )
     (
      // external
-     input [p_ADDR_BITS-1:0]  mem_addr
+     input                    clk
+    ,input                    rst
+    ,input [p_ADDR_BITS-1:0]  mem_addr
     ,input                    mem_cmd
+    ,input [1:0]              mem_size
     ,input                    mem_valid
     ,output                   mem_ready
     ,input                    mem_r_ready
@@ -33,23 +37,29 @@ module MemCtrl
     );
 
     // mem side
-    integer                   seed;
-    reg                       r_reed;
+    reg                       r_read;
     reg                       r_write;
     reg                       r_cmd_active;
     reg [p_ADDR_BITS-1:0]     r_mem_addr;
     reg                       r_mem_ready;
     reg                       r_mem_r_ready;
     reg                       r_mem_w_ready;
-    wire mem_read;
-    reg                   r_rvalid;
-    reg [p_DATA_BITS-1:0] r_rddata;
+    wire                      mem_read;
+    wire                      mem_write;
+    reg                       r_rvalid;
+    reg [p_DATA_BITS-1:0]     r_rddata;
 
     // control
     assign mem_read   = (mem_cmd == 1'b0);
     assign mem_write  = (mem_cmd == 1'b1);
 
-    assign addr = mem_addr[p_ADDR_BITS-1:2];
+    // external
+    assign mem_ready = 1'b1;
+    assign mem_r_valid = (p_IF_TYPE) ? r_rvalid : rden;
+    assign mem_r_data = (p_IF_TYPE) ? r_rddata : rddata;
+
+
+    assign addr = mem_addr;
     assign rden = mem_read && mem_valid && mem_ready;
     assign wren  = mem_write && mem_valid && mem_ready;
 
@@ -57,14 +67,14 @@ module MemCtrl
         if (rst) begin
             r_cmd_active <= 1'b0;
         end
-        else if (rden || r_reed) begin
+        else if (rden || r_read) begin
             if (mem_r_valid && mem_ready) begin
                 r_cmd_active <= 1'b0;
-                r_reed <= 1'b0;
+                r_read <= 1'b0;
             end
             else begin
                 r_cmd_active <= 1'b1;
-                r_reed <= 1'b1;
+                r_read <= 1'b1;
             end
         end
         else if (wren) begin
@@ -115,8 +125,9 @@ module MemModel
     // imem
     ,input [p_ADDR_BITS-1:0]  imem_addr
     ,input                    imem_cmd
+    ,input [1:0]              imem_size
     ,input                    imem_valid
-    ,input                    imem_ready
+    ,output                   imem_ready
     ,output                   imem_r_valid
     ,output                   imem_r_ready
     ,output [p_DATA_BITS-1:0] imem_r_data
@@ -125,6 +136,7 @@ module MemModel
     // dmem
     ,input [p_ADDR_BITS-1:0]  dmem_addr
     ,input                    dmem_cmd
+    ,input [1:0]              dmem_size
     ,input                    dmem_valid
     ,output                   dmem_ready
     ,input                    dmem_r_ready
@@ -170,10 +182,12 @@ module MemModel
 
         reg [p_ADDR_BITS-1:0] rddata;
         rddata = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
-        if (port) $display("[dmem](addr, rddata) = (0x%08x, 0x%08x)", addr, rddata);
-        else      $display("[imem](addr, rddata) = (0x%08x, 0x%08x)", addr, rddata);
         read = rddata;
     endfunction : read // read
+
+
+    // imem side
+    assign i_rddata = (i_rden) ? read(p_IMEM, i_addr) : $random;
 
     // dmem side
 
@@ -181,16 +195,16 @@ module MemModel
     always @(posedge clk or posedge rst) begin
         if (d_wren) begin
             if (d_wrstrb[0]) begin
-                mem[dmem_wdaddr] <= d_wrdata[7:0];
+                mem[d_addr] <= d_wrdata[7:0];
             end
             if (d_wrstrb[1]) begin
-                mem[dmem_wdaddr] <= d_wrdata[15:8];
+                mem[d_addr] <= d_wrdata[15:8];
             end
             if (d_wrstrb[2]) begin
-                mem[dmem_wdaddr] <= d_wrdata[24:16];
+                mem[d_addr] <= d_wrdata[24:16];
             end
             if (d_wrstrb[3]) begin
-                mem[dmem_wdaddr] <= d_wrdata[31:24];
+                mem[d_addr] <= d_wrdata[31:24];
             end
         end
     end
@@ -207,8 +221,11 @@ module MemModel
           )
     imemCtrl
         (
-          .mem_addr    (imem_addr    )
+          .clk         (clk          )
+         ,.rst         (rst          )
+         ,.mem_addr    (imem_addr    )
          ,.mem_cmd     (imem_cmd     )
+         ,.mem_size    (imem_size    )
          ,.mem_valid   (imem_valid   )
          ,.mem_ready   (imem_ready   )
          ,.mem_r_ready (imem_r_ready )
@@ -225,7 +242,7 @@ module MemModel
          ,.addr        (i_addr       )
          ,.rden        (i_rden       )
          ,.rddata      (i_rddata     )
-         ,.wren        (1'b0         )
+         ,.wren        (             )
          ,.wrstrb      (             )
          ,.wrdata      (             )
          );
@@ -239,8 +256,11 @@ module MemModel
           )
     dmemCtrl
         (
-          .mem_addr    (dmem_addr    )
+          .clk         (clk          )
+         ,.rst         (rst          )
+         ,.mem_addr    (dmem_addr    )
          ,.mem_cmd     (dmem_cmd     )
+         ,.mem_size    (dmem_size    )
          ,.mem_valid   (dmem_valid   )
          ,.mem_ready   (dmem_ready   )
          ,.mem_r_ready (dmem_r_ready )
@@ -261,5 +281,16 @@ module MemModel
          ,.wrstrb      (d_wrstrb     )
          ,.wrdata      (d_wrdata     )
          );
+
+    // log
+    /*
+    always @(posedge clk) begin
+        if (i_rden)
+            $display("[%t][imem](addr, rddata) = (0x%08x, 0x%08x)", $time, i_addr, i_rddata);
+        if (d_rden)
+            $display("[%t][dmem](addr, rddata) = (0x%08x, 0x%08x)", $time, d_addr, d_rddata);
+    end
+    */
+
 
 endmodule : MemModel
