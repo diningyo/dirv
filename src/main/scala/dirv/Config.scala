@@ -2,33 +2,38 @@
 
 package dirv
 
+import chisel3.util.log2Ceil
 import dirv.io.{MemRIO, MemRWIO}
 
 case object Consts {
-  val rv32XLen = 32
+  val rv32Xlen = 32
   val rviRegNum = 32
   val rveRegNum = 16
 }
 
 // arch
-sealed abstract trait RVArch {
-  def xLen(): Int
-  def regNum(): Int
+sealed trait RVArch {
+  def xlen: Int
+  def regNum: Int
+  def mpfrBits: Int = log2Ceil(regNum)
 }
 case object RV32I extends RVArch {
-  override def xLen(): Int = Consts.rv32XLen
-  override def regNum(): Int = Consts.rviRegNum
+  override def xlen: Int = Consts.rv32Xlen
+  override def regNum: Int = Consts.rviRegNum
 }
 case object RV32E extends RVArch {
-  override def xLen(): Int = Consts.rv32XLen
-  override def regNum(): Int = Consts.rveRegNum
+  override def xlen: Int = Consts.rv32Xlen
+  override def regNum: Int = Consts.rveRegNum
 }
 
 case object defaultConfig {
-  val initAddr = BigInt("00010000", 16)
-  val rv32Bits = 32
+  val initAddr = BigInt("00001000", 16)
   val addrBits = 32
   val dataBits = 32
+  val vendorId = BigInt("1", 16)
+  val archId = BigInt("0", 16)
+  val impId = BigInt("0", 16)
+  val hartId = BigInt("0", 16)
 }
 
 case class Config(
@@ -36,6 +41,10 @@ case class Config(
     initAddr: BigInt = defaultConfig.initAddr,
     addrBits: Int = defaultConfig.addrBits,
     dataBits: Int = defaultConfig.dataBits,
+    vendorId: BigInt = defaultConfig.vendorId,
+    archId: BigInt = defaultConfig.archId,
+    impId: BigInt = defaultConfig.impId,
+    hartId: BigInt = defaultConfig.hartId,
     dbg: Boolean = true
 ) {
   val imemIOType = MemRIO

@@ -12,13 +12,19 @@ class Dirv(implicit cfg: Config) extends Module {
   val ifu = Module(new Ifu)
   val idu = Module(new Idu)
   val exu = Module(new Exu)
+  val lsu = Module(new Lsu)
+
   //val
 
-  ifu.io.ifu2ext <> io.imem
+  // tmp
+  io.imem <> ifu.io.ifu2ext
   ifu.io.ifu2idu <> idu.io.ifu2idu
+  ifu.io.exu2ifu <> exu.io.exu2ifu
 
-  exu.io.inst2ext <> idu.io.inst2ext
-  io.dmem <> exu.io.exu2ext
+  exu.io.idu2exu <> idu.io.idu2exu
+
+  lsu.io.exu2lsu <> exu.io.exu2lsu
+  io.dmem <> lsu.io.lsu2ext
 
   if (cfg.dbg) {
     io.dbg.get.inst := exu.io.inst.get
