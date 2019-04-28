@@ -3,9 +3,30 @@
 package dirv.pipeline
 
 import chisel3._
+import chisel3.util._
 import dirv.Config
-import dirv.io.{MemCmd, MemIO}
 
+
+class Exu2IfuIO(implicit cfg: Config) extends Bundle {
+  val updatePcReq = Output(Bool())
+  val updatePc = Output(UInt(cfg.arch.xlen.W))
+  val stopFetch = Output(Bool())
+
+  override def cloneType: this.type = new Exu2IfuIO().asInstanceOf[this.type]
+
+}
+
+class Exu2LsuIO(implicit cfg: Config) extends Bundle {
+  val memAddr = Output(UInt(cfg.addrBits.W))
+  val inst = Output(new InstRV32())
+
+  override def cloneType: this.type = new Exu2LsuIO().asInstanceOf[this.type]
+}
+
+/**
+  * Execution Unit
+  * @param cfg dirv's configuration parameter.
+  */
 class Exu(implicit cfg: Config) extends Module{
   val io = IO(new Bundle {
     val idu2exu = Flipped(new Idu2ExuIO())
@@ -20,14 +41,54 @@ class Exu(implicit cfg: Config) extends Module{
   val alu = Module(new Alu)
   val mpfr = Module(new Mpfr)
   val csrf = Module(new Csrf)
-  val lsu = Module(new Lsu)
 
-  // dummy IO connection
+  // Alias
+  val instExe :: instMem :: instWb :: Nil = Seq.fill(3)(io.idu2exu.inst.bits)
 
+  // PC
+  val currPc = RegInit(cfg.initAddr.U)
+
+  //
+  val updatePcReq = Wire(Bool())
+  val initPcSeq = Seq.fill(3)(RegInit(false.B))
+  val initPc = !initPcSeq(2) && initPcSeq(1)
+
+  when (!initPcSeq.reduce(_ && _)) {
+    (Seq(true.B) ++ initPcSeq).zip(initPcSeq).foreach{case (c, n) => n := c}
+  }
+
+  updatePcReq := initPc
+
+  when (io.idu2exu.inst.valid && io.idu2exu.inst.ready) {
+    when (io.exu2ifu.updatePcReq) {
+      currPc := io.exu2ifu.updatePc
+    } .otherwise {
+      currPc := currPc + 4.U
+    }
+  }
+
+  // branch control
+  val condBranchValid = Wire(Bool())
+
+  condBranchValid := MuxCase(false.B, Seq(
+    instExe.beq -> (mpfr.io.rs1.data === mpfr.io.rs2.data),
+    instExe.bne -> (mpfr.io.rs1.data =/= mpfr.io.rs2.data),
+    instExe.blt -> (mpfr.io.rs1.data.asSInt() < mpfr.io.rs2.data.asSInt()),
+    instExe.bge -> (mpfr.io.rs1.data.asSInt() >= mpfr.io.rs2.data.asSInt()),
+    instExe.bltu -> (mpfr.io.rs1.data < mpfr.io.rs2.data),
+    instExe.bgeu -> (mpfr.io.rs1.data >= mpfr.io.rs2.data)
+  ))
+
+
+  val jmpPcReq = instExe.jal || condBranchValid
+  val jmpPc = Mux1H(Seq(
+    instExe.jal -> (currPc + instExe.immJ),
+    condBranchValid -> (currPc + instExe.immB)
+  ))(cfg.addrBits - 1, 0)
 
   // connect Mpfr
-  mpfr.io.rs1.addr := io.inst2ext.rs1
-  mpfr.io.rs2.addr := io.inst2ext.rs2
+  mpfr.io.rs1.addr := instExe.rs1
+  mpfr.io.rs2.addr := instExe.rs2
 
   // data to Alu
   val aluRs1Data = Wire(UInt(cfg.dataBits.W))
@@ -36,22 +97,43 @@ class Exu(implicit cfg: Config) extends Module{
   aluRs1Data := mpfr.io.rs1.data
   aluRs2Data := mpfr.io.rs2.data
 
-  io.inst2ext <> alu.io.inst
+  alu.io.inst := instExe
+  alu.io.pc := currPc
   alu.io.rs1 := aluRs1Data
   alu.io.rs2 := aluRs2Data
 
-  // mem
-  io.exu2ext.req := true.B
-  io.exu2ext.cmd := MemCmd.rd
-  io.exu2ext.addr := alu.io.aluOut
-  io.exu2ext.w.get.data := 0xdeafbeafL.U
-  io.exu2ext.w.get.strb := 0xf.U
+  // csr
+  csrf.io.inst := instWb
+  csrf.io.excOccured := false.B
+  csrf.io.invalidWb := false.B
+  csrf.io.excMepcWren := false.B
+  csrf.io.excPc := currPc
+  csrf.io.excCode := 0.U
+  csrf.io.trapOccured := false.B
+  csrf.io.trapAddr := 0.U
+  csrf.io.wrData := alu.io.result
 
+  // mem
 
   // wb
-  mpfr.io.wb.en := true.B
-  mpfr.io.wb.addr := io.inst2ext.rd
-  mpfr.io.wb.data := alu.io.aluOut
+  mpfr.io.rd.en := instWb.aluValid || instWb.csrValid
+  mpfr.io.rd.addr := instWb.rd
+  mpfr.io.rd.data := MuxCase(0.U, Seq(
+    instWb.aluValid -> alu.io.result,
+    instWb.csrValid -> csrf.io.rdData
+  ))
+
+  //
+  io.idu2exu.inst.ready := true.B
+
+  //
+  io.exu2ifu.updatePcReq := jmpPcReq || updatePcReq
+  io.exu2ifu.updatePc := jmpPc
+  io.exu2ifu.stopFetch := false.B
+
+  //
+  io.exu2lsu.memAddr := alu.io.result
+  io.exu2lsu.inst := instMem
 
   // debug
   if (cfg.dbg) {
