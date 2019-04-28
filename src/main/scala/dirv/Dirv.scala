@@ -6,6 +6,10 @@ import chisel3._
 import dirv.io.DirvIO
 import dirv.pipeline._
 
+/**
+  * Dirv top module
+  * @param cfg dirv's configuration parameter.
+  */
 class Dirv(implicit cfg: Config) extends Module {
   val io = IO(new DirvIO())
 

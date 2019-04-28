@@ -20,7 +20,7 @@ class RsIO(addrBits: Int, dataBits:Int) extends Bundle {
 
 /**
   * File Register I/O
-  * @param cfg
+  * @param cfg dirv's configuration parameter.
   */
 class MpfrIO(implicit val cfg: Config) extends Bundle {
   val rs1 = new RsIO(cfg.arch.mpfrBits, cfg.arch.xlen)
@@ -37,7 +37,7 @@ class MpfrIO(implicit val cfg: Config) extends Bundle {
 
 /**
   * File Register
-  * @param cfg
+  * @param cfg dirv's configuration parameter.
   */
 class Mpfr(implicit cfg: Config) extends Module with InstInfoRV32 {
   val io = IO(new MpfrIO())
