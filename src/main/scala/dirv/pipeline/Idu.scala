@@ -3,11 +3,14 @@
 package dirv.pipeline
 
 import chisel3._
-import chisel3.util.{Cat, Fill, MuxCase}
+import chisel3.util.{Cat, Fill, Irrevocable, MuxCase}
 import dirv.Config
-import dirv.io.{MemCmd, MemIO, MemSize}
+import dirv.io.MemSize
 
-trait InstInfo {
+/**
+  * Trait for RV32I bitmap
+  */
+trait InstInfoRV32 {
   val funct7Msb = 31
   val funct7Lsb = 25
   val funct7Bits = funct7Msb - funct7Lsb + 1
@@ -29,13 +32,13 @@ trait InstInfo {
 }
 
 /**
-  * RISC-V instruction
+  * RISC-V RV32 instructions
   *  -> Just now, xlen == 32 is only supported
   * @param xlen xlen
-  * @param dbg debug opiton. if true, added instruction raw data field.
+  * @param cfg dirv's configuration parameter.
   */
-class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
-  val rawData = if (dbg) Some(UInt(xlen.W)) else None
+class InstRV32(xlen: Int = 32)(implicit val cfg: Config) extends Bundle with InstInfoRV32 {
+  val rawData = if (cfg.dbg) Some(UInt(xlen.W)) else None
   val funct7 = UInt(funct7Bits.W)
   val rs2 = UInt(rs2Bits.W)
   val rs1 = UInt(rs1Bits.W)
@@ -43,6 +46,7 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
   val rd = UInt(rdBits.W)
   val opcode = UInt(opCodeBits.W)
   val illegal = Bool()
+  val valid = Bool()
 
   // instruction
   // I-system instructions
@@ -55,16 +59,6 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
   val csrrci = Bool()
   val csrUimmValid = Bool()
   val csrValid = Bool()
-
-  // I-op-imm instructions
-  val opImm = Bool()
-  val addi = Bool()
-  val slti = Bool()
-  val sltiu = Bool()
-  val andi = Bool()
-  val ori = Bool()
-  val xori = Bool()
-  val aluValid = Bool()
 
   // fence
   val fenceValid = Bool()
@@ -90,6 +84,30 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
   val lbu = Bool()
   val lhu = Bool()
 
+  // R-alu
+  val arith = Bool()
+  val aluReg = Bool()
+  val add = Bool()
+  val sub = Bool()
+  val sll = Bool()
+  val slt = Bool()
+  val sltu = Bool()
+  val xor = Bool()
+  val srl = Bool()
+  val sra = Bool()
+  val or = Bool()
+  val and = Bool()
+  val aluValid = Bool()
+
+  // I-op-imm instructions
+  val aluImm = Bool()
+  val addi = Bool()
+  val slti = Bool()
+  val sltiu = Bool()
+  val andi = Bool()
+  val ori = Bool()
+  val xori = Bool()
+
   // shift
   val slli = Bool()
   val srli = Bool()
@@ -97,17 +115,15 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
   val shamt = UInt(5.W)
   val shiftValid = Bool()
   val illegalShamt = Bool()
-  val arith = Bool()
 
   // Store
-  val valid = Bool()
+  val storeValid = Bool()
   val sb = Bool()
   val sh = Bool()
   val sw = Bool()
 
   // Branch
   val bValid = Bool()
-  val branch = Bool()
   val beq = Bool() // branch equal
   val bne = Bool() // branch not equal
   val blt = Bool() // branch less than
@@ -123,27 +139,18 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
   val jal = Bool()
   val jValid = Bool()
 
+  val throughAlu = Bool()
+
   /**
     * Instruction Decode
     */
   def decode(data: UInt): Unit = {
-    funct7 := data(funct3Msb, funct7Lsb)
+    funct7 := data(funct7Msb, funct7Lsb)
     rs2 := data(rs2Msb, rs2Lsb)
     rs1 := data(rs1Msb, rs1Lsb)
     funct3 := data(funct3Msb, funct3Lsb)
     rd := data(rdMsb, rdLsb)
     opcode := data(opCodeMsb, opCodeLsb)
-
-    loadInstDecode()
-
-    // system
-    systemInstDecode()
-
-    // execption
-    excDecode()
-
-    // opImm
-    opImmInstDecode()
 
     jalr := opcode === "b1100111".U
     fenceValid := opcode === "b0001111".U
@@ -151,11 +158,20 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
     fence := (funct3 === "b000".U) && fenceValid
     fenceI := (funct3 === "b001".U) && fenceValid
 
+    loadInstDecode()
+    systemInstDecode()
+    excDecode()
+    aluInstDecode()
+    branchDecode()
+    jumpDecode()
+    uiDecode()
+
+    throughAlu := lui
     valid := csrValid || aluValid || jalr || loadValid || excValid || fenceValid
     illegal := illegalShamt
 
     // Debug
-    if (dbg) rawData.get := data
+    if (cfg.dbg) rawData.get := data
   }
 
   def loadInstDecode(): Unit = {
@@ -166,7 +182,7 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
     lbu := (funct3 === "b100".U) && loadValid
     lhu := (funct3 === "b101".U) && loadValid
 
-    valid := opcode === "b0100011".U
+    storeValid := opcode === "b0100011".U
     sb := (funct3 === "b000".U) && valid
     sh := (funct3 === "b001".U) && valid
     sw := (funct3 === "b010".U) && valid
@@ -202,24 +218,38 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
     ebreak := excValid && (rs2(1, 0) === "b01".U)
   }
 
-  def opImmInstDecode(): Unit = {
-    opImm := opcode === "b0010011".U
-    addi := (funct3 === "b000".U) && opImm
-    slti := (funct3 === "b010".U) && opImm
-    sltiu := (funct3 === "b011".U) && opImm
-    xori := (funct3 === "b100".U) && opImm
-    ori := (funct3 === "b110".U) && opImm
-    andi := (funct3 === "b111".U) && opImm
-    aluValid := opImm
+  def aluInstDecode(): Unit = {
+    // register
+    aluReg := opcode === "b0110011".U
+    add := (funct3 === "b000".U) && aluReg && (!arith)
+    sub := (funct3 === "b000".U) && aluReg && arith
+    sll := (funct3 === "b001".U) && aluReg
+    slt := (funct3 === "b010".U) && aluReg
+    sltu := (funct3 === "b011".U) && aluReg
+    xor := (funct3 === "b100".U) && aluReg
+    srl := (funct3 === "b101".U) && aluReg && (!arith)
+    sra := (funct3 === "b101".U) && aluReg && arith
+    or := (funct3 === "b110".U) && aluReg
+    and := (funct3 === "b111".U) && aluReg
+
+    // immediate
+    aluImm := opcode === "b0010011".U
+    addi := (funct3 === "b000".U) && aluImm
+    slti := (funct3 === "b010".U) && aluImm
+    sltiu := (funct3 === "b011".U) && aluImm
+    xori := (funct3 === "b100".U) && aluImm
+    ori := (funct3 === "b110".U) && aluImm
+    andi := (funct3 === "b111".U) && aluImm
+    aluValid := aluImm || aluReg || auipc || lui
     shiftInstDecode()
   }
 
   def shiftInstDecode(): Unit = {
     shiftValid := slli || srli || srai
-    illegalShamt := !((funct7(11, 5) === "b0000000".U) || (funct7(11, 5) === "b0100000".U)) && shiftValid
-    slli := (funct3 === "b001".U) && opImm
-    srli := (funct3 === "b101".U) && opImm && (!arith)
-    srai := (funct3 === "b101".U) && opImm && arith
+    illegalShamt := !((funct7 === "b0000000".U) || (funct7 === "b0100000".U)) && shiftValid
+    slli := (funct3 === "b001".U) && aluImm
+    srli := (funct3 === "b101".U) && aluImm && (!arith)
+    srai := (funct3 === "b101".U) && aluImm && arith
     arith := funct7(5)
     shamt := rs2(4, 0)
   }
@@ -254,40 +284,47 @@ class Inst(xlen: Int = 32, dbg: Boolean = false) extends Bundle with InstInfo {
 
   def immS: UInt = Cat(Fill(20, funct7(6)), funct7, rd)
   def immB: UInt = Cat(Fill(21, funct7(6)), rd(0), funct7(5, 0), rd(4, 1), 0.U(1.W))
-  def immU: UInt = Cat(funct7, rs2, Fill(12, 0.U))
+  def immU: UInt = Cat(funct7, rs2, rs1, funct3, Fill(12, 0.U))
   def immJ: UInt = {
     Cat(Fill(13, funct7(6)), rs1, funct3, rs2(0), funct7, rs2(4, 1), 0x0.U(1.W))
   }
+
+  override def cloneType: InstRV32.this.type = new InstRV32(xlen).asInstanceOf[this.type]
 }
 
-class Idu(implicit cfg: Config) extends Module with InstInfo {
-  val io = IO(new Bundle {
-    val ifu2idu = MemIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
-    val inst2ext = Output(new Inst())
-    val pc = if (cfg.dbg) Some(Output(UInt(cfg.addrBits.W))) else None
-  })
+/**
+  *
+  * @param cfg dirv's configuration parameter.
+  */
+class Idu2ExuIO(implicit val cfg: Config) extends Bundle {
+  val inst = Irrevocable(new InstRV32())
+}
 
-  val pcReg = RegInit(cfg.initAddr.U)
 
-  pcReg := pcReg + 4.U
 
-  io.ifu2idu.cmd := MemCmd.rd.U
-  io.ifu2idu.addr := pcReg
-  io.ifu2idu.req := true.B
+/**
+  * Class for IDU I/O
+  * @param cfg dirv's configuration parameter.
+  */
+class IduIO(implicit val cfg: Config) extends Bundle {
+  val ifu2idu = Flipped(new Ifu2IduIO())
+  val idu2exu = new Idu2ExuIO()
+  override def cloneType: IduIO.this.type = new IduIO().asInstanceOf[this.type]
+}
 
-  val currCmd = Mux(io.ifu2idu.r.get.rddv, io.ifu2idu.r.get.data, 0.U)
+/**
+  * Instruction Decode Unit
+  * @param cfg dirv's configuration parameter.
+  */
+class Idu(implicit cfg: Config) extends Module with InstInfoRV32 {
+  val io = IO(new IduIO())
 
-  io.inst2ext.opcode := currCmd(opCodeMsb, opCodeLsb)
-  io.inst2ext.rd := currCmd(rdMsb, rdLsb)
-  io.inst2ext.funct3 := currCmd(funct3Msb, funct3Lsb)
-  io.inst2ext.rs1 := currCmd(rs1Msb, rs1Lsb)
-  io.inst2ext.rs2 := currCmd(rs2Msb, rs2Lsb)
-  io.inst2ext.funct7 := currCmd(funct7Msb, funct7Lsb)
+  val inst = Wire(new InstRV32())
 
-  // debug
-  if (cfg.dbg) {
-    io.pc.get := pcReg
-  }
+  inst.decode(io.ifu2idu.inst)
+
+  io.idu2exu.inst.bits := inst
+  io.idu2exu.inst.valid := io.ifu2idu.valid
 
   /*
   if (cfg.arch == RV32E)
