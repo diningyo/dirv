@@ -28,6 +28,7 @@ class Dirv(implicit cfg: Config) extends Module {
   exu.io.idu2exu <> idu.io.idu2exu
 
   lsu.io.exu2lsu <> exu.io.exu2lsu
+  exu.io.lsu2exu <> lsu.io.lsu2exu
   io.dmem <> lsu.io.lsu2ext
 
   if (cfg.dbg) {

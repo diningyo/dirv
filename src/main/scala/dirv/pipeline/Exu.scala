@@ -32,6 +32,7 @@ class Exu(implicit cfg: Config) extends Module{
     val idu2exu = Flipped(new Idu2ExuIO())
     val exu2ifu = new Exu2IfuIO()
     val exu2lsu = new Exu2LsuIO()
+    val lsu2exu = Flipped(new Lsu2ExuIO)
     val inst = if (cfg.dbg) Some(Output(UInt(cfg.arch.xlen.W))) else None
     val pc = if (cfg.dbg) Some(Output(UInt(cfg.arch.xlen.W))) else None
     val xregs = if (cfg.dbg) Some(Output(Vec(cfg.arch.regNum, UInt(cfg.arch.xlen.W)))) else None
@@ -124,7 +125,7 @@ class Exu(implicit cfg: Config) extends Module{
   ))
 
   //
-  io.idu2exu.inst.ready := true.B
+  io.idu2exu.inst.ready := !io.lsu2exu.stallReq
 
   //
   io.exu2ifu.updatePcReq := jmpPcReq || updatePcReq

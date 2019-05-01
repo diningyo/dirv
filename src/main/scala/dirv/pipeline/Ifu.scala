@@ -14,6 +14,7 @@ import dirv.io.{MemCmd, MemIO, MemSize}
   */
 class Ifu2IduIO(implicit cfg: Config) extends Bundle {
   val valid = Output(Bool())
+  val ready = Input(Bool())
   val inst = Output(UInt(cfg.arch.xlen.W))
 
   override def cloneType: this.type = new Ifu2IduIO().asInstanceOf[this.type]
@@ -75,7 +76,7 @@ class Ifu(implicit cfg: Config) extends Module {
   fetchValid := io.ifu2ext.r.get.valid && io.ifu2ext.r.get.ready
   fetchInst := io.ifu2ext.r.get.data
 
-  when (fetchValid) {
+  when (fetchValid && (!io.ifu2idu.ready)) {
     fetchInstBuf := fetchInst
   }
 
@@ -102,7 +103,7 @@ class Ifu(implicit cfg: Config) extends Module {
   io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
   io.ifu2ext.cmd := MemCmd.rd.U
   io.ifu2ext.size := MemSize.word.U
-  io.ifu2ext.r.get.ready := true.B
+  io.ifu2ext.r.get.ready := io.ifu2idu.ready
 
   // IFU <-> IDU
   io.ifu2idu.valid := fetchValid

@@ -323,6 +323,9 @@ class Idu(implicit cfg: Config) extends Module with InstInfoRV32 {
 
   inst.decode(io.ifu2idu.inst)
 
+  //
+  io.ifu2idu.ready := io.idu2exu.inst.ready
+
   io.idu2exu.inst.bits := inst
   io.idu2exu.inst.valid := io.ifu2idu.valid
 
