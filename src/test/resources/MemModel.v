@@ -36,6 +36,15 @@ module MemCtrl
     ,output [p_DATA_BITS-1:0] wrdata
     );
 
+    //
+    // local parameters
+    //
+    localparam lps_CMD = 1'b0;
+    localparam lps_DATA = 1'b1;
+
+    //
+    reg r_fsm;
+
     // mem side
     reg                       r_read;
     reg                       r_write;
@@ -54,21 +63,25 @@ module MemCtrl
     assign mem_write  = (mem_cmd == 1'b1);
 
     // external
-    assign mem_ready = 1'b1;
+    assign mem_ready = (r_fsm == lps_CMD) ? 1'b1 : (mem_r_ready && mem_w_ready);
     assign mem_r_valid = (p_IF_TYPE) ? r_rvalid : rden;
-    assign mem_r_data = (p_IF_TYPE) ? r_rddata : rddata;
+    assign mem_r_data = rddata;
+    assign mem_w_ready = 1'b1;
 
 
-    assign addr = mem_addr;
+    assign addr = r_mem_addr;
     assign rden = mem_read && mem_valid && mem_ready;
     assign wren  = mem_write && mem_valid && mem_ready;
+    assign wrdata = mem_w_data;
+    assign wrstrb = mem_w_strb;
+
 
     always @(posedge clk or negedge rst) begin
         if (rst) begin
             r_cmd_active <= 1'b0;
         end
         else if (rden || r_read) begin
-            if (mem_r_valid && mem_ready) begin
+            if (mem_r_valid && mem_r_ready) begin
                 r_cmd_active <= 1'b0;
                 r_read <= 1'b0;
             end
@@ -103,9 +116,39 @@ module MemCtrl
         if (rst) begin
             r_rvalid <= 1'b0;
             r_rddata <= 'h0;
-        end else begin
+        end
+        else if (!rden && (r_fsm == lps_DATA && mem_r_ready)) begin
+            r_rvalid <= 1'b0;
+        end
+        else if (rden)begin
             r_rvalid <= rden;
             r_rddata <= rddata;
+        end
+    end
+
+    //
+    always @(posedge clk or negedge rst) begin
+        if (rst) begin
+            r_fsm <= lps_CMD;
+        end
+        else begin
+            case (r_fsm)
+                lps_CMD : begin
+                    if (mem_valid && mem_ready) begin
+                        r_fsm <= lps_DATA;
+                    end
+                end
+
+                lps_DATA : begin
+                    if ((mem_r_valid && mem_r_ready) ||
+                        (mem_w_valid && mem_w_ready)) begin
+                        r_fsm <= lps_DATA;
+                    end
+                    else begin
+                        r_fsm <= lps_CMD;
+                    end
+                end
+            endcase
         end
     end
 
