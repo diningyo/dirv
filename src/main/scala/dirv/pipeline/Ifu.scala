@@ -74,10 +74,10 @@ class Ifu(implicit cfg: Config) extends Module {
 
   // fetch
   fetchValid := io.ifu2ext.r.get.valid && io.ifu2ext.r.get.ready
-  fetchInst := io.ifu2ext.r.get.data
+  fetchInst := Mux(fetchValid, io.ifu2ext.r.get.data, fetchInstBuf)
 
-  when (fetchValid && (!io.ifu2idu.ready)) {
-    fetchInstBuf := fetchInst
+  when (io.ifu2idu.ready) {
+    fetchInstBuf := io.ifu2ext.r.get.data
   }
 
   // state

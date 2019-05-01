@@ -104,11 +104,11 @@ class Lsu(implicit cfg: Config) extends Module {
   io.lsu2exu.loadData := extR.data
 
   // lsu -> external
-  ext.valid := inst.loadValid || inst.storeValid
+  ext.valid := (inst.loadValid || inst.storeValid) && ((fsm === sIdle) || (fsm === sCmdWait))
   ext.addr := io.exu2lsu.memAddr
   ext.size := size
   ext.cmd := Mux(inst.loadValid, MemCmd.rd.U, MemCmd.wr.U)
-  extW.data := 0xdeafbeafL.U
+  extW.data := io.exu2lsu.memWrdata
   extW.strb := strb
   extW.valid := io.exu2lsu.inst.storeValid
   extR.ready := true.B

@@ -3,9 +3,8 @@
 package dirv.pipeline
 
 import chisel3._
-import chisel3.util.{Cat, Fill, Irrevocable, MuxCase}
+import chisel3.util.{Cat, Fill, Irrevocable}
 import dirv.Config
-import dirv.io.MemSize
 
 /**
   * Trait for RV32I bitmap
@@ -37,7 +36,9 @@ trait InstInfoRV32 {
   * @param xlen xlen
   * @param cfg dirv's configuration parameter.
   */
-class InstRV32(xlen: Int = 32)(implicit val cfg: Config) extends Bundle with InstInfoRV32 {
+class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
+  extends Bundle with InstInfoRV32 {
+
   val rawData = if (cfg.dbg) Some(UInt(xlen.W)) else None
   val funct7 = UInt(funct7Bits.W)
   val rs2 = UInt(rs2Bits.W)
@@ -77,7 +78,6 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config) extends Bundle with Ins
 
   // I-op load
   val loadValid = Bool()
-  val size = UInt(2.W)
   val lb = Bool()
   val lh = Bool()
   val lw = Bool()
@@ -183,19 +183,9 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config) extends Bundle with Ins
     lhu := (funct3 === "b101".U) && loadValid
 
     storeValid := opcode === "b0100011".U
-    sb := (funct3 === "b000".U) && valid
-    sh := (funct3 === "b001".U) && valid
-    sw := (funct3 === "b010".U) && valid
-
-    size := MuxCase(MemSize.byte.U, Seq(
-      sh -> MemSize.half.U,
-      sw -> MemSize.word.U
-    ))
-
-    size := MuxCase(MemSize.byte.U, Seq(
-      (lh || lhu) -> MemSize.half.U,
-      lw -> MemSize.word.U
-    ))
+    sb := (funct3 === "b000".U) && storeValid
+    sh := (funct3 === "b001".U) && storeValid
+    sw := (funct3 === "b010".U) && storeValid
   }
 
   def systemInstDecode(): Unit = {
@@ -276,12 +266,12 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config) extends Bundle with Ins
   }
 
   def getCsr: UInt = Cat(funct7, rs2)
-  def getAluImm: UInt = Cat(Fill(20, funct7(6)), funct7, rs2)
 
   def isCsrWr: Bool = csrrw || csrrwi
   def isCsrRd: Bool = csrrs || csrrsi
   def isCsrClr: Bool = csrrc || csrrci
 
+  def immI: UInt = Cat(Fill(20, funct7(6)), funct7, rs2)
   def immS: UInt = Cat(Fill(20, funct7(6)), funct7, rd)
   def immB: UInt = Cat(Fill(21, funct7(6)), rd(0), funct7(5, 0), rd(4, 1), 0.U(1.W))
   def immU: UInt = Cat(funct7, rs2, rs1, funct3, Fill(12, 0.U))

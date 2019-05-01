@@ -18,6 +18,7 @@ class Exu2IfuIO(implicit cfg: Config) extends Bundle {
 
 class Exu2LsuIO(implicit cfg: Config) extends Bundle {
   val memAddr = Output(UInt(cfg.addrBits.W))
+  val memWrdata = Output(UInt(cfg.dataBits.W))
   val inst = Output(new InstRV32())
 
   override def cloneType: this.type = new Exu2LsuIO().asInstanceOf[this.type]
@@ -117,9 +118,10 @@ class Exu(implicit cfg: Config) extends Module{
   // mem
 
   // wb
-  mpfr.io.rd.en := instWb.aluValid || instWb.csrValid
+  mpfr.io.rd.en := instWb.aluValid || instWb.csrValid || instWb.loadValid
   mpfr.io.rd.addr := instWb.rd
   mpfr.io.rd.data := MuxCase(0.U, Seq(
+    instWb.loadValid -> io.lsu2exu.loadData,
     instWb.aluValid -> alu.io.result,
     instWb.csrValid -> csrf.io.rdData
   ))
@@ -134,6 +136,7 @@ class Exu(implicit cfg: Config) extends Module{
 
   //
   io.exu2lsu.memAddr := alu.io.result
+  io.exu2lsu.memWrdata := mpfr.io.rs2.data
   io.exu2lsu.inst := instMem
 
   // debug

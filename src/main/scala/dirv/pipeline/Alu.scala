@@ -30,13 +30,15 @@ class Alu(implicit cfg: Config) extends Module {
   val inst = io.inst
   val rs1 = Mux(inst.auipc, io.pc, io.rs1)
   val rs2 = MuxCase(io.rs2, Seq(
-    io.inst.aluImm -> inst.getAluImm,
-    io.inst.auipc -> inst.immU
+    inst.storeValid -> inst.immS,
+    (inst.aluImm || inst.loadValid) -> inst.immI,
+    inst.auipc -> inst.immU
   ))
   val shamt = io.inst.shamt
+  val add = inst.addi || inst.add || inst.auipc || inst.loadValid || inst.storeValid
 
   val rv32iAlu = scala.collection.mutable.Seq(
-    (inst.addi || inst.add || inst.auipc) -> (rs1 + rs2),
+    add -> (rs1 + rs2),
     (inst.slti || inst.slt) -> (rs1.asSInt() < rs2.asSInt()).asUInt(),
     (inst.sltiu || inst.sltu) -> (rs1 < rs2),
     inst.sub -> (rs1 - rs2),
