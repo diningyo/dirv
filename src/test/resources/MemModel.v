@@ -46,6 +46,7 @@ module MemCtrl
     reg r_fsm;
 
     // mem side
+    wire                      w_read;
     reg                       r_read;
     reg                       r_write;
     reg                       r_cmd_active;
@@ -69,18 +70,20 @@ module MemCtrl
     assign mem_w_ready = 1'b1;
 
 
-    assign addr = r_mem_addr;
-    assign rden = mem_read && mem_valid && mem_ready;
+    assign addr = (mem_read) ? r_mem_addr : mem_addr;
+    assign rden = w_read || r_read;
     assign wren  = mem_write && mem_valid && mem_ready;
     assign wrdata = mem_w_data;
     assign wrstrb = mem_w_strb;
+
+    assign w_read = (mem_read && mem_valid && mem_ready);
 
 
     always @(posedge clk or negedge rst) begin
         if (rst) begin
             r_cmd_active <= 1'b0;
         end
-        else if (rden || r_read) begin
+        else if (w_read || r_read) begin
             if (mem_r_valid && mem_r_ready) begin
                 r_cmd_active <= 1'b0;
                 r_read <= 1'b0;
@@ -106,7 +109,7 @@ module MemCtrl
         if (rst) begin
             r_mem_addr <= 'h0;
         end
-        else if (rden || wren) begin
+        else if (w_read || wren) begin
             r_mem_addr <= mem_addr;
         end
     end
@@ -117,7 +120,7 @@ module MemCtrl
             r_rvalid <= 1'b0;
             r_rddata <= 'h0;
         end
-        else if (!rden && (r_fsm == lps_DATA && mem_r_ready)) begin
+        else if (!w_read && (r_fsm == lps_DATA && mem_r_ready)) begin
             r_rvalid <= 1'b0;
         end
         else if (rden)begin
@@ -135,7 +138,12 @@ module MemCtrl
             case (r_fsm)
                 lps_CMD : begin
                     if (mem_valid && mem_ready) begin
-                        r_fsm <= lps_DATA;
+                        if (mem_w_valid && mem_w_ready) begin
+                            r_fsm <= lps_CMD;
+                        end
+                        else begin
+                            r_fsm <= lps_DATA;
+                        end
                     end
                 end
 
@@ -212,6 +220,7 @@ module MemModel
     wire [p_STRB_BITS-1:0] d_wrstrb;
     wire [p_DATA_BITS-1:0] d_wrdata;
 
+    reg [p_DATA_BITS-1:0] r_dummy_rddata;
 
     initial begin
         $readmemh(p_TEST_HEX_FILE, mem);
@@ -230,9 +239,15 @@ module MemModel
 
 
     // imem side
-    assign i_rddata = (i_rden) ? read(p_IMEM, i_addr) : $random;
+    assign i_rddata = (i_rden) ? read(p_IMEM, i_addr) : r_dummy_rddata;
 
     // dmem side
+    assign d_rddata = (d_rden) ? read(p_IMEM, d_addr) : r_dummy_rddata;
+
+    // dummy
+    always @(posedge clk) begin
+        r_dummy_rddata <= $random;
+    end
 
     // write
     always @(posedge clk or posedge rst) begin
@@ -241,13 +256,13 @@ module MemModel
                 mem[d_addr] <= d_wrdata[7:0];
             end
             if (d_wrstrb[1]) begin
-                mem[d_addr] <= d_wrdata[15:8];
+                mem[d_addr + 1] <= d_wrdata[15:8];
             end
             if (d_wrstrb[2]) begin
-                mem[d_addr] <= d_wrdata[24:16];
+                mem[d_addr + 2] <= d_wrdata[24:16];
             end
             if (d_wrstrb[3]) begin
-                mem[d_addr] <= d_wrdata[31:24];
+                mem[d_addr + 3] <= d_wrdata[31:24];
             end
         end
     end
