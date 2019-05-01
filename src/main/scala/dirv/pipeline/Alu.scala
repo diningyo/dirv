@@ -6,18 +6,26 @@ import chisel3._
 import chisel3.util.{Cat, Mux1H, MuxCase}
 import dirv.Config
 
+
+/**
+  * ALU I/O
+  * @param cfg dirv's configuration parameter.
+  */
+class AluIO(implicit cfg: Config) extends Bundle {
+  val inst = Input(new InstRV32())
+  val pc = Input(UInt(cfg.dataBits.W))
+  val rs1 = Input(UInt(cfg.dataBits.W))
+  val rs2 = Input(UInt(cfg.dataBits.W))
+  val result = Output(UInt(cfg.dataBits.W))
+}
+
+
 /**
   * ALU
   * @param cfg dirv's configuration parameter.
   */
 class Alu(implicit cfg: Config) extends Module {
-  val io = IO(new Bundle {
-    val inst = Input(new InstRV32())
-    val pc = Input(UInt(cfg.dataBits.W))
-    val rs1 = Input(UInt(cfg.dataBits.W))
-    val rs2 = Input(UInt(cfg.dataBits.W))
-    val result = Output(UInt(cfg.dataBits.W))
-  })
+  val io = IO(new AluIO)
 
   val inst = io.inst
   val rs1 = Mux(inst.auipc, io.pc, io.rs1)
@@ -27,7 +35,7 @@ class Alu(implicit cfg: Config) extends Module {
   ))
   val shamt = io.inst.shamt
 
-  val rv32iAlu = Seq(
+  val rv32iAlu = scala.collection.mutable.Seq(
     (inst.addi || inst.add || inst.auipc) -> (rs1 + rs2),
     (inst.slti || inst.slt) -> (rs1.asSInt() < rs2.asSInt()).asUInt(),
     (inst.sltiu || inst.sltu) -> (rs1 < rs2),
