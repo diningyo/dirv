@@ -51,13 +51,32 @@ class Lsu(implicit cfg: Config) extends Module {
     (inst.sw || inst.lw) -> MemSize.byte.U
   ))
 
-  val uaMsb = log2Ceil(cfg.arch.xlen / 8)
+  // make strobe signal
+  val byteNum = cfg.arch.xlen / 8
+  val uaMsb = log2Ceil(byteNum)
   val unaligedAddr = io.exu2lsu.memAddr(uaMsb - 1, 0)
   val strb = Mux1H(Seq(
     inst.sb -> Fill(0x1 << MemSize.byte, 1.U),
     inst.sh -> Fill(0x1 << MemSize.half, 1.U),
     inst.sw -> Fill(0x1 << MemSize.word, 1.U)
   )) << unaligedAddr
+
+  val wrdataVec = Wire(Vec(byteNum, UInt(8.W)))
+  val loadData = Wire(Vec(byteNum, UInt(8.W)))
+
+  // bits -> bytes
+  (0 until byteNum).foreach(i => {
+    loadData(i) := extR.data(((i + 1) * 8) - 1, i * 8)
+    wrdataVec(i) := io.exu2lsu.memWrdata(((i + 1) * 8) - 1, i * 8)
+  })
+
+  // write data
+  val shiftNum = (unaligedAddr << 3.U).asUInt()
+  val wrdata = Mux1H(Seq(
+    inst.sb -> io.exu2lsu.memWrdata(7, 0),
+    inst.sh -> io.exu2lsu.memWrdata(15, 0),
+    inst.sw -> io.exu2lsu.memWrdata
+  )) << shiftNum
 
   // fsm
   switch (fsm) {
@@ -101,14 +120,19 @@ class Lsu(implicit cfg: Config) extends Module {
   // lsu -> exu
   io.lsu2exu.stallReq := (fsm =/= sIdle)
   io.lsu2exu.loadDataVaid := extR.valid && extR.ready
-  io.lsu2exu.loadData := extR.data
+  io.lsu2exu.loadData := Mux1H(Seq(
+    (inst.lb || inst.lbu) -> Cat(Fill(24, inst.lb && loadData(unaligedAddr)(7)), loadData(unaligedAddr)),
+    (inst.lh || inst.lhu) -> Cat(Fill(16, inst.lh && loadData(unaligedAddr + 1.U)(7)),
+      Cat(loadData(unaligedAddr + 1.U), loadData(unaligedAddr))),
+    inst.lw -> Cat(loadData.reverse)
+  ))
 
   // lsu -> external
   ext.valid := (inst.loadValid || inst.storeValid) && ((fsm === sIdle) || (fsm === sCmdWait))
   ext.addr := io.exu2lsu.memAddr
   ext.size := size
   ext.cmd := Mux(inst.loadValid, MemCmd.rd.U, MemCmd.wr.U)
-  extW.data := io.exu2lsu.memWrdata
+  extW.data := wrdata
   extW.strb := strb
   extW.valid := io.exu2lsu.inst.storeValid
   extR.ready := true.B
