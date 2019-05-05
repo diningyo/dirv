@@ -46,6 +46,7 @@ module MemCtrl
     reg r_fsm;
 
     // mem side
+    wire [p_ADDR_BITS-1:0]    w_addr;
     wire                      w_read;
     reg                       r_read;
     reg                       r_write;
@@ -69,8 +70,8 @@ module MemCtrl
     assign mem_r_data = rddata;
     assign mem_w_ready = 1'b1;
 
-
-    assign addr = (mem_read) ? r_mem_addr : mem_addr;
+    assign w_addr = (mem_read) ? r_mem_addr : mem_addr;
+    assign addr = {w_addr[p_ADDR_BITS-1:2], 2'b00};
     assign rden = w_read || r_read;
     assign wren  = mem_write && mem_valid && mem_ready;
     assign wrdata = mem_w_data;
