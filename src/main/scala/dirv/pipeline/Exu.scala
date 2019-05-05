@@ -82,9 +82,10 @@ class Exu(implicit cfg: Config) extends Module{
   ))
 
 
-  val jmpPcReq = instExe.jal || condBranchValid
+  val jmpPcReq = instExe.jal || instExe.jalr || condBranchValid
   val jmpPc = Mux1H(Seq(
     instExe.jal -> (currPc + instExe.immJ),
+    instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
     condBranchValid -> (currPc + instExe.immB)
   ))(cfg.addrBits - 1, 0)
 
@@ -118,11 +119,11 @@ class Exu(implicit cfg: Config) extends Module{
   // mem
 
   // wb
-  mpfr.io.rd.en := instWb.aluValid || instWb.csrValid || instWb.loadValid
+  mpfr.io.rd.en := instWb.aluValid || instWb.csrValid || instWb.loadValid || instWb.jal || instWb.jalr
   mpfr.io.rd.addr := instWb.rd
   mpfr.io.rd.data := MuxCase(0.U, Seq(
     instWb.loadValid -> io.lsu2exu.loadData,
-    instWb.aluValid -> alu.io.result,
+    (instWb.aluValid || instWb.jal || instWb.jalr) -> alu.io.result,
     instWb.csrValid -> csrf.io.rdData
   ))
 
