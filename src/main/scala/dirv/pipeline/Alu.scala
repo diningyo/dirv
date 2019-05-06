@@ -31,17 +31,19 @@ class Alu(implicit cfg: Config) extends Module {
 
   val inst = io.inst
   val rs1 = MuxCase(io.rs1, Seq(
-    (inst.csrrw || inst.csrrwi) -> 0.U,
+    inst.csrUimmValid -> inst.rs1,
     inst.auipc -> io.pc,
     (inst.jal || inst.jalr) -> (io.pc + 4.U)
   ))
   val rs2 = MuxCase(io.rs2, Seq(
+    inst.csrValid -> 0.U,
     inst.storeValid -> inst.immS,
     (inst.slli || inst.srli || inst.srai) -> inst.shamt,
     (inst.aluImm || inst.loadValid) -> inst.immI,
     inst.auipc -> inst.immU
   ))
-  val aluThrough = inst.auipc || inst.loadValid || inst.storeValid || inst.jal || inst.jalr || inst.csrrw
+  val aluThrough = inst.auipc || inst.loadValid || inst.storeValid || inst.jal || inst.jalr ||
+    inst.csrrs || inst.csrrc || inst.csrrw || inst.csrrsi || inst.csrrci || inst.csrrwi
   val add = inst.addi || inst.add
   val shamt = Mux(inst.slli || inst.srli || inst.srai, inst.shamt, rs2(inst.shamt.getWidth - 1, 0))
 
