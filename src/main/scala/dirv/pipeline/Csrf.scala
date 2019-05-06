@@ -339,32 +339,33 @@ class Csrf(implicit cfg: Config) extends Module {
     (inst.csrrs || inst.csrrsi) -> (rdData | wrData)
   ))
 
-  /*
   // exception
-  csr.io.excOccured := instDec.illegalShamt || illegalOpcode || instDec.ebreak || misalignedInstAddr || misalignedDataAddr
-  csr.io.excCode := Mux1H(Seq(
-    misalignedInstAddr -> 0.U,
-    (instDec.illegalShamt || illegalOpcode) -> 2.U,
-    instDec.ebreak -> 3.U,
-    io.core.misalignedRdAddr -> 4.U,
-    io.core.misalignedWrAddr -> 6.U
+  val excOccured = inst.illegalShamt //|| illegalOpcode || instDec.ebreak || misalignedInstAddr || misalignedDataAddr
+  val excCode = Mux1H(Seq(
+    //misalignedInstAddr -> 0.U,
+    (inst.illegalShamt) -> 2.U
+    //(inst.illegalShamt || illegalOpcode) -> 2.U,
+    //instDec.ebreak -> 3.U,
+    //io.core.misalignedRdAddr -> 4.U,
+    //io.core.misalignedWrAddr -> 6.U
   ))
 
-  csr.io.excMepcWren := instDec.illegalShamt || illegalOpcode || instDec.ebreak || misalignedDataAddr || invalidWrBack
-  csr.io.excPc := currPc(exeIdx)
+  val excMepcWren = inst.illegalShamt //|| illegalOpcode || instDec.ebreak || misalignedDataAddr || invalidWrBack
 
   // trap value
+  /*
   csr.io.trapOccured := misalignedDataAddr || misalignedInstAddr
   csr.io.trapAddr := Mux1H(Seq(
     io.core.misalignedWrAddr -> io.core.dmemWrAddr,
     io.core.misalignedRdAddr -> io.core.dmemRdAddr,
     misalignedInstAddr -> ifuCurrPc
   ))
+  */
 
   mstatus.mpp := "b11".U
 
-  when (io.excOccured) {
-    mcause.write(Cat(0.U(1.W), io.excCode))
+  when (excOccured) {
+    mcause.write(excCode)
   }
 
   when (io.excMepcWren) {
@@ -375,7 +376,6 @@ class Csrf(implicit cfg: Config) extends Module {
     mtval.write(io.trapAddr)
   }
 
-  */
   // address decode
   val csrSelBits = Cat(CSR.csrRegAddrs.reverse.map(_.asUInt() === inst.getCsr))
 
@@ -400,7 +400,7 @@ class Csrf(implicit cfg: Config) extends Module {
   csrRegs.foreach {
     case (addr, reg) =>
       when (wren && csrSelBits(CSR.csrRegMaps(addr))) {
-        reg.write(io.wrData)
+        reg.write(csrWrData)
       }
   }
 

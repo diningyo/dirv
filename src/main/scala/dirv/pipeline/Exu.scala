@@ -82,8 +82,13 @@ class Exu(implicit cfg: Config) extends Module{
   ))
 
 
-  val jmpPcReq = instExe.jal || instExe.jalr || condBranchValid
+  // illegal
+  val illegal = instExe.illegal
+
+
+  val jmpPcReq = illegal || instExe.jal || instExe.jalr || condBranchValid
   val jmpPc = Mux1H(Seq(
+    illegal -> csrf.io.mtvec,
     instExe.jal -> (currPc + instExe.immJ),
     instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
     condBranchValid -> (currPc + instExe.immB)
@@ -107,7 +112,6 @@ class Exu(implicit cfg: Config) extends Module{
 
   // csr
   csrf.io.inst := instWb
-  csrf.io.excOccured := false.B
   csrf.io.invalidWb := false.B
   csrf.io.excMepcWren := false.B
   csrf.io.excPc := currPc
@@ -119,7 +123,7 @@ class Exu(implicit cfg: Config) extends Module{
   // mem
 
   // wb
-  mpfr.io.rd.en := instWb.aluValid || instWb.csrValid || instWb.loadValid || instWb.jal || instWb.jalr
+  mpfr.io.rd.en := (!illegal) && (instWb.aluValid || instWb.csrValid || instWb.loadValid || instWb.jal || instWb.jalr)
   mpfr.io.rd.addr := instWb.rd
   mpfr.io.rd.data := MuxCase(0.U, Seq(
     instWb.loadValid -> io.lsu2exu.loadData,
