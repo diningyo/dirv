@@ -293,7 +293,7 @@ class CsrIO(val xlen: Int = 32, val csrBits: Int = 12)
   val rdData = Output(UInt(xlen.W))
   val wrData = Input(UInt(xlen.W))
   val invalidWb = Input(Bool())
-  val excOccured = Input(Bool())
+  //val excOccured = Input(Bool())
   val excCode = Input(UInt((xlen - 1).W))
   val excMepcWren = Input(Bool())
   val excPc = Input(UInt(xlen.W))
@@ -340,17 +340,19 @@ class Csrf(implicit cfg: Config) extends Module {
   ))
 
   // exception
-  val excOccured = inst.illegalShamt //|| illegalOpcode || instDec.ebreak || misalignedInstAddr || misalignedDataAddr
-  val excCode = Mux1H(Seq(
+  val excOccured = inst.illegalShamt || inst.ebreak // || misalignedInstAddr || misalignedDataAddr
+  val excCode = Wire(UInt(cfg.arch.xlen.W))
+
+  excCode := Mux1H(Seq(
     //misalignedInstAddr -> 0.U,
-    (inst.illegalShamt) -> 2.U
+    inst.illegalShamt -> 2.U,
     //(inst.illegalShamt || illegalOpcode) -> 2.U,
-    //instDec.ebreak -> 3.U,
+    inst.ebreak -> 3.U
     //io.core.misalignedRdAddr -> 4.U,
     //io.core.misalignedWrAddr -> 6.U
   ))
 
-  val excMepcWren = inst.illegalShamt //|| illegalOpcode || instDec.ebreak || misalignedDataAddr || invalidWrBack
+  val excMepcWren = inst.illegalShamt || inst.ebreak //|| misalignedDataAddr || invalidWrBack
 
   // trap value
   /*
@@ -368,7 +370,7 @@ class Csrf(implicit cfg: Config) extends Module {
     mcause.write(excCode)
   }
 
-  when (io.excMepcWren) {
+  when (excMepcWren) {
     mepc.write(io.excPc)
   }
 

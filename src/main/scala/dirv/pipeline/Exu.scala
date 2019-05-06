@@ -86,9 +86,9 @@ class Exu(implicit cfg: Config) extends Module{
   val illegal = instExe.illegal
 
 
-  val jmpPcReq = illegal || instExe.jal || instExe.jalr || condBranchValid
+  val jmpPcReq = illegal || instExe.ebreak || instExe.jal || instExe.jalr || condBranchValid
   val jmpPc = Mux1H(Seq(
-    illegal -> csrf.io.mtvec,
+    (illegal || instExe.ebreak) -> csrf.io.mtvec,
     instExe.jal -> (currPc + instExe.immJ),
     instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
     condBranchValid -> (currPc + instExe.immB)
