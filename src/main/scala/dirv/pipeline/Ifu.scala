@@ -25,9 +25,9 @@ class Ifu2IduIO(implicit cfg: Config) extends Bundle {
   * @param cfg dirv's configuration parameter.
   */
 class Ifu2exuIO(implicit cfg: Config) extends Bundle {
-  val valid = Output(Bool())
+  val excInstMa = Output(new ExcMa())
 
-  override def cloneType: this.type = new Ifu2IduIO().asInstanceOf[this.type]
+  override def cloneType: this.type = new Ifu2exuIO().asInstanceOf[this.type]
 }
 
 /**
@@ -37,6 +37,7 @@ class Ifu2exuIO(implicit cfg: Config) extends Bundle {
 class IfuIO(implicit cfg: Config) extends Bundle {
   val ifu2ext = MemIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
   val ifu2idu = new Ifu2IduIO()
+ // val ifu2exu = new Ifu2exuIO()
   val exu2ifu = Flipped(new Exu2IfuIO())
 
   override def cloneType: this.type = new IfuIO().asInstanceOf[this.type]
@@ -99,7 +100,7 @@ class Ifu(implicit cfg: Config) extends Module {
   //
 
   // External <-> IFU
-  io.ifu2ext.valid := fsm === sFetch
+  io.ifu2ext.valid := (fsm === sFetch)
   io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
   io.ifu2ext.cmd := MemCmd.rd.U
   io.ifu2ext.size := MemSize.word.U

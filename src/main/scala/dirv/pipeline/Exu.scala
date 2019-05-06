@@ -89,19 +89,22 @@ class Exu(implicit cfg: Config) extends Module{
 
 
   // illegal
-  val illegal = instExe.illegal || (!instExe.valid) && io.idu2exu.inst.valid
   val excDataMaReq = io.lsu2exu.excWrMa.excReq || io.lsu2exu.excRdMa.excReq
-  val excReq = illegal || excDataMaReq || instExe.ecall || instExe.ebreak
 
-  val jmpPcReq = instExe.ebreak || instExe.jal || instExe.jalr ||
-    condBranchValid || instExe.mret || instExe.wfi || excReq
-  val jmpPc = Mux1H(Seq(
-    excReq -> csrf.io.mtvec,
+  val branchPc = Mux1H(Seq(
     (instExe.mret || instExe.wfi) -> csrf.io.mepc,
     instExe.jal -> (currPc + instExe.immJ),
     instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
     condBranchValid -> (currPc + instExe.immB)
   ))(cfg.addrBits - 1, 0)
+
+  val excInstMaReq = branchPc(1, 0) =/= 0.U
+  val illegal = excInstMaReq || instExe.illegal || (!instExe.valid) && io.idu2exu.inst.valid
+  val excReq = illegal || excDataMaReq || instExe.ecall || instExe.ebreak || excInstMaReq
+
+  val jmpPcReq = instExe.ebreak || instExe.jal || instExe.jalr ||
+    condBranchValid || instExe.mret || instExe.wfi || excReq
+  val jmpPc = Mux(excReq, csrf.io.mtvec, branchPc)
 
   // connect Mpfr
   mpfr.io.rs1.addr := instExe.rs1
@@ -122,6 +125,8 @@ class Exu(implicit cfg: Config) extends Module{
   // csr
   csrf.io.inst := instWb
   csrf.io.invalidWb := false.B
+  csrf.io.excInstMa.excReq := excInstMaReq
+  csrf.io.excInstMa.excAddr := branchPc
   csrf.io.excRdMa := io.lsu2exu.excRdMa
   csrf.io.excWrMa := io.lsu2exu.excWrMa
   csrf.io.excMepcWren := false.B

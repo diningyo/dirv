@@ -58,7 +58,7 @@ class Lsu(implicit cfg: Config) extends Module {
     val ret = Wire(new ExcMa())
 
     ret.excReq := excReq && dataReq
-    ret.excAdder := addr
+    ret.excAddr := addr
 
     ret
   }

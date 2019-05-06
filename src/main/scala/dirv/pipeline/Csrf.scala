@@ -283,7 +283,7 @@ class Mie extends BaseReg {
 
 class ExcMa(implicit val cfg: Config) extends Bundle {
   val excReq = Bool()
-  val excAdder = UInt(cfg.addrBits.W)
+  val excAddr = UInt(cfg.addrBits.W)
 }
 
 /**
@@ -298,6 +298,7 @@ class CsrIO(val xlen: Int = 32, val csrBits: Int = 12)
   val wrData = Input(UInt(xlen.W))
   val invalidWb = Input(Bool())
   //val excOccured = Input(Bool())
+  val excInstMa = Input(new ExcMa())
   val excWrMa = Input(new ExcMa())
   val excRdMa = Input(new ExcMa())
   val excCode = Input(UInt((xlen - 1).W))
@@ -350,14 +351,15 @@ class Csrf(implicit cfg: Config) extends Module {
   val excCode = Wire(UInt(cfg.arch.xlen.W))
 
   excCode := Mux1H(Seq(
-    //misalignedInstAddr -> 0.U,
+    io.excInstMa.excReq -> 0.U,
     inst.illegal -> 2.U,
     inst.ebreak -> 3.U,
     io.excRdMa.excReq -> 4.U,
     io.excWrMa.excReq -> 6.U
   ))
 
-  val excMepcWren = (!inst.valid) || inst.illegalShamt || inst.ebreak //|| misalignedDataAddr || invalidWrBack
+  val excMepcWren = (!inst.valid) || inst.illegalShamt || inst.ebreak ||
+    io.excRdMa.excReq || io.excWrMa.excReq || io.excInstMa.excReq
 
   mstatus.mpp := "b11".U
 
@@ -370,11 +372,11 @@ class Csrf(implicit cfg: Config) extends Module {
   }
 
   // trap value
-  val trapOccured = io.excRdMa.excReq || io.excWrMa.excReq
+  val trapOccured = io.excRdMa.excReq || io.excWrMa.excReq || io.excInstMa.excReq
   val trapAddr = Mux1H(Seq(
-    io.excRdMa.excReq -> io.excRdMa.excAdder,
-    io.excWrMa.excReq -> io.excWrMa.excAdder
-    //misalignedInstAddr -> ifuCurrPc
+    io.excRdMa.excReq -> io.excRdMa.excAddr,
+    io.excWrMa.excReq -> io.excWrMa.excAddr,
+    io.excInstMa.excReq -> io.excInstMa.excAddr
   ))
 
   when (trapOccured) {
