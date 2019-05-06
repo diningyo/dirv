@@ -48,6 +48,7 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
   val opcode = UInt(opCodeBits.W)
   val illegal = Bool()
   val valid = Bool()
+  val illegalOpcode = Bool()
 
   // instruction
   // I-system instructions
@@ -144,7 +145,7 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
   /**
     * Instruction Decode
     */
-  def decode(data: UInt): Unit = {
+  def decode(dataValid: Bool, data: UInt): Unit = {
     funct7 := data(funct7Msb, funct7Lsb)
     rs2 := data(rs2Msb, rs2Lsb)
     rs1 := data(rs1Msb, rs1Lsb)
@@ -167,8 +168,10 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
     uiDecode()
 
     throughAlu := lui
-    valid := csrValid || aluValid || jalr || loadValid || excValid || fenceValid
-    illegal := illegalShamt
+    valid := csrValid || aluValid || jalr || loadValid || excValid ||
+      fenceValid || jValid || storeValid || lui || auipc || bValid
+    illegalOpcode := !valid && dataValid
+    illegal := illegalShamt || illegalOpcode
 
     // Debug
     if (cfg.dbg) rawData.get := data
@@ -230,7 +233,7 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
     xori := (funct3 === "b100".U) && aluImm
     ori := (funct3 === "b110".U) && aluImm
     andi := (funct3 === "b111".U) && aluImm
-    aluValid := aluImm || aluReg || auipc || lui
+    aluValid := aluImm || aluReg || auipc || lui || shiftValid
     shiftInstDecode()
   }
 
@@ -260,7 +263,6 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
   }
 
   def jumpDecode(): Unit = {
-
     jal := opcode === "b1101111".U
     jValid := jal
   }
@@ -311,7 +313,7 @@ class Idu(implicit cfg: Config) extends Module with InstInfoRV32 {
 
   val inst = Wire(new InstRV32())
 
-  inst.decode(io.ifu2idu.inst)
+  inst.decode(io.ifu2idu.valid && io.ifu2idu.ready, io.ifu2idu.inst)
 
   //
   io.ifu2idu.ready := io.idu2exu.inst.ready

@@ -3,7 +3,7 @@
 package dirv.pipeline
 
 import chisel3._
-import chisel3.util.{Cat, Fill, Mux1H, MuxCase}
+import chisel3.util.{Cat, Fill, Irrevocable, Mux1H, MuxCase}
 import dirv.Config
 
 /**
@@ -281,6 +281,10 @@ class Mie extends BaseReg {
     msie, 0.U(1.W), ssie, usie)
 }
 
+class ExcMa(implicit val cfg: Config) extends Bundle {
+  val excReq = Bool()
+  val excAdder = UInt(cfg.addrBits.W)
+}
 
 /**
   * Class for CSR block I/O
@@ -294,6 +298,8 @@ class CsrIO(val xlen: Int = 32, val csrBits: Int = 12)
   val wrData = Input(UInt(xlen.W))
   val invalidWb = Input(Bool())
   //val excOccured = Input(Bool())
+  val excWrMa = Input(new ExcMa())
+  val excRdMa = Input(new ExcMa())
   val excCode = Input(UInt((xlen - 1).W))
   val excMepcWren = Input(Bool())
   val excPc = Input(UInt(xlen.W))
@@ -340,29 +346,18 @@ class Csrf(implicit cfg: Config) extends Module {
   ))
 
   // exception
-  val excOccured = inst.illegalShamt || inst.ebreak // || misalignedInstAddr || misalignedDataAddr
+  val excOccured = inst.illegalOpcode || inst.illegalShamt || inst.ebreak || io.excRdMa.excReq || io.excWrMa.excReq
   val excCode = Wire(UInt(cfg.arch.xlen.W))
 
   excCode := Mux1H(Seq(
     //misalignedInstAddr -> 0.U,
-    inst.illegalShamt -> 2.U,
-    //(inst.illegalShamt || illegalOpcode) -> 2.U,
-    inst.ebreak -> 3.U
-    //io.core.misalignedRdAddr -> 4.U,
-    //io.core.misalignedWrAddr -> 6.U
+    inst.illegal -> 2.U,
+    inst.ebreak -> 3.U,
+    io.excRdMa.excReq -> 4.U,
+    io.excWrMa.excReq -> 6.U
   ))
 
-  val excMepcWren = inst.illegalShamt || inst.ebreak //|| misalignedDataAddr || invalidWrBack
-
-  // trap value
-  /*
-  csr.io.trapOccured := misalignedDataAddr || misalignedInstAddr
-  csr.io.trapAddr := Mux1H(Seq(
-    io.core.misalignedWrAddr -> io.core.dmemWrAddr,
-    io.core.misalignedRdAddr -> io.core.dmemRdAddr,
-    misalignedInstAddr -> ifuCurrPc
-  ))
-  */
+  val excMepcWren = (!inst.valid) || inst.illegalShamt || inst.ebreak //|| misalignedDataAddr || invalidWrBack
 
   mstatus.mpp := "b11".U
 
@@ -374,8 +369,16 @@ class Csrf(implicit cfg: Config) extends Module {
     mepc.write(io.excPc)
   }
 
-  when (io.trapOccured) {
-    mtval.write(io.trapAddr)
+  // trap value
+  val trapOccured = io.excRdMa.excReq || io.excWrMa.excReq
+  val trapAddr = Mux1H(Seq(
+    io.excRdMa.excReq -> io.excRdMa.excAdder,
+    io.excWrMa.excReq -> io.excWrMa.excAdder
+    //misalignedInstAddr -> ifuCurrPc
+  ))
+
+  when (trapOccured) {
+    mtval.write(trapAddr)
   }
 
   // address decode
@@ -409,7 +412,6 @@ class Csrf(implicit cfg: Config) extends Module {
   rdData := MuxCase(0.U, csrRegs.zipWithIndex.map {
     case(reg, selBits) => (csrSelBits(selBits), reg._2.read)
   })
-
 
   // io
   io.rdData := rdData

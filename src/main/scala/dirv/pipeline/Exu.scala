@@ -69,6 +69,12 @@ class Exu(implicit cfg: Config) extends Module{
     }
   }
 
+  // dependancy check
+  /*
+  val invalidRdWb = instWb.rd === 0.U
+  val depRs1Rd = (instExe.rs1 === instWb.rd) && invalidRdWb
+  val depRs2Rd = (instExe.rs2 === instWb.rd) && invalidRdWb
+  */
   // branch control
   val condBranchValid = Wire(Bool())
 
@@ -83,12 +89,15 @@ class Exu(implicit cfg: Config) extends Module{
 
 
   // illegal
-  val illegal = instExe.illegal
+  val illegal = instExe.illegal || (!instExe.valid) && io.idu2exu.inst.valid
+  val excDataMaReq = io.lsu2exu.excWrMa.excReq || io.lsu2exu.excRdMa.excReq
+  val excReq = illegal || excDataMaReq || instExe.ecall || instExe.ebreak
 
-
-  val jmpPcReq = illegal || instExe.ebreak || instExe.jal || instExe.jalr || condBranchValid
+  val jmpPcReq = instExe.ebreak || instExe.jal || instExe.jalr ||
+    condBranchValid || instExe.mret || instExe.wfi || excReq
   val jmpPc = Mux1H(Seq(
-    (illegal || instExe.ebreak) -> csrf.io.mtvec,
+    excReq -> csrf.io.mtvec,
+    (instExe.mret || instExe.wfi) -> csrf.io.mepc,
     instExe.jal -> (currPc + instExe.immJ),
     instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
     condBranchValid -> (currPc + instExe.immB)
@@ -113,6 +122,8 @@ class Exu(implicit cfg: Config) extends Module{
   // csr
   csrf.io.inst := instWb
   csrf.io.invalidWb := false.B
+  csrf.io.excRdMa := io.lsu2exu.excRdMa
+  csrf.io.excWrMa := io.lsu2exu.excWrMa
   csrf.io.excMepcWren := false.B
   csrf.io.excPc := currPc
   csrf.io.excCode := 0.U
@@ -123,7 +134,8 @@ class Exu(implicit cfg: Config) extends Module{
   // mem
 
   // wb
-  mpfr.io.rd.en := (!illegal) && (instWb.aluValid || instWb.csrValid || instWb.loadValid || instWb.jal || instWb.jalr)
+  mpfr.io.rd.en := (!illegal) && (instWb.aluValid || instWb.csrValid ||
+    io.lsu2exu.loadDataValid || instWb.jal || instWb.jalr)
   mpfr.io.rd.addr := instWb.rd
   mpfr.io.rd.data := MuxCase(0.U, Seq(
     instWb.loadValid -> io.lsu2exu.loadData,
