@@ -1,0 +1,51 @@
+diff --git riscv-tests/benchmarks/common/test.ld riscv-tests/benchmarks/common/test.ld
+index 4f8892e..e5164be 100644
+--- riscv-tests/benchmarks/common/test.ld
++++ riscv-tests/benchmarks/common/test.ld
+@@ -22,7 +22,7 @@ SECTIONS
+ {
+
+   /* text: test code section */
+-  . = 0x80000000;
++  . = 0x00001000;
+   .text.init : { *(.text.init) }
+
+   . = ALIGN(0x1000);
+diff --git riscv-tests/isa/Makefile riscv-tests/isa/Makefile
+index 4e1ba20..d3ee8fa 100644
+--- riscv-tests/isa/Makefile
++++ riscv-tests/isa/Makefile
+@@ -35,6 +35,7 @@ RISCV_PREFIX ?= riscv$(XLEN)-unknown-elf-
+ RISCV_GCC ?= $(RISCV_PREFIX)gcc
+ RISCV_GCC_OPTS ?= -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+ RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data
++RISCV_OBJCOPY ?= $(RISCV_PREFIX)objcopy -O verilog
+ RISCV_SIM ?= spike
+
+ vpath %.S $(src_dir)
+@@ -45,11 +46,14 @@ vpath %.S $(src_dir)
+ %.dump: %
+ 	$(RISCV_OBJDUMP) $< > $@
+
++%.hex: %
++	$(RISCV_OBJCOPY) $^ $@
++
+ %.out: %
+ 	$(RISCV_SIM) --isa=rv64gc $< 2> $@
+
+ %.out32: %
+-	$(RISCV_SIM) --isa=rv32gc $< 2> $@
++	$(RISCV_SIM) --pc=0x1000 --isa=rv32gc $< 2> $@
+
+ define compile_template
+
+@@ -102,7 +106,8 @@ junk += $(tests) $(tests_dump) $(tests_hex) $(tests_out) $(tests32_out)
+ #------------------------------------------------------------
+ # Default
+
+-all: $(tests_dump)
++#all: $(tests_dump) $(tests_hex) $(tests32_out)
++all: $(tests_dump) $(tests_hex)
+
+ #------------------------------------------------------------
+ # Clean up
