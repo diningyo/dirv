@@ -110,6 +110,7 @@ sbt:dirv> runMain Elaborate
 
 ```bash
 $ cd src/test/resources/riscv-tests
+$ ./configure --with-xlen=32
 $ make isa
 ```
 
