@@ -1,16 +1,21 @@
-diff --git riscv-tests/benchmarks/common/test.ld riscv-tests/benchmarks/common/test.ld
-index 4f8892e..e5164be 100644
---- riscv-tests/benchmarks/common/test.ld
-+++ riscv-tests/benchmarks/common/test.ld
-@@ -22,7 +22,7 @@ SECTIONS
- {
+diff --git riscv-tests/env/p/link.ld riscv-tests/env/p/link.ld
+index b3e315e..54c65e9 100644
+--- riscv-tests/env/p/link.ld
++++ riscv-tests/env/p/link.ld
+@@ -3,7 +3,7 @@ ENTRY(_start)
 
-   /* text: test code section */
+ SECTIONS
+ {
 -  . = 0x80000000;
 +  . = 0x00001000;
    .text.init : { *(.text.init) }
-
    . = ALIGN(0x1000);
+   .tohost : { *(.tohost) }
+@@ -14,4 +14,3 @@ SECTIONS
+   .bss : { *(.bss) }
+   _end = .;
+ }
+-
 diff --git riscv-tests/isa/Makefile riscv-tests/isa/Makefile
 index 4e1ba20..d3ee8fa 100644
 --- riscv-tests/isa/Makefile
