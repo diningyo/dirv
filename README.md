@@ -109,7 +109,9 @@ sbt:dirv> runMain Elaborate
 1. build riscv-tests
 
 ```bash
-$ cd src/test/resources/riscv-tests
+$ cd src/test/resources/
+$ patch -p0 < riscv-tests.patch 
+$ cd riscv-tests
 $ ./configure --with-xlen=32
 $ make isa
 ```
