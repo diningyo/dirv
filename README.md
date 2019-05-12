@@ -91,9 +91,8 @@ Clone this repository or download to directory which you wanted.
 
 ```bash
 $ git clone https://github.com/diningyo/dirv.git
-$ git submodule update --init --recursive
 $ cd dirv
-$ sbt
+$ git submodule update --init --recursive
 ```
 
 ### Generate Verilog-HDL RTL
@@ -101,6 +100,7 @@ $ sbt
 run follow command on sbt-shell
 
 ```scala
+$ sbt
 sbt:dirv> runMain Elaborate
 ```
 
@@ -114,6 +114,7 @@ $ patch -p0 < riscv-tests.patch
 $ cd riscv-tests
 $ ./configure --with-xlen=32
 $ make isa
+$ cd ../../../
 ```
 
 2. run test command on sbt-shell

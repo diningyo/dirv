@@ -26,9 +26,8 @@ Chiselで書いたRISC-Vのお試し実装
 
 ```bash
 $ git clone https://github.com/diningyo/dirv.git
-$ git submodule update --init --recursive
 $ cd dirv
-$ sbt
+$ git submodule update --init --recursive
 ```
 
 ### RTLの生成
@@ -36,6 +35,7 @@ $ sbt
 sbtシェル上から以下のコマンドを実行。
 
 ```scala
+$ sbt
 sbt:dirv> runMain Elaborate
 ```
 
@@ -49,9 +49,10 @@ $ patch -p0 < riscv-tests.patch
 $ cd riscv-tests
 $ ./configure --with-xlen=32
 $ make isa
+$ cd ../../../
 ```
 
-2. sbtコマンド上でテスト実行
+2. sbtシェル上で次のコマンドを実行
 
 ```scala
 $ sbt
