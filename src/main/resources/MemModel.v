@@ -1,5 +1,3 @@
-
-
 module MemCtrl
     #(
        parameter p_ADDR_BITS  = 32
@@ -166,14 +164,14 @@ endmodule : MemCtrl
 
 module MemModel
     #(
-       parameter p_ADDR_BITS = 32
-      ,parameter p_DATA_BITS = 32
-      ,parameter p_STRB_BITS = p_DATA_BITS / 8
-      ,parameter p_TEST_HEX_FILE = "test.hex"
-      )
+        parameter p_ADDR_BITS = 32
+        ,parameter p_DATA_BITS = 32
+        ,parameter p_STRB_BITS = p_DATA_BITS / 8
+        ,parameter p_TEST_HEX_FILE = "test.hex"
+    )
     (
-     input                    clk
-    ,input                    rst
+        input                    clk
+        ,input                    rst
     // imem
     ,input [p_ADDR_BITS-1:0]  imem_addr
     ,input                    imem_cmd
@@ -221,100 +219,116 @@ module MemModel
     // Module Instance
     //
     MemCtrl
-        #(
-           .p_ADDR_BITS (p_ADDR_BITS )
-          ,.p_DATA_BITS (p_DATA_BITS )
-          ,.p_STRB_BITS (p_STRB_BITS )
-          ,.p_PORT_NAME ("imem"      )
-          )
+    #(
+       .p_ADDR_BITS (p_ADDR_BITS )
+      ,.p_DATA_BITS (p_DATA_BITS )
+      ,.p_STRB_BITS (p_STRB_BITS )
+      ,.p_PORT_NAME ("imem"      )
+    )
     imemCtrl
-        (
-          .clk         (clk          )
-         ,.rst         (rst          )
-         ,.mem_addr    (imem_addr    )
-         ,.mem_cmd     (imem_cmd     )
-         ,.mem_size    (imem_size    )
-         ,.mem_valid   (imem_valid   )
-         ,.mem_ready   (imem_ready   )
-         ,.mem_r_ready (imem_r_ready )
-         ,.mem_r_valid (imem_r_valid )
-         ,.mem_r_data  (imem_r_data  )
-         ,.mem_r_resp  (imem_r_resp  )
-         ,.mem_w_valid (1'b0         )
-         ,.mem_w_ready (             )
-         ,.mem_w_strb  ('h0          )
-         ,.mem_w_data  ('h0          )
-         ,.mem_w_resp  (             )
+    (
+      .clk         (clk          )
+     ,.rst         (rst          )
+     ,.mem_addr    (imem_addr    )
+     ,.mem_cmd     (imem_cmd     )
+     ,.mem_size    (imem_size    )
+     ,.mem_valid   (imem_valid   )
+     ,.mem_ready   (imem_ready   )
+     ,.mem_r_ready (imem_r_ready )
+     ,.mem_r_valid (imem_r_valid )
+     ,.mem_r_data  (imem_r_data  )
+     ,.mem_r_resp  (imem_r_resp  )
+     ,.mem_w_valid (1'b0         )
+     ,.mem_w_ready (             )
+     ,.mem_w_strb  ('h0          )
+     ,.mem_w_data  ('h0          )
+     ,.mem_w_resp  (             )
 
-         // memory
-         ,.addr        (i_addr       )
-         ,.rddata      (i_rddata     )
-         ,.wren        (             )
-         ,.wrstrb      (             )
-         ,.wrdata      (             )
-         );
+     // memory
+     ,.addr        (i_addr       )
+     ,.rddata      (i_rddata     )
+     ,.wren        (             )
+     ,.wrstrb      (             )
+     ,.wrdata      (             )
+    );
 
     MemCtrl
-        #(
-           .p_ADDR_BITS (p_ADDR_BITS )
-          ,.p_DATA_BITS (p_DATA_BITS )
-          ,.p_STRB_BITS (p_STRB_BITS )
-          ,.p_PORT_NAME ("dmem"      )
-          )
+    #(
+       .p_ADDR_BITS (p_ADDR_BITS )
+      ,.p_DATA_BITS (p_DATA_BITS )
+      ,.p_STRB_BITS (p_STRB_BITS )
+      ,.p_PORT_NAME ("dmem"      )
+    )
     dmemCtrl
+    (
+      .clk         (clk          )
+     ,.rst         (rst          )
+     ,.mem_addr    (dmem_addr    )
+     ,.mem_cmd     (dmem_cmd     )
+     ,.mem_size    (dmem_size    )
+     ,.mem_valid   (dmem_valid   )
+     ,.mem_ready   (dmem_ready   )
+     ,.mem_r_ready (dmem_r_ready )
+     ,.mem_r_valid (dmem_r_valid )
+     ,.mem_r_data  (dmem_r_data  )
+     ,.mem_r_resp  (dmem_r_resp  )
+     ,.mem_w_valid (dmem_w_valid )
+     ,.mem_w_ready (dmem_w_ready )
+     ,.mem_w_strb  (dmem_w_strb  )
+     ,.mem_w_data  (dmem_w_data  )
+     ,.mem_w_resp  (dmem_w_resp  )
+
+     // memory
+     ,.addr        (d_addr       )
+     ,.rddata      (d_rddata     )
+     ,.wren        (d_wren       )
+     ,.wrstrb      (d_wrstrb     )
+     ,.wrdata      (d_wrdata     )
+    );
+
+`ifdef d_XILINX
+    blk_mem_gen_0 blk_mem_gen_0
         (
-          .clk         (clk          )
-         ,.rst         (rst          )
-         ,.mem_addr    (dmem_addr    )
-         ,.mem_cmd     (dmem_cmd     )
-         ,.mem_size    (dmem_size    )
-         ,.mem_valid   (dmem_valid   )
-         ,.mem_ready   (dmem_ready   )
-         ,.mem_r_ready (dmem_r_ready )
-         ,.mem_r_valid (dmem_r_valid )
-         ,.mem_r_data  (dmem_r_data  )
-         ,.mem_r_resp  (dmem_r_resp  )
-         ,.mem_w_valid (dmem_w_valid )
-         ,.mem_w_ready (dmem_w_ready )
-         ,.mem_w_strb  (dmem_w_strb  )
-         ,.mem_w_data  (dmem_w_data  )
-         ,.mem_w_resp  (dmem_w_resp  )
-
-         // memory
-         ,.addr        (d_addr       )
-         ,.rddata      (d_rddata     )
-         ,.wren        (d_wren       )
-         ,.wrstrb      (d_wrstrb     )
-         ,.wrdata      (d_wrdata     )
+          .clka   (clk                    )
+         ,.wea    (1'b0                   )
+         ,.addra  (i_addr                 )
+         ,.dina   ('b0                    )
+         ,.douta  (i_rddata               )
+         ,.clkb   (clk                    )
+         ,.web    ({4{d_wren}} & d_wrstrb )
+         ,.addrb  (d_addr                 )
+         ,.dinb   (d_wrdata               )
+         ,.doutb  (d_rddata               )
          );
-
+`else
     data_ram
         #(
-           .p_ADDR_BITS (p_ADDR_BITS)
-          ,.p_DATA_BITS (p_DATA_BITS)
-          ,.p_STRB_BITS (p_STRB_BITS)
-          ,.p_TEST_HEX_FILE (p_TEST_HEX_FILE)
+           .p_ADDR_BITS     (p_ADDR_BITS     )
+          ,.p_DATA_BITS     (p_DATA_BITS     )
+          ,.p_STRB_BITS     (p_STRB_BITS     )
+          ,.p_TEST_HEX_FILE (p_TEST_HEX_FILE )
         )
     m_data_ram
         (
-         // external
-         .clk      (clk      )
-        ,.rst      (rst      )
+          // external
+          .clk      (clk      )
+         ,.rst      (rst      )
 
-        ,.addr_0   (i_addr   )
-        ,.rddata_0 (i_rddata )
-        ,.en_0     (1'b0     )
-        ,.wren_0   (1'b0     )
-        ,.wrstrb_0 ('h0      )
-        ,.wrdata_0 ('h0      )
+         ,.addr_0   (i_addr   )
+         ,.rddata_0 (i_rddata )
+         ,.en_0     (1'b0     )
+         ,.wren_0   (1'b0     )
+         ,.wrstrb_0 ('h0      )
+         ,.wrdata_0 ('h0      )
 
-        ,.addr_1   (d_addr   )
-        ,.rddata_1 (d_rddata )
-        ,.en_1     (d_wren   )
-        ,.wren_1   (d_wren   )
-        ,.wrstrb_1 (d_wrstrb )
-        ,.wrdata_1 (d_wrdata )
+         ,.addr_1   (d_addr   )
+         ,.rddata_1 (d_rddata )
+         ,.en_1     (d_wren   )
+         ,.wren_1   (d_wren   )
+         ,.wrstrb_1 (d_wrstrb )
+         ,.wrdata_1 (d_wrdata )
         );
+`endif
 
     // log
     /*
@@ -335,9 +349,9 @@ module data_ram
       ,parameter p_DATA_BITS  = 32
       ,parameter p_STRB_BITS  = p_DATA_BITS / 8
       ,parameter p_TEST_HEX_FILE = "test.hex"
-    )
+      )
     (
-     // external
+    // external
      input                    clk
     ,input                    rst
 
@@ -366,7 +380,7 @@ module data_ram
 
     function [p_DATA_BITS-1:0] read
         (
-         input [p_ADDR_BITS-1:0] addr
+            input [p_ADDR_BITS-1:0] addr
         );
 
         reg [p_ADDR_BITS-1:0] rddata;
@@ -399,6 +413,5 @@ module data_ram
             end
         end
     end
-
 
 endmodule : data_ram
