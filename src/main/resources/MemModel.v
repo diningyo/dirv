@@ -29,7 +29,6 @@ module MemCtrl
 
     // memory
     ,output [p_ADDR_BITS-1:0] addr
-    ,output                   rden
     ,output [p_DATA_BITS-1:0] rddata
     ,output                   wren
     ,output [p_STRB_BITS-1:0] wrstrb
@@ -59,6 +58,7 @@ module MemCtrl
     wire                      mem_write;
     reg                       r_rvalid;
     reg [p_DATA_BITS-1:0]     r_rddata;
+    wire                      rden;
 
     // control
     assign mem_read   = (mem_cmd == 1'b0);
@@ -205,68 +205,17 @@ module MemModel
     parameter p_IMEM = 1'b0;
     parameter p_DMEM = 1'b1;
 
-    reg [7:0] mem[0:1024*256]; // temp. 256Kbytes
-
     wire [p_ADDR_BITS-1:0] i_addr;
-    wire                   i_rden;
     wire [p_DATA_BITS-1:0] i_rddata;
     wire                   i_wren;
     wire [p_STRB_BITS-1:0] i_wrstrb;
     wire [p_DATA_BITS-1:0] i_wrdata;
 
     wire [p_ADDR_BITS-1:0] d_addr;
-    wire                   d_rden;
     wire [p_DATA_BITS-1:0] d_rddata;
     wire                   d_wren;
     wire [p_STRB_BITS-1:0] d_wrstrb;
     wire [p_DATA_BITS-1:0] d_wrdata;
-
-    reg [p_DATA_BITS-1:0] r_dummy_rddata;
-
-    initial begin
-        $readmemh(p_TEST_HEX_FILE, mem);
-    end
-
-    function [p_DATA_BITS-1:0] read
-        (
-            input                   port,
-            input [p_ADDR_BITS-1:0] addr
-        );
-
-        reg [p_ADDR_BITS-1:0] rddata;
-        rddata = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
-        read = rddata;
-    endfunction : read // read
-
-
-    // imem side
-    assign i_rddata = (i_rden) ? read(p_IMEM, i_addr) : r_dummy_rddata;
-
-    // dmem side
-    assign d_rddata = (d_rden) ? read(p_IMEM, d_addr) : r_dummy_rddata;
-
-    // dummy
-    always @(posedge clk) begin
-        r_dummy_rddata <= $random;
-    end
-
-    // write
-    always @(posedge clk or posedge rst) begin
-        if (d_wren) begin
-            if (d_wrstrb[0]) begin
-                mem[d_addr] <= d_wrdata[7:0];
-            end
-            if (d_wrstrb[1]) begin
-                mem[d_addr + 1] <= d_wrdata[15:8];
-            end
-            if (d_wrstrb[2]) begin
-                mem[d_addr + 2] <= d_wrdata[24:16];
-            end
-            if (d_wrstrb[3]) begin
-                mem[d_addr + 3] <= d_wrdata[31:24];
-            end
-        end
-    end
 
     //
     // Module Instance
@@ -299,7 +248,6 @@ module MemModel
 
          // memory
          ,.addr        (i_addr       )
-         ,.rden        (i_rden       )
          ,.rddata      (i_rddata     )
          ,.wren        (             )
          ,.wrstrb      (             )
@@ -334,12 +282,39 @@ module MemModel
 
          // memory
          ,.addr        (d_addr       )
-         ,.rden        (d_rden       )
          ,.rddata      (d_rddata     )
          ,.wren        (d_wren       )
          ,.wrstrb      (d_wrstrb     )
          ,.wrdata      (d_wrdata     )
          );
+
+    data_ram
+        #(
+           .p_ADDR_BITS (p_ADDR_BITS)
+          ,.p_DATA_BITS (p_DATA_BITS)
+          ,.p_STRB_BITS (p_STRB_BITS)
+          ,.p_TEST_HEX_FILE (p_TEST_HEX_FILE)
+        )
+    m_data_ram
+        (
+         // external
+         .clk      (clk      )
+        ,.rst      (rst      )
+
+        ,.addr_0   (i_addr   )
+        ,.rddata_0 (i_rddata )
+        ,.en_0     (1'b0     )
+        ,.wren_0   (1'b0     )
+        ,.wrstrb_0 ('h0      )
+        ,.wrdata_0 ('h0      )
+
+        ,.addr_1   (d_addr   )
+        ,.rddata_1 (d_rddata )
+        ,.en_1     (d_wren   )
+        ,.wren_1   (d_wren   )
+        ,.wrstrb_1 (d_wrstrb )
+        ,.wrdata_1 (d_wrdata )
+        );
 
     // log
     /*
@@ -353,3 +328,77 @@ module MemModel
 
 
 endmodule : MemModel
+
+module data_ram
+    #(
+       parameter p_ADDR_BITS  = 32
+      ,parameter p_DATA_BITS  = 32
+      ,parameter p_STRB_BITS  = p_DATA_BITS / 8
+      ,parameter p_TEST_HEX_FILE = "test.hex"
+    )
+    (
+     // external
+     input                    clk
+    ,input                    rst
+
+    // memory
+    ,input [p_ADDR_BITS-1:0]  addr_0
+    ,output [p_DATA_BITS-1:0] rddata_0
+    ,input                    en_0
+    ,input                    wren_0
+    ,input [p_STRB_BITS-1:0]  wrstrb_0
+    ,input [p_DATA_BITS-1:0]  wrdata_0
+
+    // memory
+    ,input [p_ADDR_BITS-1:0]  addr_1
+    ,output [p_DATA_BITS-1:0] rddata_1
+    ,input                    en_1
+    ,input                    wren_1
+    ,input [p_STRB_BITS-1:0]  wrstrb_1
+    ,input [p_DATA_BITS-1:0]  wrdata_1
+    );
+
+    reg [7:0] mem[0:1024*64]; // temp. 256Kbytes
+
+    initial begin
+        $readmemh(p_TEST_HEX_FILE, mem);
+    end
+
+    function [p_DATA_BITS-1:0] read
+        (
+         input [p_ADDR_BITS-1:0] addr
+        );
+
+        reg [p_ADDR_BITS-1:0] rddata;
+        rddata = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
+        read = rddata;
+    endfunction : read // read
+
+    // imem side
+    assign rddata_0 = read(addr_0);
+
+    // dmem side
+    assign rddata_1  = read(addr_1);
+
+    // write
+    always @(posedge clk) begin
+        if (en_1) begin
+            if (wren_1) begin
+                if (wrstrb_1[0]) begin
+                    mem[addr_1] <= wrdata_1[7:0];
+                end
+                if (wrstrb_1[1]) begin
+                    mem[addr_1 + 1] <= wrdata_1[15:8];
+                end
+                if (wrstrb_1[2]) begin
+                    mem[addr_1 + 2] <= wrdata_1[24:16];
+                end
+                if (wrstrb_1[3]) begin
+                    mem[addr_1 + 3] <= wrdata_1[31:24];
+                end
+            end
+        end
+    end
+
+
+endmodule : data_ram
