@@ -1,10 +1,7 @@
 // See LICENSE for license details.
 
-package dirv
-
+import chisel3.iotesters._
 import scala.util.control.Breaks
-
-import chisel3.iotesters.PeekPokeTester
 
 /**
   * Environment for Dirv's riscv-tests

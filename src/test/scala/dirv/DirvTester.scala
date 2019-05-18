@@ -1,10 +1,9 @@
 // See LICENSE for license details.
 
-package dirv
-
-import chisel3.iotesters.{ChiselFlatSpec, Driver}
+import chisel3.iotesters._
 import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap, ParallelTestExecution}
 
+import dirv.Config
 
 /**
   * Object for parameter of riscv-tests

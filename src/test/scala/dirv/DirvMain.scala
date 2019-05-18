@@ -1,8 +1,9 @@
+/*
 // See LICENSE for license details.
 
 package dirv
 
-import chisel3.iotesters.Driver
+import chisel3._
 
 /**
   * Run some programs with Dirv.
@@ -23,3 +24,4 @@ object RunRegression extends App {
 
   // TODO :: add execute whole tests
 }
+*/
