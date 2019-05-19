@@ -286,7 +286,7 @@ module MemModel
      ,.wrdata      (d_wrdata     )
     );
 
-`ifdef d_XILINX
+`ifdef d_XILINX_FPGA
     blk_mem_gen_0 blk_mem_gen_0
         (
           .clka   (clk                    )
