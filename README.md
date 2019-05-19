@@ -112,9 +112,10 @@ sbt:dirv> runMain Elaborate
 
 ```bash
 $ cd src/test/resources/
-$ patch -p0 < riscv-tests.patch
 $ cd riscv-tests
 $ ./configure --with-xlen=32
+$ cd ..
+$ patch -p0 < riscv-tests.patch 
 $ make isa
 $ cd ../../../
 ```

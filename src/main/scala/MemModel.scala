@@ -1,10 +1,10 @@
 // See LICENSE for license details.
 
-package dirv
-
 import chisel3._
-import chisel3.core.StringParam
 import chisel3.util.HasBlackBoxResource
+import chisel3.experimental.StringParam
+
+import dirv.Config
 import dirv.io.MemIO
 
 class MemModel(testFile: String)(implicit cfg: Config) extends BlackBox(

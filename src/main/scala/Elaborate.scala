@@ -10,5 +10,5 @@ object Elaborate extends App {
 
   Driver.execute(
     Array("-tn=dirv", "-td=rtl/dirv"),
-    () => new Dirv())
+    () => new SimDtm(""))
 }

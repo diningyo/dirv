@@ -1,8 +1,9 @@
 // See LICENSE for license details.
 
-package dirv
-
 import chisel3._
+
+import dirv.{Config, Dirv}
+
 
 /**
   * Simulation environment top module
