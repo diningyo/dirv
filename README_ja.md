@@ -9,9 +9,11 @@ Chiselで書いたRISC-Vのお試し実装
 - User-Level ISA Version 2.2
 - Privileged ISA Version 1.10
 - 割り込みは未サポート
-- 2ステージパイプライン　(Fetch - Decode/Execute/Memory/Write back)
+- 1ステージパイプライン　(Fetch/Decode/Execute/Memory/Write back)
 - Interface Protocol - オリジナル
-- Chiselで実装
+- UCバークレーで開発されたハードウェア構築言語であるChiselで実装
+  - Chiselの詳細については[公式のウェブサイト](https://chisel.eecs.berkeley.edu/)を参照ください。
+
 
 ## 動作に必要なもの
 
@@ -45,7 +47,7 @@ sbt:dirv> runMain Elaborate
 
 ```bash
 $ cd src/test/resources/
-$ patch -p0 < riscv-tests.patch 
+$ patch -p0 < riscv-tests.patch
 $ cd riscv-tests
 $ ./configure --with-xlen=32
 $ make isa
@@ -80,11 +82,53 @@ sbt:dirv> testOnly dirv.DirvRV32ITester -- -z <テスト番号>
 下記のログの以下の部分がテスト名/テスト番号に対応しています。
 
  - テスト名  : add
- - テスト番号: rv32ui-000 
+ - テスト番号: rv32ui-000
 
 ```scala
 [info] - must execute RISC-V instruction add        - [riscv-tests:rv32ui-000]
 ```
+## 外部インターフェースの動作
+
+AXIっぽくコマンドとデータが分離されたready-valid型のバス・プロトコルになっています。<br>
+AXIとの違いは以下の通りです：
+
+- コマンドはリード/ライトで共通でデータはリード/ライトが分離
+- バーストアクセスは非対応
+- コマンドには以下のフィールドのみでAXIにあるようなCacheやProtといったものが存在しない
+  - アドレス
+  - コマンド(read/writeの選択)
+  - サイズ(byte/half word/word)
+- ライトはデータチャネルでレスポンスが返ってくる
+
+### 端子
+
+|端子名|入出力|ビット幅|説明|
+|:----|:----|:----|:----|
+|**コマンド・チャネル**||||
+|valid|O|1|コマンドのvalid信号|
+|ready|I|1|コマンドのready信号|
+|cmd|O|1|コマンド(0:read/1:write)|
+|addr|O|32|アクセス先のアドレス|
+|size|O|2|アクセスのサイズ(0:byte/1:half word/2:word)|
+|**ライトデータ・チャネル**|-|-|-|
+|w_valid|O|1|ライトデータのvalid信号|
+|w_ready|I|1|ライトデータのready信号|
+|w_resp|I|1|ライトのエラー応答(0:OK/1:Error)|
+|w_strb|O|1|ライトのstrobe信号|
+|w_data|O|32|ライトデータ|
+|**リードデータ・チャネル**||||
+|r_valid|I|1|リードデータのvalid信号|
+|r_ready|O|1|リードデータのready信号|
+|r_resp|I|1|エラー応答(0:OK/1:Error)|
+|r_data|I|32|リードデータ|
+
+### リード
+
+![img](./img/dirv_if_read.svg)
+
+### ライト
+
+![img](./img/dirv_if_write.svg)
 
 ## TODO
 
@@ -95,3 +139,4 @@ sbt:dirv> testOnly dirv.DirvRV32ITester -- -z <テスト番号>
 - riscv-complianceテストの評価
 - coremarkの評価
 - FPGA実装
+- AXI IF wrapperの作成

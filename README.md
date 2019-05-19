@@ -1,16 +1,18 @@
 # dirv
-This is My first trial project for designing RISC-V in Chisel
 
-## Description 
+This is my first trial project for designing RISC-V in Chisel.
 
-- RV32I
-- Machine mode Only
-- User-Level ISA Version 2.2
-- Privileged ISA Version 1.10
+## Description
+
+- support RV32I only
+- Machine mode only
+- User-Level ISA version 2.2
+- Privileged ISA version 1.10
 - NOT support interrupts.
-- 2-stage pipelines (Fetch - Decode/Execute/Memory/Write back)
+- 1-stage pipelines (Fetch/Decode/Execute/Memory/Write back)
 - Interface Protocol - original interface which uses ready-valid mechanism.
-- Written in Chisel
+- Written in Chisel which is an open-source hardware construction language developed at UC Berkeley.
+  - To need more information, please see [Chisel web site](https://chisel.eecs.berkeley.edu/).
 
 ## Demo
 
@@ -110,7 +112,7 @@ sbt:dirv> runMain Elaborate
 
 ```bash
 $ cd src/test/resources/
-$ patch -p0 < riscv-tests.patch 
+$ patch -p0 < riscv-tests.patch
 $ cd riscv-tests
 $ ./configure --with-xlen=32
 $ make isa
@@ -150,6 +152,50 @@ And test_name and test_no are:
  - test_name : add
  - test_no : rv32ui-000
 
+## External Bus Interface
+
+Dirv has orignal bus interface which is similar to AMBA AXI bus protocol.
+Differnces of AXI are:
+
+- A command channel is commoon both of read and write. But data channel is separate.
+- NOT support burst access.
+- The command only has basic command fields describing bellow, and doesn't have extra attribute fields such as AxCache, AxProt in AXI.
+  - addr
+  - cmd(to select read or write)
+  - size(to select byte/half word/word)
+- Write data channel is to use for receiving response.
+
+### Input/Output
+
+|name|In/Out|bit width|explanation|
+|:----|:----|:----|:----|
+|**command channel**||||
+|valid|O|1|valid signal for command channel|
+|ready|I|1|ready  signal for command channel|
+|cmd|O|1|command(0:read/1:write)|
+|addr|O|32|address to access|
+|size|O|2|size of access(0:byte/1:half word/2:word)|
+|**write data channel**|-|-|-|
+|w_valid|O|1|valid signal for write data|
+|w_ready|I|1|valid signal for write data|
+|w_resp|I|1|error response signal for write(0:OK/1:Error)|
+|w_strb|O|1|strobe signals for write to select which byte-lanes is active|
+|w_data|O|32|write data|
+|**read data channel**||||
+|r_valid|I|1|valid signal for write data|
+|r_ready|O|1|valid signal for write data|
+|r_resp|I|1|error response signal for read(0:OK/1:Error)|
+|r_data|I|32|read data|
+
+### waveform - read
+
+![img](./img/dirv_if_read.svg)
+
+### waveform - write
+
+![img](./img/dirv_if_write.svg)
+
+
 ## TODO
 
 - Implement 3-stage/5-stage pipelines.
@@ -158,3 +204,4 @@ And test_name and test_no are:
 - Support M-extension.
 - Evaluate riscv-compliance test suite.
 - Evaluate coremark benchmark test suite.
+- make AXI wrapper interface.
