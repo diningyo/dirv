@@ -2,6 +2,7 @@
 
 package dirv
 
+import chisel3._
 import chisel3.util.log2Ceil
 import dirv.io.{MemRIO, MemRWIO}
 
@@ -9,6 +10,7 @@ case object Consts {
   val rv32Xlen = 32
   val rviRegNum = 32
   val rveRegNum = 16
+  val nop = 0x4033.U(32.W)
 }
 
 // arch

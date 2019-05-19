@@ -53,19 +53,19 @@ class Ifu(implicit cfg: Config) extends Module {
 
   val sIdle :: sFetch :: Nil = Enum(2)
 
-  val hasCmd = RegInit(false.B)
-  val active = RegInit(false.B)
-  val fetchValid = Wire(Bool())
-  val fetchInst = Wire(UInt(cfg.dataBits.W))
-  val fetchInstBuf = RegInit(0.U(cfg.dataBits.W))
+  val qInstFlush = io.exu2ifu.updatePcReq
+  val qInstWren = Wire(Bool())
+  val qInstRden = Wire(Bool())
+  val qInstRdPtr = RegInit(0.U(1.W))
+  val qInstWrPtr = RegInit(0.U(1.W))
+  val qInstDataNum = RegInit(0.U(2.W))
+  val qInstHasData = Wire(Bool())
+  val qInst = RegInit(VecInit(Seq.fill(2)(0.U(cfg.dataBits.W))))
 
   val imemAddrReg = RegInit(cfg.initAddr.U)
   val fsm = RegInit(sIdle)
 
-  //
-  active := true.B
-
-  when (io.ifu2ext.valid && io.ifu2ext.ready) {
+  when (qInstWren) {
     when (io.exu2ifu.updatePcReq) {
       imemAddrReg := io.exu2ifu.updatePc + 4.U
     } .otherwise {
@@ -73,13 +73,39 @@ class Ifu(implicit cfg: Config) extends Module {
     }
   }
 
-  // fetch
-  fetchValid := io.ifu2ext.r.get.valid && io.ifu2ext.r.get.ready
-  fetchInst := Mux(fetchValid, io.ifu2ext.r.get.data, fetchInstBuf)
+  // Instruction FIFO
+  qInstWren := io.ifu2ext.r.get.valid && io.ifu2ext.r.get.ready
+  qInstRden := io.ifu2idu.valid && io.ifu2idu.ready
 
-  when (io.ifu2idu.ready) {
-    fetchInstBuf := io.ifu2ext.r.get.data
+  when (qInstFlush) {
+    qInst(0) := dirv.Consts.nop
+  } .elsewhen (qInstWren) {
+    qInst(qInstWrPtr) := io.ifu2ext.r.get.data
   }
+
+  when (qInstFlush) {
+    qInstRdPtr := 0.U
+    qInstWrPtr := 0.U
+  } .otherwise {
+    when (qInstWren) {
+      qInstWrPtr := qInstWrPtr + 1.U
+    }
+    when (qInstRden) {
+      qInstRdPtr := qInstRdPtr + 1.U
+    }
+  }
+
+  when (qInstFlush) {
+    qInstDataNum := 0.U
+  } .elsewhen (qInstRden && qInstRden) {
+    qInstDataNum := qInstDataNum
+  } .elsewhen (qInstRden) {
+    qInstDataNum := qInstDataNum - 1.U
+  } .elsewhen (qInstWren) {
+    qInstDataNum := qInstDataNum + 1.U
+  }
+
+  qInstHasData := qInstDataNum =/= 0.U
 
   // state
   switch (fsm) {
@@ -95,11 +121,7 @@ class Ifu(implicit cfg: Config) extends Module {
     }
   }
 
-  //
-  //
-  //
-
-  // External <-> IFU
+  // External <-> IF
   io.ifu2ext.valid := (fsm === sFetch)
   io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
   io.ifu2ext.cmd := MemCmd.rd.U
@@ -107,6 +129,6 @@ class Ifu(implicit cfg: Config) extends Module {
   io.ifu2ext.r.get.ready := io.ifu2idu.ready
 
   // IFU <-> IDU
-  io.ifu2idu.valid := fetchValid
-  io.ifu2idu.inst := Mux(fetchValid, fetchInst, fetchInstBuf)
+  io.ifu2idu.valid := qInstHasData
+  io.ifu2idu.inst := qInst(qInstRdPtr)
 }

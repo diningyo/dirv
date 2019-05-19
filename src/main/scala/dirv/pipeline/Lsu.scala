@@ -105,6 +105,10 @@ class Lsu(implicit cfg: Config) extends Module {
     inst.sw -> io.exu2lsu.memWrdata
   )) << shiftNum
 
+  // access done
+  val rdDone = extR.valid && extR.ready
+  val wrDone = extW.valid && extW.ready
+
   // fsm
   switch (fsm) {
     is (sIdle) {
@@ -132,22 +136,24 @@ class Lsu(implicit cfg: Config) extends Module {
     }
 
     is (sRdataWait) {
-      when (extR.valid && extR.ready) {
+      when (rdDone) {
         fsm := sIdle
       }
     }
 
     is (sWriteWait) {
-      when(extW.valid && extW.ready) {
+      when(wrDone) {
         fsm := sIdle
       }
     }
   }
 
   // lsu -> exu
+  val extAccessReq = !(io.lsu2exu.excRdMa.excReq || io.lsu2exu.excWrMa.excReq) && (inst.loadValid || inst.storeValid)
   io.lsu2exu.excRdMa := setMaAddr(inst.loadValid, io.exu2lsu.memAddr, size)
   io.lsu2exu.excWrMa := setMaAddr(inst.storeValid, io.exu2lsu.memAddr, size)
-  io.lsu2exu.stallReq := (fsm =/= sIdle)
+  io.lsu2exu.stallReq := ((extAccessReq && (fsm === sIdle)) && !wrDone)||
+                          RegNext((fsm =/= sIdle) && (rdDone || wrDone))
   io.lsu2exu.loadDataValid :=  extR.valid && extR.ready
   io.lsu2exu.loadData := Mux1H(Seq(
     (inst.lb || inst.lbu) -> Cat(Fill(24, inst.lb && loadData(unaligedAddr)(7)), loadData(unaligedAddr)),
@@ -157,8 +163,7 @@ class Lsu(implicit cfg: Config) extends Module {
   ))
 
   // lsu -> external
-  ext.valid := !(io.lsu2exu.excRdMa.excReq || io.lsu2exu.excWrMa.excReq) &&
-    (inst.loadValid || inst.storeValid) && ((fsm === sIdle) || (fsm === sCmdWait))
+  ext.valid := extAccessReq && ((fsm === sIdle) || (fsm === sCmdWait))
   ext.addr := io.exu2lsu.memAddr
   ext.size := size
   ext.cmd := Mux(inst.loadValid, MemCmd.rd.U, MemCmd.wr.U)
