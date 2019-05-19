@@ -152,6 +152,10 @@ And test_name and test_no are:
  - test_name : add
  - test_no : rv32ui-000
 
+## Block Diagram
+
+![block diagram](./img/dirv_block_diagram.svg)
+
 ## External Bus Interface
 
 Dirv has orignal bus interface which is similar to AMBA AXI bus protocol.

@@ -87,6 +87,11 @@ sbt:dirv> testOnly dirv.DirvRV32ITester -- -z <テスト番号>
 ```scala
 [info] - must execute RISC-V instruction add        - [riscv-tests:rv32ui-000]
 ```
+
+## ブロック図
+
+![block diagram](./img/dirv_block_diagram.svg)
+
 ## 外部インターフェースの動作
 
 AXIに似たコマンドとデータが分離されたready-valid型のバス・プロトコルになっています。<br>
