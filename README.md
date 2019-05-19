@@ -9,7 +9,7 @@ This is my first trial project for designing RISC-V in Chisel.
 - User-Level ISA version 2.2
 - Privileged ISA version 1.10
 - NOT support interrupts.
-- 1-stage pipelines (Fetch/Decode/Execute/Memory/Write back)
+- 2-stage pipelines (Fetch - Decode/Execute/Memory/Write back)
 - Interface Protocol - original interface which uses ready-valid mechanism.
 - Written in Chisel which is an open-source hardware construction language developed at UC Berkeley.
   - To need more information, please see [Chisel web site](https://chisel.eecs.berkeley.edu/).

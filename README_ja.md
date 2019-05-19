@@ -9,7 +9,7 @@ Chiselで書いたRISC-Vのお試し実装
 - User-Level ISA Version 2.2
 - Privileged ISA Version 1.10
 - 割り込みは未サポート
-- 1ステージパイプライン　(Fetch/Decode/Execute/Memory/Write back)
+- 2ステージパイプライン　(Fetch - Decode/Execute/Memory/Write back)
 - Interface Protocol - オリジナル
 - UCバークレーで開発されたハードウェア構築言語であるChiselで実装
   - Chiselの詳細については[公式のウェブサイト](https://chisel.eecs.berkeley.edu/)を参照ください。
@@ -124,11 +124,11 @@ AXIとの違いは以下の通りです：
 
 ### リード
 
-![img](./img/dirv_if_read.svg)
+![image of read](./img/dirv_if_read.svg)
 
 ### ライト
 
-![img](./img/dirv_if_write.svg)
+![image of write](./img/dirv_if_write.svg)
 
 ## TODO
 
