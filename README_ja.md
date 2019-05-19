@@ -47,10 +47,9 @@ sbt:dirv> runMain Elaborate
 
 ```bash
 $ cd src/test/resources/
+$ patch -p0 < riscv-tests.patch
 $ cd riscv-tests
 $ ./configure --with-xlen=32
-$ cd ..
-$ patch -p0 < riscv-tests.patch 
 $ make isa
 $ cd ../../../
 ```
@@ -90,7 +89,7 @@ sbt:dirv> testOnly dirv.DirvRV32ITester -- -z <テスト番号>
 ```
 ## 外部インターフェースの動作
 
-AXIっぽくコマンドとデータが分離されたready-valid型のバス・プロトコルになっています。<br>
+AXIに似たコマンドとデータが分離されたready-valid型のバス・プロトコルになっています。<br>
 AXIとの違いは以下の通りです：
 
 - コマンドはリード/ライトで共通でデータはリード/ライトが分離
