@@ -12,3 +12,12 @@ object Elaborate extends App {
     Array("-tn=dirv", "-td=rtl/dirv"),
     () => new SimDtm(""))
 }
+
+object Help extends App {
+
+  implicit val cfg: Config = Config()
+
+  Driver.execute(
+    Array("--help"),
+    () => new SimDtm(""))
+}
