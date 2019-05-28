@@ -1,108 +1,148 @@
 
 package uart
 
+import scala.math.{pow, round}
+
 import chisel3._
 import chisel3.util._
 
+/**
+  * Enumeration for Uart direction
+  */
+sealed trait UartDirection
+case object UartTx extends UartDirection
+case object UartRx extends UartDirection
 
+/**
+  *　Interface for Uart
+  */
 class UartIO extends Bundle {
   val tx = Output(UInt(1.W))
   val rx = Input(UInt(1.W))
 }
 
-class Ctrl extends Module {
+/**
+  * Uart control top module
+  * @param baudrate target baudrate
+  * @param clockFreq clock frequency(MHz)
+  */
+class TxRxCtrl(baudrate: Int=9600,
+               clockFreq: Int=100) extends Module {
   val io = IO(new Bundle {
     val uart = new UartIO
-    val tx = Flipped(ValidIO(UInt(8.W)))
-    val rx = ValidIO(UInt(8.W))
+    val r2c = Flipped(new RegTop2CtrlIO())
   })
 
-  val baudrateCount = 100 // TODO : ちゃんと周波数に合わせる
+  val durationCount = round(clockFreq * pow(10, 6) / baudrate).toInt
 
-  // Tx
-  val txStm = Module(new StateMachine)
-  val txDurationCounter = RegInit(0.U(32.W))
-  val txBits = RegInit(0.U(3.W))
+  val txCtrl = Module(new Ctrl(UartTx, durationCount))
+  val rxCtrl = Module(new Ctrl(UartRx, durationCount))
 
-  when (!txStm.io.idle) {
-    when (txDurationCounter < baudrateCount.U) {
-      txDurationCounter := txDurationCounter + 1.U
-    } .otherwise {
-      txDurationCounter := 0.U
-    }
-  }
+  io.uart.tx := txCtrl.io.uart
+  txCtrl.io.reg <> io.r2c.tx
 
-  val txUpdateReq = txDurationCounter === baudrateCount.U
-
-  when (txStm.io.data) {
-    when (txUpdateReq) {
-      txBits := txBits + 1.U
-    }
-  } .otherwise {
-    txBits := 0.U
-  }
-
-  io.uart.tx := MuxCase(1.U, Seq(
-    txStm.io.start -> 0.U,
-    txStm.io.data -> io.tx.bits(txBits)
-  ))
-
-  // txStm <-> ctrl
-  txStm.io.startReq := io.tx.valid
-  txStm.io.dataReq := txStm.io.start && txUpdateReq
-  txStm.io.stopReq := txStm.io.data && txUpdateReq && (txBits === 7.U)
-  txStm.io.fin := txStm.io.stop && txUpdateReq
-
-  // Rx
-  val rxStm = Module(new StateMachine)
-  val rxDurationCounter = RegInit(0.U(32.W))
-  val rxBits = RegInit(0.U(3.W))
-  val rxData = RegInit(0.U)
-
-  when (rxStm.io.idle ) {
-    when (!io.uart.rx) {
-      rxDurationCounter := (baudrateCount / 2).U
-    } .otherwise {
-      rxDurationCounter := 0.U
-    }
-  } .otherwise {
-    when (rxDurationCounter < baudrateCount.U) {
-      rxDurationCounter := rxDurationCounter + 1.U
-    } .otherwise {
-      rxDurationCounter := 0.U
-    }
-  }
-
-  val rxUpdateReq = rxDurationCounter === baudrateCount.U
-
-  when (rxStm.io.data) {
-    when (rxUpdateReq) {
-      rxBits := rxBits + 1.U
-    }
-  } .otherwise {
-    rxBits := 0.U
-  }
-
-  when (rxStm.io.data) {
-    when (rxUpdateReq) {
-      rxData := rxData | (io.uart.rx << rxBits).asUInt()
-    }
-  } .otherwise {
-    rxData := 0.U
-  }
-
-  // rxStm <-> ctrl
-  rxStm.io.startReq := rxStm.io.idle && !io.uart.rx
-  rxStm.io.dataReq := rxStm.io.start && rxUpdateReq
-  rxStm.io.stopReq := rxStm.io.data && rxUpdateReq && (rxBits === 7.U)
-  rxStm.io.fin := rxStm.io.stop && rxUpdateReq
-
-  // top <-> ctrl
-  io.rx.valid := rxStm.io.stopReq
-  io.rx.bits := rxData
-
+  rxCtrl.io.uart := io.uart.rx
+  rxCtrl.io.reg <> io.r2c.rx
 }
 
+/**
+  *  Uart control module for each direction
+  * @param direction direction of uart.
+  * @param durationCount count cycle for uart data per 1bit.
+  */
+class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
+  val io = IO(new Bundle {
+    val uart = direction match {
+      case UartTx => Output(UInt(1.W))
+      case UartRx => Input(UInt(1.W))
+    }
+    val reg = direction match {
+      case UartTx => Flipped(new TxFifoIO)
+      case UartRx => Flipped(new RxFifoIO)
+    }
+  })
+
+  val stm = Module(new StateMachine)
+  val durationCounter = RegInit(durationCount.U)
+  val bitIdx = RegInit(0.U(3.W))
+
+  // parameter
+  val initDurationCount = (direction match {
+    case UartTx => 0
+    case UartRx => durationCount / 2
+  }).U
+
+  // trigger for uart request
+  val startReq = direction match {
+    case UartTx => !io.reg.asInstanceOf[TxFifoIO].empty
+    case UartRx => !io.uart
+  }
+
+  // Uart Rx received data
+  val rxData = direction match {
+    case UartTx => None
+    case UartRx => Some(RegInit(0.U))
+  }
+
+  val updateReq = durationCounter === (durationCount - 1).U
+
+  when (stm.io.idle ) {
+    when (startReq) {
+      durationCounter := initDurationCount
+    } .otherwise {
+      durationCounter := 0.U
+    }
+  } .otherwise {
+    when (!updateReq) {
+      durationCounter := durationCounter + 1.U
+    } .otherwise {
+      durationCounter := 0.U
+    }
+  }
+
+  when (stm.io.data) {
+    when (updateReq) {
+      bitIdx := bitIdx + 1.U
+    }
+  } .otherwise {
+    bitIdx := 0.U
+  }
+
+  direction match {
+
+    case UartTx =>
+      val reg = io.reg.asInstanceOf[TxFifoIO]
+
+      io.uart := MuxCase(1.U, Seq(
+        stm.io.start -> 0.U,
+        stm.io.data -> reg.data(bitIdx)
+      ))
+
+      reg.rden := stm.io.stop && updateReq
+
+    case UartRx =>
+      val reg = io.reg.asInstanceOf[RxFifoIO]
+
+      when (stm.io.data) {
+        when (updateReq) {
+          rxData.get := rxData.get | (io.uart << bitIdx).asUInt()
+        }
+      } .otherwise {
+        rxData.get := 0.U
+      }
+      reg.wren := stm.io.stopReq
+      reg.data := rxData.get
+  }
+  // txStm <-> ctrl
+  stm.io.startReq := startReq
+  stm.io.dataReq := stm.io.start && updateReq
+  stm.io.stopReq := stm.io.data && updateReq && (bitIdx === 7.U)
+  stm.io.fin := stm.io.stop && updateReq
+}
+
+/**
+  * State machine for Uart control module
+  */
 class StateMachine extends Module {
   val io = IO(new Bundle {
     val startReq = Input(Bool())
