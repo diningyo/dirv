@@ -62,7 +62,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
     }
   })
 
-  val stm = Module(new StateMachine)
+  val stm = Module(new CtrlStateMachine)
   val durationCounter = RegInit(durationCount.U)
   val bitIdx = RegInit(0.U(3.W))
 
@@ -76,12 +76,6 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   val startReq = direction match {
     case UartTx => !io.reg.asInstanceOf[TxFifoIO].empty
     case UartRx => !io.uart
-  }
-
-  // Uart Rx received data
-  val rxData = direction match {
-    case UartTx => None
-    case UartRx => Some(RegInit(0.U))
   }
 
   val updateReq = durationCounter === (durationCount - 1).U
@@ -109,7 +103,6 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   }
 
   direction match {
-
     case UartTx =>
       val reg = io.reg.asInstanceOf[TxFifoIO]
 
@@ -122,17 +115,19 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
 
     case UartRx =>
       val reg = io.reg.asInstanceOf[RxFifoIO]
+      val rxData = RegInit(0.U)
 
       when (stm.io.data) {
         when (updateReq) {
-          rxData.get := rxData.get | (io.uart << bitIdx).asUInt()
+          rxData := rxData | (io.uart << bitIdx).asUInt()
         }
       } .otherwise {
-        rxData.get := 0.U
+        rxData := 0.U
       }
       reg.wren := stm.io.stopReq
-      reg.data := rxData.get
+      reg.data := rxData
   }
+
   // txStm <-> ctrl
   stm.io.startReq := startReq
   stm.io.dataReq := stm.io.start && updateReq
@@ -143,7 +138,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
 /**
   * State machine for Uart control module
   */
-class StateMachine extends Module {
+class CtrlStateMachine extends Module {
   val io = IO(new Bundle {
     val startReq = Input(Bool())
     val dataReq = Input(Bool())
