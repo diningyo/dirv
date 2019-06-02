@@ -1,3 +1,4 @@
+// See LICENSE for license details.
 
 package uart
 
@@ -57,8 +58,8 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
       case UartRx => Input(UInt(1.W))
     }
     val reg = direction match {
-      case UartTx => Flipped(new TxFifoIO)
-      case UartRx => Flipped(new RxFifoIO)
+      case UartTx => Flipped(new FifoRdIO)
+      case UartRx => Flipped(new FifoWrIO)
     }
   })
 
@@ -74,7 +75,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
 
   // trigger for uart request
   val startReq = direction match {
-    case UartTx => !io.reg.asInstanceOf[TxFifoIO].empty
+    case UartTx => !io.reg.asInstanceOf[FifoRdIO].empty
     case UartRx => !io.uart
   }
 
@@ -104,17 +105,17 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
 
   direction match {
     case UartTx =>
-      val reg = io.reg.asInstanceOf[TxFifoIO]
+      val reg = io.reg.asInstanceOf[FifoRdIO]
 
       io.uart := MuxCase(1.U, Seq(
         stm.io.start -> 0.U,
         stm.io.data -> reg.data(bitIdx)
       ))
 
-      reg.rden := stm.io.stop && updateReq
+      reg.enable := stm.io.stop && updateReq
 
     case UartRx =>
-      val reg = io.reg.asInstanceOf[RxFifoIO]
+      val reg = io.reg.asInstanceOf[FifoWrIO]
       val rxData = RegInit(0.U)
 
       when (stm.io.data) {
@@ -124,7 +125,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
       } .otherwise {
         rxData := 0.U
       }
-      reg.wren := stm.io.stopReq
+      reg.enable := stm.io.stopReq
       reg.data := rxData
   }
 
