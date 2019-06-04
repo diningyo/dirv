@@ -26,6 +26,7 @@ class Mem2SramUnitTester(c: Mem2Sram) extends PeekPokeTester(c) {
     poke(c.io.mem.cmd, MemCmd.wr)
     poke(c.io.mem.size, MemSize.word)
     poke(c.io.mem.w.get.valid, true)
+    poke(c.io.mem.w.get.data, data)
     step(1)
     expect(c.io.regW.enable, true)
     expect(c.io.regW.addr, addr)
