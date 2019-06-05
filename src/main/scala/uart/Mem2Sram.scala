@@ -40,6 +40,10 @@ class Mem2Sram extends Module {
   val regRead = mem.cmd === MemCmd.rd.U
   val regWrite = mem.cmd === MemCmd.wr.U
 
+  val regWstrb = RegInit(0.U(4.W))
+  val regWdata = RegInit(0.U(32.W))
+  val regWvalid = RegInit(false.B)
+
   val sIdle :: sRead :: sWrite :: Nil = Enum(3)
   val stm = RegInit(sIdle)
 
@@ -54,7 +58,7 @@ class Mem2Sram extends Module {
     }
 
     is (sWrite) {
-      when (memW.valid) {
+      when (regWvalid) {
         stm := sIdle
       }
     }
@@ -93,10 +97,6 @@ class Mem2Sram extends Module {
     }
   }
 
-  val regWstrb = RegInit(0.U(4.W))
-  val regWdata = RegInit(0.U(32.W))
-  val regWvalid = RegInit(true.B)
-
   when (memW.valid) {
     regWstrb := memW.strb
     regWdata := memW.data
@@ -104,7 +104,7 @@ class Mem2Sram extends Module {
   }
 
   io.regW.addr := regAddr
-  io.regW.enable := regWvalid
+  io.regW.enable := regWvalid && (stm === sWrite)
   io.regW.strb := memW.strb
   io.regW.data := regWdata
 
