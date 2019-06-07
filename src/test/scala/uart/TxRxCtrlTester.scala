@@ -52,7 +52,7 @@ class TxRxCtrlUnitTester(c: TxRxCtrl, baudrate: Int, clockFreq: Int) extends Pee
     // send stop bits
     poke(c.io.uart.rx, true)
     for (_ <- Range(0, duration)) {
-      if (peek(c.io.r2c.rx.wren) == 0x1) {
+      if (peek(c.io.r2c.rx.enable) == 0x1) {
         expect(c.io.r2c.rx.data, data)
       }
       step(1)
@@ -120,7 +120,7 @@ class TxRxCtrlTester extends BaseTester {
     Driver.execute(args, () => new TxRxCtrl(baudrate, clockFreq)) {
       c => new TxRxCtrlUnitTester(c, baudrate, clockFreq) {
         val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
-        poke(c.io.r2c.tx.rden, true)
+        poke(c.io.r2c.tx.enable, true)
 
         for (d <- txData) {
           poke(c.io.r2c.tx.data, d)
