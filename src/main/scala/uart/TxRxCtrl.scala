@@ -80,6 +80,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   }
 
   val updateReq = durationCounter === (durationCount - 1).U
+  val fin = stm.io.stop && updateReq
 
   when (stm.io.idle ) {
     when (startReq) {
@@ -118,14 +119,14 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
       val reg = io.reg.asInstanceOf[FifoWrIO]
       val rxData = RegInit(0.U)
 
-      when (stm.io.data) {
+      when (stm.io.idle && startReq) {
+        rxData := 0.U
+      } .elsewhen (stm.io.data) {
         when (updateReq) {
           rxData := rxData | (io.uart << bitIdx).asUInt()
         }
-      } .otherwise {
-        rxData := 0.U
       }
-      reg.enable := stm.io.stopReq
+      reg.enable := fin
       reg.data := rxData
   }
 
@@ -133,7 +134,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   stm.io.startReq := startReq
   stm.io.dataReq := stm.io.start && updateReq
   stm.io.stopReq := stm.io.data && updateReq && (bitIdx === 7.U)
-  stm.io.fin := stm.io.stop && updateReq
+  stm.io.fin := fin
 }
 
 /**
