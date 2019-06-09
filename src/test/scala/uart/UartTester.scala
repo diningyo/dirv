@@ -18,12 +18,16 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
   val timeOutCycle = 1000
   val duration = round(clockFreq * pow(10, 6) / baudrate).toInt
 
+  println(s"duration = $duration")
+
   var i = 0
 
   def idle(): Unit = {
     poke(c.io.mem.valid, false)
     poke(c.io.mem.w.get.valid, false)
     poke(c.io.mem.r.get.ready, true)
+    poke(c.io.uart.rx, true)
+    step(1)
   }
 
   def waitCmdRdy(): Unit = {
@@ -36,6 +40,7 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
 
   def issueRdCmd(addr: Int): Unit = {
     poke(c.io.mem.cmd, MemCmd.rd)
+    poke(c.io.mem.addr, addr)
     poke(c.io.mem.valid, true)
   }
 
@@ -47,11 +52,14 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
       i += 1
     }
     if (cmp) expect(c.io.mem.r.get.data, exp)
-    peek(c.io.mem.r.get.data)
+    val rddata = peek(c.io.mem.r.get.data)
+    step(1)
+    rddata
   }
 
   def issueWrCmd(addr: Int): Unit = {
     poke(c.io.mem.cmd, MemCmd.wr)
+    poke(c.io.mem.addr, addr)
     poke(c.io.mem.valid, true)
   }
 
@@ -67,7 +75,7 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
     * @param data data to write
     */
   def writeReg(addr: Int, data: Int): Unit = {
-    println(f"write(0x$addr%02x) : 0x$data%08x")
+    println(f"[HOST] write(0x$addr%02x) : 0x$data%08x")
     issueWrCmd(addr)
     issueW(data, 0xf)
     while (((peek(c.io.mem.ready) == 0) || (peek(c.io.mem.w.get.ready) == 0)) && (i < memAccLimit)) {
@@ -83,9 +91,9 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
   def readReg(addr: Int, exp: BigInt, cmp: Boolean = true): BigInt = {
     issueRdCmd(addr)
     step(1)
-    poke(c.io.mem.r.get.valid, false)
+    poke(c.io.mem.valid, false)
     val data = waitR(exp, cmp)
-    println(f"read (0x$addr%02x) : 0x$data%08x")
+    println(f"[HOST] read (0x$addr%02x) : 0x$data%08x")
     data
   }
 
@@ -94,7 +102,7 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
     * @param data send data. And this value will be expect value.
     */
   def send(data: Int): Unit = {
-
+    println(f"[UART] send data   : 0x$data%02x")
     // send start bit
     poke(c.io.uart.rx, false)
     for (_ <- Range(0, duration)) {
@@ -104,13 +112,19 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
     // send bit data
     for (idx <- Range(0, 8)) {
       val rxBit = (data >> idx) & 0x1
+      //println(s"uart bit= $rxBit")
       poke(c.io.uart.rx, rxBit)
       for (_ <- Range(0, duration)) {
         step(1)
       }
     }
 
-    // send stop bits : TODO : change action to read stat and rxFifo
+    // send stop bits
+    poke(c.io.uart.rx, true)
+    for (_ <- Range(0, duration)) {
+      step(1)
+    }
+
   }
 
   /**
@@ -170,7 +184,9 @@ class UartTester extends BaseTester {
     Driver.execute(args, () => new Top(baudrate0, clockFreq0)) {
       c => new UartUnitTester(c, baudrate0, clockFreq0) {
 
-        val txData = Range(0, 10000).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
+
+        idle()
 
         for (data <- txData) {
           while ((readReg(stat, 0x4, cmp=false) & 0x4) == 0x0) {
@@ -194,7 +210,9 @@ class UartTester extends BaseTester {
     Driver.execute(args, () => new Top(baudrate0, clockFreq0)) {
       c => new UartUnitTester(c, baudrate0, clockFreq0) {
 
-        val txData = Range(0, 10000).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
+
+        idle()
 
         for (data <- txData) {
           while ((readReg(stat, 0x4, cmp=false) & 0x4) == 0x0) {
@@ -202,7 +220,7 @@ class UartTester extends BaseTester {
           }
           readReg(stat, 0x4) // TxFifoEmpty
           writeReg(txFifo, data)
-          readReg(stat, 0x8) // TxFifoFull
+          readReg(stat, 0x0) // TxFifoEmpty 1 -> 0
         }
       }
     } should be (true)
@@ -221,10 +239,13 @@ class UartTester extends BaseTester {
     Driver.execute(args, () => new Top(baudrate1, clockFreq1)) {
       c => new UartUnitTester(c, baudrate1, clockFreq1) {
 
-        val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
+        val b = new scala.util.control.Breaks
+        val txData = Range(0, 3).map(_ => floor(random * 256).toInt)
+
+        idle()
 
         for (data <- txData) {
-          while ((readReg(stat, 0x4, cmp=false) & 0x4) == 0x0) {
+          while ((readReg(stat, 0x4, cmp = false) & 0x4) == 0x0) {
             step(1)
           }
           readReg(stat, 0x4) // TxFifoEmpty
@@ -247,6 +268,8 @@ class UartTester extends BaseTester {
 
         val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
 
+        idle()
+
         for (data <- txData) {
           while ((readReg(stat, 0x4, cmp=false) & 0x4) == 0x0) {
             step(1)
@@ -254,6 +277,79 @@ class UartTester extends BaseTester {
           readReg(stat, 0x4) // TxFifoEmpty
           writeReg(txFifo, data)
           readReg(stat, 0x8) // TxFifoFull
+        }
+      }
+    } should be (true)
+  }
+}
+
+class UartRxTester extends BaseTester {
+
+  import RegInfo._
+
+  val dutName = "uart-Top"
+
+  behavior of dutName
+
+  var baudrate0: Int = 500000
+  var clockFreq0: Int = 1
+
+  it should "send with uart tx when host writes TxFiFo register. [uart-rx-000]" in {
+    val outDir = dutName + "_uart-rx-000"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new Top(baudrate0, clockFreq0)) {
+      c => new UartUnitTester(c, baudrate0, clockFreq0) {
+
+        //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
+        val rxData = Range(0, 256)
+
+        idle()
+
+        for (data <- rxData) {
+          send(data)
+
+          // wait data receive
+          while ((readReg(stat, 0x4, cmp=false) & 0x1) == 0x0) {
+            step(1)
+          }
+          readReg(stat, 0x5) // TxFifoEmpty / RxDataValid
+          readReg(rxFifo, data)
+        }
+      }
+    } should be (true)
+  }
+
+  var baudrate1: Int = 9600
+  var clockFreq1: Int = 100
+
+  it should "send with uart tx when host writes TxFiFo register. [uart-rx-100]" in {
+    val outDir = dutName + "_uart-rx-100"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new Top(baudrate1, clockFreq1)) {
+      c => new UartUnitTester(c, baudrate1, clockFreq1) {
+
+        //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
+        val rxData = Range(0, 256)
+
+        idle()
+
+        for (data <- rxData) {
+          send(data)
+
+          // wait data receive
+          while ((readReg(stat, 0x4, cmp=false) & 0x1) == 0x0) {
+            step(1)
+          }
+          readReg(stat, 0x5) // TxFifoEmpty / RxDataValid
+          readReg(rxFifo, data)
         }
       }
     } should be (true)
