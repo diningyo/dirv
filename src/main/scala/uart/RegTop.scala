@@ -120,7 +120,7 @@ class RegTop(debug: Boolean=false) extends Module {
   io.regR.dataValid := RegNext(rdselRxFifo || rdselStat, false.B)
   io.regR.data := RegNext(MuxCase(0.U, Seq(
     rdselRxFifo -> rxFifo.io.rd.data,
-    rdselStat -> ctrl.read())), 0.U)
+    rdselStat -> stat.read())), 0.U)
 
   io.r2c.tx <> txFifo.io.rd
   txFifo.io.rst := wrselCtrl & ctrl.rstTxFifo
