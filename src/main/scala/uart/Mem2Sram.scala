@@ -109,7 +109,7 @@ class Mem2Sram extends Module {
   io.regW.data := regWdata
 
   io.regR.addr := regAddr
-  io.regR.enable := regRead
+  io.regR.enable := RegNext(regRead && mem.valid)
 
   mem.ready := true.B
 
