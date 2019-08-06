@@ -112,12 +112,12 @@ module MemCtrl
             r_rvalid <= 1'b0;
             r_rddata <= 'h0;
         end
-        else if (!w_read && (r_fsm == lps_DATA && mem_r_ready)) begin
-            r_rvalid <= 1'b0;
-        end
         else if (rden)begin
             r_rvalid <= rden;
             r_rddata <= rddata;
+        end
+        else if (!w_read && (r_fsm == lps_DATA && mem_r_ready)) begin
+            r_rvalid <= 1'b0;
         end
     end
 
@@ -140,12 +140,17 @@ module MemCtrl
                 end
 
                 lps_DATA : begin
-                    if ((mem_r_valid && mem_r_ready) ||
-                        (mem_w_valid && mem_w_ready)) begin
-                        r_fsm <= lps_DATA;
+                    if (mem_valid) begin
+                        if ((mem_r_valid && mem_r_ready) ||
+                            (mem_w_valid && mem_w_ready)) begin
+                            r_fsm <= lps_DATA;
+                        end
                     end
                     else begin
-                        r_fsm <= lps_CMD;
+                        if ((mem_r_valid && mem_r_ready) ||
+                            (mem_w_valid && mem_w_ready)) begin
+                            r_fsm <= lps_CMD;
+                        end
                     end
                 end
             endcase
