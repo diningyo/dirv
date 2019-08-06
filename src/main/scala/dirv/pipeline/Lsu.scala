@@ -152,8 +152,7 @@ class Lsu(implicit cfg: Config) extends Module {
   val extAccessReq = !(io.lsu2exu.excRdMa.excReq || io.lsu2exu.excWrMa.excReq) && (inst.loadValid || inst.storeValid)
   io.lsu2exu.excRdMa := setMaAddr(inst.loadValid, io.exu2lsu.memAddr, size)
   io.lsu2exu.excWrMa := setMaAddr(inst.storeValid, io.exu2lsu.memAddr, size)
-  io.lsu2exu.stallReq := ((extAccessReq && (fsm === sIdle)) && !wrDone)||
-                          RegNext((fsm =/= sIdle) && (rdDone || wrDone))
+  io.lsu2exu.stallReq := ((extAccessReq && (fsm === sIdle)) && !wrDone) || ((fsm =/= sIdle) && !(wrDone || rdDone))
   io.lsu2exu.loadDataValid :=  extR.valid && extR.ready
   io.lsu2exu.loadData := Mux1H(Seq(
     (inst.lb || inst.lbu) -> Cat(Fill(24, inst.lb && loadData(unaligedAddr)(7)), loadData(unaligedAddr)),
