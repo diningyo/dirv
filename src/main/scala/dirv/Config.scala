@@ -4,7 +4,6 @@ package dirv
 
 import chisel3._
 import chisel3.util.log2Ceil
-import dirv.io.{MemRIO, MemRWIO}
 
 case object Consts {
   val rv32Xlen = 32
