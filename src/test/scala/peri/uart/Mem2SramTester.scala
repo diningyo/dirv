@@ -1,6 +1,6 @@
 // See LICENSE for license details.
 
-package uart
+package peri.uart
 
 import scala.math.{floor, random}
 import chisel3.iotesters._

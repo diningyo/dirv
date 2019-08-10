@@ -1,5 +1,5 @@
 
-package uart
+package peri.uart
 
 import scala.math.{pow, round, floor, random}
 
@@ -8,7 +8,7 @@ import chisel3.iotesters._
 /**
   * Unit tester for TxRxCtrl module.
   * @param c dut module (instance of TxRXCtrl)
-  * @param baudrate test duration count. this valuable is used for controlling uart signals.
+  * @param baudrate test duration count. this valuable is used for controlling peri.uart signals.
   */
 class TxRxCtrlUnitTester(c: TxRxCtrl, baudrate: Int, clockFreq: Int) extends PeekPokeTester(c) {
 
@@ -110,7 +110,7 @@ class TxRxCtrlTester extends BaseTester {
   val baudrate: Int = 500000
   val clockFreq: Int = 1
 
-  it should "send when io.tx.valid is high. [uart-tx]" in {
+  it should "send when io.tx.valid is high. [peri.uart-tx]" in {
     val outDir = dutName + "-tx"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -131,7 +131,7 @@ class TxRxCtrlTester extends BaseTester {
     } should be (true)
   }
 
-  it should "receive when io.uart.rx.valid is low. [uart-rx]" in {
+  it should "receive when io.peri.uart.rx.valid is low. [peri.uart-rx]" in {
     val outDir = dutName + "-rx"
     val args = getArgs(Map(
       "--top-name" -> dutName,

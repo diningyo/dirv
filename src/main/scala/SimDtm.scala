@@ -1,8 +1,8 @@
 // See LICENSE for license details.
 
 import chisel3._
-
 import dirv.{Config, Dirv}
+import peri.mem.MemModel
 
 
 /**

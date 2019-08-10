@@ -1,6 +1,6 @@
 // See LICENSE for license details.
 
-package uart
+package peri.uart
 
 import chisel3._
 import dirv.io.{MemIO, MemRWIO}

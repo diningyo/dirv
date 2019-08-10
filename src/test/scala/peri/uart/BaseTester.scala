@@ -1,6 +1,6 @@
-// See README.md for license details.
+// See LICENSE for license details.
 
-package uart
+package peri.uart
 
 import scala.util.control.Breaks
 
@@ -13,8 +13,8 @@ import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap}
 abstract class BaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfigMap  {
 
   val defaultArgs = scala.collection.mutable.Map(
-    "--generate-vcd-output" -> "on",
-    "--backend-name" -> "treadle",
+    "--generate-vcd-output" -> "off",
+    "--backend-name" -> "verilator",
     "--is-verbose" -> false
   )
 

@@ -1,9 +1,10 @@
 // See LICENSE for license details.
 
-import chisel3._
-import chisel3.util.HasBlackBoxResource
-import chisel3.experimental.StringParam
+package peri.mem
 
+import chisel3._
+import chisel3.experimental.StringParam
+import chisel3.util.HasBlackBoxResource
 import dirv.Config
 import dirv.io.MemIO
 

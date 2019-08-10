@@ -1,5 +1,5 @@
 
-package uart
+package peri.uart
 
 import scala.math.{floor, random}
 

@@ -1,6 +1,6 @@
 // See LICENSE for license details.
 
-package uart
+package peri.uart
 
 
 import chisel3.iotesters._
@@ -8,7 +8,7 @@ import chisel3.iotesters._
 import scala.math.{floor, random}
 
 /**
-  * Unit tester for uart.Fifo class
+  * Unit tester for peri.uart.Fifo class
   * @param c dut instance
   */
 class FifoUnitTester(c: Fifo) extends PeekPokeTester(c) {
@@ -60,7 +60,7 @@ class FifoUnitTester(c: Fifo) extends PeekPokeTester(c) {
   *
   */
 class FifoTester extends BaseTester {
-  val dutName = "uart.Fifo"
+  val dutName = "peri.uart.Fifo"
   val depth = 16
 
   it should "set a data into fifo when Host issues a command \"push\"" in {

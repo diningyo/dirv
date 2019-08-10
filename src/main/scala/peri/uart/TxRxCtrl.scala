@@ -1,6 +1,6 @@
 // See LICENSE for license details.
 
-package uart
+package peri.uart
 
 import scala.math.{pow, round}
 
@@ -48,8 +48,8 @@ class TxRxCtrl(baudrate: Int=9600,
 
 /**
   *  Uart control module for each direction
-  * @param direction direction of uart.
-  * @param durationCount count cycle for uart data per 1bit.
+  * @param direction direction of peri.uart.
+  * @param durationCount count cycle for peri.uart data per 1bit.
   */
 class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   val io = IO(new Bundle {
@@ -73,7 +73,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
     case UartRx => durationCount / 2
   }).U
 
-  // trigger for uart request
+  // trigger for peri.uart request
   val startReq = direction match {
     case UartTx => !io.reg.asInstanceOf[FifoRdIO].empty
     case UartRx => !io.uart

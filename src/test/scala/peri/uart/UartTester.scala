@@ -1,6 +1,6 @@
 // See LICENSE for license details.
 
-package uart
+package peri.uart
 
 import chisel3.iotesters._
 import dirv.io.MemCmd
@@ -10,7 +10,7 @@ import scala.math.{floor, pow, random, round}
 /**
   * Unit tester for TxRxCtrl module.
   * @param c dut module (instance of TxRXCtrl)
-  * @param baudrate test duration count. this valuable is used for controlling uart signals.
+  * @param baudrate test duration count. this valuable is used for controlling peri.uart signals.
   */
 class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTester(c) {
 
@@ -112,7 +112,7 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
     // send bit data
     for (idx <- Range(0, 8)) {
       val rxBit = (data >> idx) & 0x1
-      //println(s"uart bit= $rxBit")
+      //println(s"peri.uart bit= $rxBit")
       poke(c.io.uart.rx, rxBit)
       for (_ <- Range(0, duration)) {
         step(1)
@@ -167,14 +167,14 @@ class UartTester extends BaseTester {
 
   import RegInfo._
 
-  val dutName = "uart-Top"
+  val dutName = "peri.uart-Top"
 
   behavior of dutName
 
   var baudrate0: Int = 500000
   var clockFreq0: Int = 1
 
-  it should "send with uart tx when host writes TxFiFo register. [uart-tx-000]" in {
+  it should "send with peri.uart tx when host writes TxFiFo register. [peri.uart-tx-000]" in {
     val outDir = dutName + "_uart-tx-000"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -200,7 +200,7 @@ class UartTester extends BaseTester {
     } should be (true)
   }
 
-  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when uart.Top send data. [uart-tx-001]" in {
+  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data. [peri.uart-tx-001]" in {
     val outDir = dutName + "_uart-tx-001"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -229,7 +229,7 @@ class UartTester extends BaseTester {
   var baudrate1: Int = 9600
   var clockFreq1: Int = 100
 
-  it should "send with uart tx when host writes TxFiFo register. [uart-tx-100]" in {
+  it should "send with peri.uart tx when host writes TxFiFo register. [peri.uart-tx-100]" in {
     val outDir = dutName + "_uart-tx-100"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -256,7 +256,7 @@ class UartTester extends BaseTester {
     } should be (true)
   }
 
-  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when uart.Top send data. [uart-tx-101]" in {
+  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data. [peri.uart-tx-101]" in {
     val outDir = dutName + "_uart-tx-101"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -287,14 +287,14 @@ class UartRxTester extends BaseTester {
 
   import RegInfo._
 
-  val dutName = "uart-Top"
+  val dutName = "peri.uart-Top"
 
   behavior of dutName
 
   var baudrate0: Int = 500000
   var clockFreq0: Int = 1
 
-  it should "send with uart tx when host writes TxFiFo register. [uart-rx-000]" in {
+  it should "send with peri.uart tx when host writes TxFiFo register. [peri.uart-rx-000]" in {
     val outDir = dutName + "_uart-rx-000"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -326,7 +326,7 @@ class UartRxTester extends BaseTester {
   var baudrate1: Int = 9600
   var clockFreq1: Int = 100
 
-  it should "send with uart tx when host writes TxFiFo register. [uart-rx-100]" in {
+  it should "send with peri.uart tx when host writes TxFiFo register. [peri.uart-rx-100]" in {
     val outDir = dutName + "_uart-rx-100"
     val args = getArgs(Map(
       "--top-name" -> dutName,
