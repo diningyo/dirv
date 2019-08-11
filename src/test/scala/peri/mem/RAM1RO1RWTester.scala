@@ -87,7 +87,7 @@ class RAM1RO1RWTester extends BaseTester {
     val outDir = dutName + "-ram"
     val args = getArgs(Map(
       "--top-name" -> dutName,
-      "--target-dir" -> s"test_run_dir/$outDir"
+      "--target-dir" -> s"test_run_dir/$outDir-000"
     ))
 
     Driver.execute(args, () => new RAM1RO1RWWrapper(
@@ -107,7 +107,7 @@ class RAM1RO1RWTester extends BaseTester {
     val outDir = dutName + "-ram"
     val args = getArgs(Map(
       "--top-name" -> dutName,
-      "--target-dir" -> s"test_run_dir/$outDir"
+      "--target-dir" -> s"test_run_dir/$outDir-001"
     ))
 
     Driver.execute(args, () => new RAM1RO1RWWrapper(
