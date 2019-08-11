@@ -1,9 +1,9 @@
 
 package peri.uart
 
-import scala.math.{pow, round, floor, random}
-
+import scala.math.{floor, pow, random, round}
 import chisel3.iotesters._
+import test.util.BaseTester
 
 /**
   * Unit tester for TxRxCtrl module.

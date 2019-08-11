@@ -8,7 +8,7 @@ import dirv.{Config, defaultConfig}
 /**
   * Enumeration for Memory IO type
   */
-sealed trait MemIOType
+trait MemIOType
 case object MemRIO extends MemIOType
 case object MemWIO extends MemIOType
 case object MemRWIO extends MemIOType

@@ -5,6 +5,7 @@ package peri.uart
 import scala.math.{floor, random}
 import chisel3.iotesters._
 import dirv.io.{MemCmd, MemSize}
+import test.util.BaseTester
 
 
 class Mem2SramUnitTester(c: Mem2Sram) extends PeekPokeTester(c) {

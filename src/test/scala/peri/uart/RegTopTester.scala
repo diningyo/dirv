@@ -2,8 +2,8 @@
 package peri.uart
 
 import scala.math.{floor, random}
-
 import chisel3.iotesters._
+import test.util.BaseTester
 
 
 class RegTopUnitTester(c: RegTop) extends PeekPokeTester(c) {

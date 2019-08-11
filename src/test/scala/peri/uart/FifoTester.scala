@@ -4,6 +4,7 @@ package peri.uart
 
 
 import chisel3.iotesters._
+import test.util.BaseTester
 
 import scala.math.{floor, random}
 
