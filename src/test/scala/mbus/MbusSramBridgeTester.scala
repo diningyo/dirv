@@ -205,4 +205,24 @@ class MbusSramBridgeTester extends BaseTester {
       }
     } should be (true)
   }
+
+  it should "be able to convert Mbus read access to Sram read access" +
+    "and return read data from Sram port." in {
+
+    val outDir = dutName + "-100"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+      c => new MbusSramBridgeUnitTester(c) {
+        idle(10)
+        single_write(0x1, 0xf, 0x12345678)
+        single_read(0x1, 0x12345678)
+        idle(10)
+
+      }
+    } should be (true)
+  }
 }
