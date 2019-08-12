@@ -82,6 +82,8 @@ class RAM1RO1RWTester extends BaseTester {
 
   behavior of dutName
 
+  val basic_p = MemParams(VerilogRAM, 128, 32)
+
   it should "be able to read valid data from memory when a.rden comes" in {
 
     val outDir = dutName + "-ram"
@@ -90,8 +92,7 @@ class RAM1RO1RWTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir-000"
     ))
 
-    Driver.execute(args, () => new RAM1RO1RWWrapper(
-      VerilogRAM, 32, 32, 32 / 8)) {
+    Driver.execute(args, () => new RAM1RO1RWWrapper(basic_p)) {
       c => new RAM1RO1RWUnitTester(c) {
 
         idle()
@@ -110,8 +111,7 @@ class RAM1RO1RWTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir-001"
     ))
 
-    Driver.execute(args, () => new RAM1RO1RWWrapper(
-      VerilogRAM, 32, 32, 32 / 8)) {
+    Driver.execute(args, () => new RAM1RO1RWWrapper(basic_p)) {
       c => new RAM1RO1RWUnitTester(c) {
 
         idle()

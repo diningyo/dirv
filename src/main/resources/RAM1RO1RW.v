@@ -3,6 +3,7 @@ module RAM1RO1RW
       parameter p_ADDR_BITS  = 32
      ,parameter p_DATA_BITS  = 32
      ,parameter p_STRB_BITS  = p_DATA_BITS / 8
+     ,parameter p_MEM_ROW_NUM = 0
      ,parameter p_INIT_HEX_FILE = "test.hex"
     )
     (
@@ -25,7 +26,7 @@ module RAM1RO1RW
 
     int i;
 
-    reg [31:0] mem[0:1024*64]; // temp. 256Kbytes
+    reg [p_DATA_BITS-1:0] mem[0:p_MEM_ROW_NUM-1];
 
     initial begin
         if (p_INIT_HEX_FILE != "") begin

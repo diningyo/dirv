@@ -2,7 +2,7 @@
 
 package peri.mem
 
-import java.nio.channels.FileLockInterruptionException
+import math.pow
 
 import chisel3._
 import chisel3.util._
@@ -12,18 +12,35 @@ sealed trait RAMType
 case object VerilogRAM extends RAMType
 case object ChiselRAM extends RAMType
 
+/**
+  *
+  * @param ramType RAM type.
+  * @param numOfMemBytes number of Memory bytes.
+  * @param dataBits Data bit width.
+  * @param initHexFile File path of Hex data file for initializing memory.
+  */
+case class MemParams
+(
+  ramType: RAMType,
+  numOfMemBytes: Int,
+  dataBits: Int,
+  initHexFile: String = ""
+) {
+  require(dataBits % 8 == 0, "dataBits must be multiply of 8")
+  val strbBits = dataBits / 8
+  val addrBits = log2Ceil(numOfMemBytes) / strbBits
+  val numOfMemRows = numOfMemBytes / strbBits // convert byte to number of row
+}
 
-class RAM1RO1RWWrapper(ramType: RAMType, addrBits: Int,
-                       dataBits: Int, strbBits: Int, initHexFile: String = ""
-                      ) extends Module  {
+class RAM1RO1RWWrapper(p: MemParams) extends Module {
   val io = IO(new Bundle {
-    val a = Flipped(new RAMIO(RAMRO, addrBits, dataBits, hasRddv = true))
-    val b = Flipped(new RAMIO(RAMRW, addrBits, dataBits, hasRddv = true))
+    val a = Flipped(new RAMIO(RAMRO, hasRddv = true)(p))
+    val b = Flipped(new RAMIO(RAMRW, hasRddv = true)(p))
   })
 
-  ramType match {
+  p.ramType match {
     case VerilogRAM =>
-      val m = Module(new RAM1RO1RW(addrBits, dataBits, strbBits, initHexFile))
+      val m = Module(new RAM1RO1RW(p))
 
       m.io.clk := clock
 
@@ -44,28 +61,34 @@ class RAM1RO1RWWrapper(ramType: RAMType, addrBits: Int,
   }
 }
 
-class RAM1RO1RW(addrBits: Int, dataBits: Int, strbBits: Int, initHexFile: String)  extends BlackBox(
+/**
+  * RAM1RO1RW
+  * Dual port RAM which one port is READ ONLY and the other is READ and WRITE.
+  * @param p parameter for Memory
+  */
+class RAM1RO1RW(p: MemParams) extends BlackBox(
   Map(
-    "p_ADDR_BITS" -> IntParam(addrBits),
-    "p_DATA_BITS" -> IntParam(dataBits),
-    "p_STRB_BITS" -> IntParam(strbBits),
-    "p_INIT_HEX_FILE" -> StringParam(initHexFile)
+    "p_ADDR_BITS" -> IntParam(p.addrBits),
+    "p_DATA_BITS" -> IntParam(p.dataBits),
+    "p_STRB_BITS" -> IntParam(p.strbBits),
+    "p_MEM_ROW_NUM" -> IntParam(p.numOfMemRows),
+    "p_INIT_HEX_FILE" -> StringParam(p.initHexFile)
   )) with HasBlackBoxResource {
   val io = IO(new Bundle{
     val clk = Input(Clock())
 
     // A port
-    val addra = Input(UInt(addrBits.W))
+    val addra = Input(UInt(p.addrBits.W))
     val rena = Input(Bool())
-    val qa = Output(UInt(dataBits.W))
+    val qa = Output(UInt(p.dataBits.W))
 
     // memory
-    val addrb = Input(UInt(addrBits.W))
+    val addrb = Input(UInt(p.addrBits.W))
     val renb = Input(Bool())
-    val qb = Output(UInt(dataBits.W))
+    val qb = Output(UInt(p.dataBits.W))
     val wenb = Input(Bool())
-    val webb = Input(UInt(strbBits.W))
-    val datab = Input(UInt(dataBits.W))
+    val webb = Input(UInt(p.strbBits.W))
+    val datab = Input(UInt(p.dataBits.W))
   })
   setResource("/RAM1RO1RW.v")
 }
