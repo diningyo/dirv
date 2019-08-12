@@ -82,7 +82,7 @@ class RAM1RO1RWTester extends BaseTester {
 
   behavior of dutName
 
-  val basic_p = MemParams(VerilogRAM, 128, 32)
+  val basic_p = RAMParams(VerilogRAM, 128, 32)
 
   it should "be able to read valid data from memory when a.rden comes" in {
 
