@@ -16,8 +16,8 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
   val sram = c.io.dut.sram
 
   def idle(cycle: Int = 1): Unit = {
-    poke(mbus.valid, true)
-    poke(mbus.w.get.valid, true)
+    poke(mbus.valid, false)
+    poke(mbus.w.get.valid, false)
     poke(mbus.r.get.ready, true)
     poke(sram.rddv.get, false)
     step(cycle)
@@ -50,17 +50,30 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
     * @param strb Valid byte lane
     * @param data register address
     */
-  def single_write(addr: Int, strb: Int,  data: Int): Unit = {
+  def single_write(addr: Int, strb: Int,  data: Int, wrDataLatency: Int = 0): Unit = {
     write_req(addr)
-    write_data(strb, data)
+    if (wrDataLatency == 0) {
+      write_data(strb, data)
+    }
 
-    var cmd_ready = BigInt(0)
-    var w_ready = BigInt(0)
-    while ((cmd_ready != 1) || (w_ready != 1)) {
-      cmd_ready = peek(mbus.ready)
-      w_ready = peek(mbus.ready)
+    var cmd_fire = BigInt(0)
+    var w_fire = BigInt(0)
+    var count = 0
+    while ((cmd_fire != 1) || (w_fire != 1)) {
+      if (count == wrDataLatency) {
+        write_data(strb, data)
+      }
 
-      if (cmd_ready == 1 && w_ready == 1) {
+      if ((peek(mbus.valid) & peek(mbus.ready)) == 1) {
+        cmd_fire = 1
+      }
+      if ((peek(mbus.w.get.valid) & peek(mbus.w.get.ready)) == 1) {
+        w_fire = 1
+      }
+
+      println(f"(cmd_ready, w_ready) = ($cmd_fire, $w_fire)")
+
+      if (cmd_fire == 1 && w_fire == 1) {
         expect(sram.addr, addr)
         expect(sram.wren.get, true)
         expect(sram.wrstrb.get, strb)
@@ -69,13 +82,16 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
 
       step(1)
 
-      if (cmd_ready == 0x1) {
+      count += 1
+
+      if (cmd_fire == 0x1) {
         poke(mbus.valid, false)
       }
-      if (w_ready == 0x1) {
+      if (w_fire == 0x1) {
         poke(mbus.w.get.valid, false)
       }
     }
+    step(1)
   }
 
   /**
@@ -154,7 +170,7 @@ class MbusSramBridgeTester extends BaseTester {
   val timeoutCycle = 1000
   val base_p = MbusSramBridgeParams(RWMbusIO, 32, 32)
 
-  it should "" in {
+  it should "be able to convert Mbus write access to Sram write access" in {
 
     val outDir = dutName + "-000"
     val args = getArgs(Map(
@@ -164,7 +180,28 @@ class MbusSramBridgeTester extends BaseTester {
 
     Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
       c => new MbusSramBridgeUnitTester(c) {
-        fail
+        idle(10)
+        single_write(0x1, 0xf, 0x12345678)
+        idle(10)
+
+      }
+    } should be (true)
+  }
+
+  it should "wait for issuing Sram write, when Mbus write data doesn't come." in {
+
+    val outDir = dutName + "-001"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+      c => new MbusSramBridgeUnitTester(c) {
+        idle(10)
+        single_write(0x1, 0xf, 0x12345678, 1)
+        idle(10)
+
       }
     } should be (true)
   }
