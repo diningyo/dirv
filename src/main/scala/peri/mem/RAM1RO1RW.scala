@@ -30,12 +30,14 @@ case class MemParams
   val strbBits = dataBits / 8
   val addrBits = log2Ceil(numOfMemBytes) / strbBits
   val numOfMemRows = numOfMemBytes / strbBits // convert byte to number of row
+  val portAParams = RAMIOParams(RAMRO, addrBits, dataBits, hasRddv = true)
+  val portBParams = RAMIOParams(RAMRW, addrBits, dataBits, hasRddv = true)
 }
 
 class RAM1RO1RWWrapper(p: MemParams) extends Module {
   val io = IO(new Bundle {
-    val a = Flipped(new RAMIO(RAMRO, hasRddv = true)(p))
-    val b = Flipped(new RAMIO(RAMRW, hasRddv = true)(p))
+    val a = Flipped(new RAMIO(p.portAParams))
+    val b = Flipped(new RAMIO(p.portBParams))
   })
 
   p.ramType match {
@@ -57,7 +59,7 @@ class RAM1RO1RWWrapper(p: MemParams) extends Module {
       m.io.webb := io.b.wrstrb.get
       m.io.datab := io.b.wrdata.get
 
-    case _ => assert(false, "Just now, verilog only.")
+    case _ => assert(cond = false, "Just now, verilog only.")
   }
 }
 
