@@ -46,12 +46,13 @@ class RAM1RO1RWWrapper(p: RAMParams) extends Module {
 
       m.io.clk := clock
 
-      m.io.addra := io.a.addr
+      // TODO : modify address conversion.
+      m.io.addra := io.a.addr(p.addrBits - 1, 2)
       m.io.rena := io.a.rden.get
       io.a.rddata.get := m.io.qa
       io.a.rddv.get := RegNext(io.a.rden.get, false.B)
-
-      m.io.addrb := io.b.addr
+      // TODO : modify address conversion.
+      m.io.addrb := io.b.addr(p.addrBits - 1, 2)
       m.io.renb := io.b.rden.get
       io.b.rddv.get := RegNext(io.b.rden.get, false.B)
       io.b.rddata.get := m.io.qb
@@ -77,6 +78,9 @@ class RAM1RO1RW(p: RAMParams) extends BlackBox(
     "p_INIT_HEX_FILE" -> StringParam(p.initHexFile)
   )) with HasBlackBoxResource {
   val io = IO(new Bundle{
+
+    println(s"p_INIT_HEX_FILE = ${p.initHexFile}")
+
     val clk = Input(Clock())
 
     // A port
