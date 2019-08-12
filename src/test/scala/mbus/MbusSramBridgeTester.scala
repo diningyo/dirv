@@ -76,8 +76,11 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       if (cmd_fire == 1 && w_fire == 1) {
         expect(sram.addr, addr)
         expect(sram.wren.get, true)
+        expect(sram.rden.get, false)
         expect(sram.wrstrb.get, strb)
         expect(sram.wrdata.get, data)
+      } else {
+        expect(sram.wren.get, false)
       }
 
       step(1)
@@ -118,7 +121,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
     * @param addr Address to write
     * @param exp expect value for read register
     */
-  def single_read(addr: Int, exp: Int): Unit = {
+  def single_read(addr: Int, exp: Int, rdDataLatency: Int = 0): Unit = {
     read_req(addr)
 
     var cmd_ready = BigInt(0)
@@ -131,7 +134,8 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       }
 
       // This check is for Zero sram read latency.
-      if (peek(sram.rddv.get) == 1) {
+      if (rdDataLatency == 0) {
+        return_read_data(exp)
         expect(mbus.r.get.valid, true)
         expect(mbus.r.get.data, exp)
       }
@@ -143,18 +147,22 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       }
     }
 
-    var r_valid = BigInt(0)
-    while (r_valid != 1) {
-      r_valid = peek(mbus.r.get.valid)
+    if (rdDataLatency != 0) {
+      var r_valid = BigInt(0)
+      var count = 1
+      while (r_valid != 1) {
+        if (count == rdDataLatency) {
+          return_read_data(exp)
+          expect(mbus.r.get.valid, true)
+          expect(mbus.r.get.data, exp)
+        }
 
-      // This check is for Zero sram read latency.
-      if (peek(sram.rddv.get) == 1) {
-        expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, exp)
+        r_valid = peek(mbus.r.get.valid)
+        step(1)
+        count += 1
       }
-
-      step(1)
     }
+    poke(sram.rddv.get, false)
   }
 }
 
@@ -220,6 +228,25 @@ class MbusSramBridgeTester extends BaseTester {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(0x1, 0x12345678)
+        idle(10)
+
+      }
+    } should be (true)
+  }
+
+  it should "wait o assert Mbus.r.valid if sram.rddv doesn't return." in {
+
+    val outDir = dutName + "-101"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+      c => new MbusSramBridgeUnitTester(c) {
+        idle(10)
+        single_write(0x1, 0xf, 0x12345678)
+        single_read(0x1, 0x12345678, 1)
         idle(10)
 
       }
