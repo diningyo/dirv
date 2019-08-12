@@ -61,8 +61,6 @@ class MbusSramBridgeIO(p: MbusSramBridgeParams) extends Bundle {
 class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   val io = IO(new MbusSramBridgeIO(p))
 
-  io := DontCare
-
   //
   // Mbus : Command
   //
@@ -81,7 +79,7 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   val m_cmd_q = Queue(w_mbus_cmd, 1, pipe = true, flow = true)
 
   //
-  // Write data
+  // Mbus : Write data
   //
   class WrData extends Bundle {
     val strb = chiselTypeOf(io.mbus.w.get.strb)
@@ -97,16 +95,49 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
 
   val m_wr_q = Queue(w_mbus_wr, 1, pipe = true, flow = true)
 
-  val w_sram_wr_ready = m_cmd_q.valid && m_wr_q.valid
+  val w_sram_wr_req = m_cmd_q.valid && (m_cmd_q.bits.cmd === MemCmd.wr.U)
+  val w_sram_wr_ready =  w_sram_wr_req && m_wr_q.valid
 
-  m_cmd_q.ready := w_sram_wr_ready
+  //
+  // Mbus : Read data
+  //
+  class RdData extends Bundle {
+    val data = chiselTypeOf(io.mbus.r.get.data)
+    val resp = chiselTypeOf(io.mbus.r.get.resp)
+  }
+
+  val w_sram_rd = Wire(Flipped(Decoupled(new RdData)))
+  w_sram_rd.valid := io.sram.rddv.get
+  w_sram_rd.bits.data := io.sram.rddata.get
+  w_sram_rd.bits.resp := MemResp.ok.U
+
+  val m_rd_q = Queue(w_sram_rd, 1, pipe = true, flow = true)
+  m_rd_q.ready := io.mbus.r.get.ready
+
+  val w_sram_read_req = m_cmd_q.valid && m_cmd_q.bits.cmd === MemCmd.rd.U
+
+  //
+  // Queue : read connection
+  //
+  m_cmd_q.ready := w_sram_wr_ready || w_sram_read_req
   m_wr_q.ready := w_sram_wr_ready
 
+  //
+  // Mbus I/O
+  //
   io.mbus.ready := w_mbus_cmd.ready
   io.mbus.w.get.ready := w_mbus_wr.ready
+  io.mbus.w.get.resp := w_mbus_wr.bits.resp
+  io.mbus.r.get.valid := m_rd_q.valid
+  io.mbus.r.get.data := m_rd_q.bits.data
+  io.mbus.r.get.resp := m_rd_q.bits.resp
 
+  //
+  // Sram I/O
+  //
   io.sram.addr := m_cmd_q.bits.addr
-  io.sram.wren.get := m_cmd_q.fire()
+  io.sram.wren.get := m_cmd_q.fire() && (m_cmd_q.bits.cmd === MemCmd.wr.U)
   io.sram.wrstrb.get := m_wr_q.bits.strb
   io.sram.wrdata.get := m_wr_q.bits.data
+  io.sram.rden.get := w_sram_read_req
 }
