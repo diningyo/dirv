@@ -2,7 +2,7 @@
 
 import chisel3._
 import dirv.{Config, Dirv}
-import peri.mem.MemModel
+import peri.mem.{MemModel, MemTop, MemTopParams}
 
 
 /**
@@ -49,13 +49,13 @@ class SimDtm(prgHexFile: String)(implicit cfg: Config) extends Module {
     val t6 = Output(UInt(cfg.arch.xlen.W))
   })
 
+  val mp = MemTopParams(64 * 1024, 32, prgHexFile)
+
   // module instances
-  val mem = Module(new MemModel(prgHexFile))
+  val mem = Module(new MemTop(mp))
   val dut = Module(new Dirv)
 
   // connect mem and dut
-  mem.io.clk := clock
-  mem.io.rst := reset
   mem.io.imem <> dut.io.imem
   mem.io.dmem <> dut.io.dmem
 
