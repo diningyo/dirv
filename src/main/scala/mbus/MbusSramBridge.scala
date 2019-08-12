@@ -81,22 +81,35 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   //
   // Mbus : Write data
   //
-  class WrData extends Bundle {
-    val strb = chiselTypeOf(io.mbus.w.get.strb)
-    val data = chiselTypeOf(io.mbus.w.get.data)
-    val resp = chiselTypeOf(io.mbus.w.get.resp)
+  val w_sram_wr_ready = WireInit(false.B)
+
+  if (p.memIOAttr != MemRIO) {
+    class WrData extends Bundle {
+      val strb = chiselTypeOf(io.mbus.w.get.strb)
+      val data = chiselTypeOf(io.mbus.w.get.data)
+      val resp = chiselTypeOf(io.mbus.w.get.resp)
+    }
+
+    val w_mbus_wr = Wire(Flipped(Decoupled(new WrData)))
+    w_mbus_wr.valid := io.mbus.w.get.valid
+    w_mbus_wr.bits.strb := io.mbus.w.get.strb
+    w_mbus_wr.bits.data := io.mbus.w.get.data
+    w_mbus_wr.bits.resp := MemResp.ok.U
+
+    val m_wr_q = Queue(w_mbus_wr, 1, pipe = true, flow = true)
+
+    val w_sram_wr_req = m_cmd_q.valid && (m_cmd_q.bits.cmd === MemCmd.wr.U)
+    w_sram_wr_ready := w_sram_wr_req && m_wr_q.valid
+
+    m_wr_q.ready := w_sram_wr_ready
+
+    io.mbus.w.get.ready := w_mbus_wr.ready
+    io.mbus.w.get.resp := w_mbus_wr.bits.resp
+
+    io.sram.wren.get := m_cmd_q.fire() && (m_cmd_q.bits.cmd === MemCmd.wr.U)
+    io.sram.wrstrb.get := m_wr_q.bits.strb
+    io.sram.wrdata.get := m_wr_q.bits.data
   }
-
-  val w_mbus_wr = Wire(Flipped(Decoupled(new WrData)))
-  w_mbus_wr.valid := io.mbus.w.get.valid
-  w_mbus_wr.bits.strb := io.mbus.w.get.strb
-  w_mbus_wr.bits.data := io.mbus.w.get.data
-  w_mbus_wr.bits.resp := MemResp.ok.U
-
-  val m_wr_q = Queue(w_mbus_wr, 1, pipe = true, flow = true)
-
-  val w_sram_wr_req = m_cmd_q.valid && (m_cmd_q.bits.cmd === MemCmd.wr.U)
-  val w_sram_wr_ready =  w_sram_wr_req && m_wr_q.valid
 
   //
   // Mbus : Read data
@@ -120,14 +133,11 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   // Queue : read connection
   //
   m_cmd_q.ready := w_sram_wr_ready || w_sram_read_req
-  m_wr_q.ready := w_sram_wr_ready
 
   //
   // Mbus I/O
   //
   io.mbus.ready := w_mbus_cmd.ready
-  io.mbus.w.get.ready := w_mbus_wr.ready
-  io.mbus.w.get.resp := w_mbus_wr.bits.resp
   io.mbus.r.get.valid := m_rd_q.valid
   io.mbus.r.get.data := m_rd_q.bits.data
   io.mbus.r.get.resp := m_rd_q.bits.resp
@@ -136,8 +146,5 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   // Sram I/O
   //
   io.sram.addr := m_cmd_q.bits.addr
-  io.sram.wren.get := m_cmd_q.fire() && (m_cmd_q.bits.cmd === MemCmd.wr.U)
-  io.sram.wrstrb.get := m_wr_q.bits.strb
-  io.sram.wrdata.get := m_wr_q.bits.data
   io.sram.rden.get := w_sram_read_req
 }
