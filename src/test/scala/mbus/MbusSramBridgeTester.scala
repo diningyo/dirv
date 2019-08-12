@@ -131,6 +131,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       if (cmd_ready == 1) {
         expect(sram.addr, addr)
         expect(sram.rden.get, true)
+        expect(sram.wren.get, false)
       }
 
       // This check is for Zero sram read latency.
@@ -138,6 +139,8 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
         return_read_data(exp)
         expect(mbus.r.get.valid, true)
         expect(mbus.r.get.data, exp)
+      } else {
+        expect(mbus.r.get.valid, false)
       }
 
       step(1)
