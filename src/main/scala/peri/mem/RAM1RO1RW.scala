@@ -19,7 +19,7 @@ case object ChiselRAM extends RAMType
   * @param dataBits Data bit width.
   * @param initHexFile File path of Hex data file for initializing memory.
   */
-case class MemParams
+case class RAMParams
 (
   ramType: RAMType,
   numOfMemBytes: Int,
@@ -28,13 +28,13 @@ case class MemParams
 ) {
   require(dataBits % 8 == 0, "dataBits must be multiply of 8")
   val strbBits = dataBits / 8
-  val addrBits = log2Ceil(numOfMemBytes) / strbBits
+  val addrBits = log2Ceil(numOfMemBytes / strbBits)
   val numOfMemRows = numOfMemBytes / strbBits // convert byte to number of row
   val portAParams = RAMIOParams(RAMRO, addrBits, dataBits, hasRddv = true)
   val portBParams = RAMIOParams(RAMRW, addrBits, dataBits, hasRddv = true)
 }
 
-class RAM1RO1RWWrapper(p: MemParams) extends Module {
+class RAM1RO1RWWrapper(p: RAMParams) extends Module {
   val io = IO(new Bundle {
     val a = Flipped(new RAMIO(p.portAParams))
     val b = Flipped(new RAMIO(p.portBParams))
@@ -68,7 +68,7 @@ class RAM1RO1RWWrapper(p: MemParams) extends Module {
   * Dual port RAM which one port is READ ONLY and the other is READ and WRITE.
   * @param p parameter for Memory
   */
-class RAM1RO1RW(p: MemParams) extends BlackBox(
+class RAM1RO1RW(p: RAMParams) extends BlackBox(
   Map(
     "p_ADDR_BITS" -> IntParam(p.addrBits),
     "p_DATA_BITS" -> IntParam(p.dataBits),
