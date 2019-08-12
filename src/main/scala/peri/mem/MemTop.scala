@@ -18,7 +18,7 @@ case class MemTopParams
   dataBits: Int,
   initHexFile: String = ""
 ) {
-  val ramParams = RAMParams(VerilogRAM, numOfMemBytes, dataBits)
+  val ramParams = RAMParams(VerilogRAM, numOfMemBytes, dataBits, initHexFile)
   val iBrgParams = MbusSramBridgeParams(ROMbusIO, ramParams.addrBits, ramParams.dataBits)
   val dBrgParams = MbusSramBridgeParams(RWMbusIO, ramParams.addrBits, ramParams.dataBits)
 }
