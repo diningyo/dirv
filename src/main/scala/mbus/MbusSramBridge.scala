@@ -146,5 +146,5 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   // Sram I/O
   //
   io.sram.addr := m_cmd_q.bits.addr
-  io.sram.rden.get := w_sram_read_req
+  io.sram.rden.get := w_sram_read_req && m_rd_q.ready
 }
