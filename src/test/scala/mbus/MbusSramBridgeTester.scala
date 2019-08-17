@@ -167,6 +167,63 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
     }
     poke(sram.rddv.get, false)
   }
+
+  /**
+    * MemIO single read ready
+    * @param addr Address to write
+    * @param exp expect value for read register
+    */
+  def single_read_ready(addr: Int, exp: Int, readyLatency: Int = 0): Unit = {
+    read_req(addr)
+
+    if (readyLatency != 0) {
+      poke(mbus.r.get.ready, false)
+    }
+
+    var cmd_ready = BigInt(0)
+    while (cmd_ready != 1) {
+      cmd_ready = peek(mbus.ready)
+
+      if (cmd_ready == 1) {
+        expect(sram.addr, addr)
+        expect(sram.rden.get, true)
+        expect(sram.wren.get, false)
+      }
+
+      // This check is for Zero sram read latency.
+      if (readyLatency == 0) {
+        return_read_data(exp)
+        expect(mbus.r.get.valid, true)
+        expect(mbus.r.get.data, exp)
+      } else {
+        expect(mbus.r.get.valid, false)
+      }
+
+      step(1)
+
+      if (cmd_ready == 0x1) {
+        poke(mbus.valid, false)
+      }
+    }
+
+    if (readyLatency != 0) {
+      var r_valid = BigInt(0)
+      var count = 1
+      return_read_data(exp)
+      while (r_valid != 1) {
+        if (count == readyLatency) {
+          poke(mbus.r.get.ready, true)
+          expect(mbus.r.get.valid, true)
+          expect(mbus.r.get.data, exp)
+        }
+
+        r_valid = peek(mbus.r.get.valid)
+        step(1)
+        count += 1
+      }
+    }
+    poke(sram.rddv.get, false)
+  }
 }
 
 /**
@@ -237,7 +294,7 @@ class MbusSramBridgeTester extends BaseTester {
     } should be (true)
   }
 
-  it should "wait o assert Mbus.r.valid if sram.rddv doesn't return." in {
+  it should "wait to assert Mbus.r.valid if sram.rddv doesn't return." in {
 
     val outDir = dutName + "-101"
     val args = getArgs(Map(
@@ -250,6 +307,96 @@ class MbusSramBridgeTester extends BaseTester {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(0x1, 0x12345678, 1)
+        idle(10)
+
+      }
+    } should be (true)
+  }
+
+  it should
+    f"keep Mbus.r.valid high if Mbus r.ready is Low. [$dutName-BUG-200]" in {
+
+    val outDir = dutName + "-BUG-200"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+      c => new MbusSramBridgeUnitTester(c) {
+        idle(10)
+        var data = intToUnsignedBigInt(0xf0008093)
+        poke(mbus.valid, true)
+        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.addr, 0x1108)
+        poke(mbus.r.get.ready, true)
+        poke(sram.rddv.get, true)
+        poke(sram.rddata.get, data)
+        expect(mbus.ready, true)
+        expect(mbus.r.get.valid, true)
+        expect(mbus.r.get.data, data)
+        expect(sram.rden.get, true)
+        expect(sram.wren.get, false)
+        step(1)
+
+        data = intToUnsignedBigInt(0x00008f03)
+        poke(mbus.valid, true)
+        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.addr, 0x110c)
+        poke(mbus.r.get.ready, true)
+        poke(sram.rddv.get, true)
+        poke(sram.rddata.get, data)
+        expect(mbus.ready, true)
+        expect(mbus.r.get.valid, true)
+        expect(mbus.r.get.data, data)
+        expect(sram.rden.get, true)
+        expect(sram.wren.get, false)
+        step(1)
+
+        // change ready signal to LOW, so mbus read data will be kept in next cycle.
+        data = intToUnsignedBigInt(0xfff00e93)
+        poke(mbus.valid, true)
+        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.addr, 0x1110)
+        poke(mbus.r.get.ready, false)
+        poke(sram.rddv.get, true)
+        poke(sram.rddata.get, data)
+        expect(mbus.ready, true)
+        expect(mbus.r.get.valid, true)
+        expect(mbus.r.get.data, data)
+        expect(sram.rden.get, false)
+        expect(sram.wren.get, false)
+        step(1)
+
+        // This bug regeneration pattern expose that
+        // mbus read data doesn't keep the value in previous cycle.
+        val setData = intToUnsignedBigInt(0xf0008093)
+        poke(mbus.valid, true)
+        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.addr, 0x1110)
+        poke(mbus.r.get.ready, true)
+        poke(sram.rddv.get, false)
+        poke(sram.rddata.get, setData)
+        expect(mbus.ready, true)
+        expect(mbus.r.get.valid, true)
+        expect(mbus.r.get.data, data)
+        expect(sram.rden.get, true)
+        expect(sram.wren.get, false)
+        step(1)
+
+        data = intToUnsignedBigInt(0x00200193)
+        poke(mbus.valid, true)
+        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.addr, 0x1114)
+        poke(mbus.r.get.ready, true)
+        poke(sram.rddv.get, true)
+        poke(sram.rddata.get, data)
+        expect(mbus.ready, true)
+        expect(mbus.r.get.valid, true)
+        expect(mbus.r.get.data, data)
+        expect(sram.rden.get, true)
+        expect(sram.wren.get, false)
+        step(1)
         idle(10)
 
       }
