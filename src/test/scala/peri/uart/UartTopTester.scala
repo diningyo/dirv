@@ -13,7 +13,7 @@ import scala.math.{floor, pow, random, round}
   * @param c dut module (instance of TxRXCtrl)
   * @param baudrate test duration count. this valuable is used for controlling peri.uart signals.
   */
-class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTester(c) {
+class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekPokeTester(c) {
 
   val memAccLimit = 10
   val timeOutCycle = 1000
@@ -164,7 +164,7 @@ class UartUnitTester(c: Top, baudrate: Int, clockFreq: Int) extends PeekPokeTest
   }
 }
 
-class UartTester extends BaseTester {
+class UartTopTester extends BaseTester {
 
   import RegInfo._
 
@@ -182,8 +182,8 @@ class UartTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Top(baudrate0, clockFreq0)) {
-      c => new UartUnitTester(c, baudrate0, clockFreq0) {
+    Driver.execute(args, () => new UartTop(baudrate0, clockFreq0)) {
+      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
 
         val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
 
@@ -208,8 +208,8 @@ class UartTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Top(baudrate0, clockFreq0)) {
-      c => new UartUnitTester(c, baudrate0, clockFreq0) {
+    Driver.execute(args, () => new UartTop(baudrate0, clockFreq0)) {
+      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
 
         val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
 
@@ -237,8 +237,8 @@ class UartTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Top(baudrate1, clockFreq1)) {
-      c => new UartUnitTester(c, baudrate1, clockFreq1) {
+    Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
+      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
 
         val b = new scala.util.control.Breaks
         val txData = Range(0, 3).map(_ => floor(random * 256).toInt)
@@ -264,8 +264,8 @@ class UartTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Top(baudrate1, clockFreq1)) {
-      c => new UartUnitTester(c, baudrate1, clockFreq1) {
+    Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
+      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
 
         val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
 
@@ -302,8 +302,8 @@ class UartRxTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Top(baudrate0, clockFreq0)) {
-      c => new UartUnitTester(c, baudrate0, clockFreq0) {
+    Driver.execute(args, () => new UartTop(baudrate0, clockFreq0)) {
+      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
         val rxData = Range(0, 256)
@@ -334,8 +334,8 @@ class UartRxTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Top(baudrate1, clockFreq1)) {
-      c => new UartUnitTester(c, baudrate1, clockFreq1) {
+    Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
+      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
         val rxData = Range(0, 256)

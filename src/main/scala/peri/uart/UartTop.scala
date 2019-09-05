@@ -5,7 +5,7 @@ package peri.uart
 import chisel3._
 import dirv.io.{MemIO, MemRWIO}
 
-class Top(bardrate: Int, clockFreq: Int) extends Module {
+class UartTop(bardrate: Int, clockFreq: Int) extends Module {
   val io = IO(new Bundle {
     val mem = Flipped(new MemIO(MemRWIO, 4, 32))
     val uart= new UartIO
