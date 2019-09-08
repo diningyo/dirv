@@ -36,14 +36,14 @@ class TxRxCtrl(baudrate: Int=9600,
 
   val durationCount = round(clockFreq * pow(10, 6) / baudrate).toInt
 
-  val txCtrl = Module(new Ctrl(UartTx, durationCount))
-  val rxCtrl = Module(new Ctrl(UartRx, durationCount))
+  val m_txctrl = Module(new Ctrl(UartTx, durationCount))
+  val m_rxctrl = Module(new Ctrl(UartRx, durationCount))
 
-  io.uart.tx := txCtrl.io.uart
-  txCtrl.io.reg <> io.r2c.tx
+  io.uart.tx := m_txctrl.io.uart
+  m_txctrl.io.reg <> io.r2c.tx
 
-  rxCtrl.io.uart := io.uart.rx
-  rxCtrl.io.reg <> io.r2c.rx
+  m_rxctrl.io.uart := io.uart.rx
+  m_rxctrl.io.reg <> io.r2c.rx
 }
 
 /**
@@ -64,44 +64,44 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   })
 
   val stm = Module(new CtrlStateMachine)
-  val durationCounter = RegInit(durationCount.U)
-  val bitIdx = RegInit(0.U(3.W))
+  val r_duration_ctr = RegInit(durationCount.U)
+  val r_bit_idx = RegInit(0.U(3.W))
 
   // parameter
-  val initDurationCount = (direction match {
+  val initDurationCount = direction match {
     case UartTx => 0
     case UartRx => durationCount / 2
-  }).U
+  }
 
   // trigger for peri.uart request
-  val startReq = direction match {
+  val w_start_req = direction match {
     case UartTx => !io.reg.asInstanceOf[FifoRdIO].empty
     case UartRx => !io.uart
   }
 
-  val updateReq = durationCounter === (durationCount - 1).U
-  val fin = stm.io.stop && updateReq
+  val w_update_req = r_duration_ctr === (durationCount - 1).U
+  val fin = stm.io.stop && w_update_req
 
   when (stm.io.idle ) {
-    when (startReq) {
-      durationCounter := initDurationCount
+    when (w_start_req) {
+      r_duration_ctr := initDurationCount.U
     } .otherwise {
-      durationCounter := 0.U
+      r_duration_ctr := 0.U
     }
   } .otherwise {
-    when (!updateReq) {
-      durationCounter := durationCounter + 1.U
+    when (!w_update_req) {
+      r_duration_ctr := r_duration_ctr + 1.U
     } .otherwise {
-      durationCounter := 0.U
+      r_duration_ctr := 0.U
     }
   }
 
   when (stm.io.data) {
-    when (updateReq) {
-      bitIdx := bitIdx + 1.U
+    when (w_update_req) {
+      r_bit_idx := r_bit_idx + 1.U
     }
   } .otherwise {
-    bitIdx := 0.U
+    r_bit_idx := 0.U
   }
 
   direction match {
@@ -110,20 +110,20 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
 
       io.uart := MuxCase(1.U, Seq(
         stm.io.start -> 0.U,
-        stm.io.data -> reg.data(bitIdx)
+        stm.io.data -> reg.data(r_bit_idx)
       ))
 
-      reg.enable := stm.io.stop && updateReq
+      reg.enable := stm.io.stop && w_update_req
 
     case UartRx =>
       val reg = io.reg.asInstanceOf[FifoWrIO]
       val rxData = RegInit(0.U)
 
-      when (stm.io.idle && startReq) {
+      when (stm.io.idle && w_start_req) {
         rxData := 0.U
       } .elsewhen (stm.io.data) {
-        when (updateReq) {
-          rxData := rxData | (io.uart << bitIdx).asUInt()
+        when (w_update_req) {
+          rxData := rxData | (io.uart << r_bit_idx).asUInt()
         }
       }
       reg.enable := fin
@@ -131,9 +131,9 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   }
 
   // txStm <-> ctrl
-  stm.io.startReq := startReq
-  stm.io.dataReq := stm.io.start && updateReq
-  stm.io.stopReq := stm.io.data && updateReq && (bitIdx === 7.U)
+  stm.io.start_req := w_start_req
+  stm.io.data_req := stm.io.start && w_update_req
+  stm.io.stop_req := stm.io.data && w_update_req && (r_bit_idx === 7.U)
   stm.io.fin := fin
 }
 
@@ -142,9 +142,9 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   */
 class CtrlStateMachine extends Module {
   val io = IO(new Bundle {
-    val startReq = Input(Bool())
-    val dataReq = Input(Bool())
-    val stopReq = Input(Bool())
+    val start_req = Input(Bool())
+    val data_req = Input(Bool())
+    val stop_req = Input(Bool())
     val fin = Input(Bool())
 
     // state
@@ -155,37 +155,37 @@ class CtrlStateMachine extends Module {
   })
 
   val sIdle :: sStart :: sData :: sStop :: Nil = Enum(4)
-  val stm = RegInit(sIdle)
+  val r_stm = RegInit(sIdle)
 
-  switch (stm) {
+  switch (r_stm) {
     is (sIdle) {
-      when (io.startReq) {
-        stm := sStart
+      when (io.start_req) {
+        r_stm := sStart
       }
     }
 
     is (sStart) {
-      when (io.dataReq) {
-        stm := sData
+      when (io.data_req) {
+        r_stm := sData
       }
     }
 
     is (sData) {
-      when (io.stopReq) {
-        stm := sStop
+      when (io.stop_req) {
+        r_stm := sStop
       }
     }
 
     is (sStop) {
       when (io.fin) {
-        stm := sIdle
+        r_stm := sIdle
       }
     }
   }
 
   // output
-  io.idle := stm === sIdle
-  io.start := stm === sStart
-  io.data := stm === sData
-  io.stop := stm === sStop
+  io.idle := r_stm === sIdle
+  io.start := r_stm === sStart
+  io.data := r_stm === sData
+  io.stop := r_stm === sStop
 }

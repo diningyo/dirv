@@ -77,7 +77,7 @@ class FifoTester extends BaseTester {
 
         expect(c.io.rd.empty, true)
         for ((data, idx) <- setData.zipWithIndex) {
-          expect(c.io.dbg.get.wrPtr, idx)
+          expect(c.io.dbg.get.wrptr, idx)
           expect(c.io.dbg.get.count, idx)
           push(data)
           expect(c.io.rd.empty, false)
@@ -103,13 +103,13 @@ class FifoTester extends BaseTester {
         // data set
         for (data <- setData) {
           push(data)
-          expect(c.io.dbg.get.rdPtr, 0)
+          expect(c.io.dbg.get.rdptr, 0)
         }
         idle()
 
         // pop
         for ((data, idx) <- setData.zipWithIndex) {
-          expect(c.io.dbg.get.rdPtr, idx)
+          expect(c.io.dbg.get.rdptr, idx)
           pop(data)
         }
         idle()
@@ -151,7 +151,7 @@ class FifoTester extends BaseTester {
         for (data <- txData) {
           push(data)
         }
-        expect(c.io.dbg.get.wrPtr, 1)
+        expect(c.io.dbg.get.wrptr, 1)
         expect(c.io.dbg.get.count, 0)
       }
     } should be (true)

@@ -5,7 +5,7 @@ package peri.uart
 import chisel3._
 import mbus._
 
-class UartTop(bardrate: Int, clockFreq: Int) extends Module {
+class UartTop(baudrate: Int, clockFreq: Int) extends Module {
 
   val sp = MbusSramBridgeParams(MbusRW, 4, 32)
 
@@ -14,13 +14,13 @@ class UartTop(bardrate: Int, clockFreq: Int) extends Module {
     val uart= new UartIO
   })
 
-  val memBrg = Module(new MbusSramBridge(MbusSramBridgeParams(MbusRW, 4, 32)))
-  val regTop = Module(new RegTop(sp.ramIOParams)())
-  val ctrl = Module(new TxRxCtrl(bardrate, clockFreq))
+  val m_brg = Module(new MbusSramBridge(MbusSramBridgeParams(MbusRW, 4, 32)))
+  val m_reg = Module(new RegTop(sp.ramIOParams)())
+  val m_ctrl = Module(new TxRxCtrl(baudrate, clockFreq))
 
-  io.mbus <> memBrg.io.mbus
-  io.uart <> ctrl.io.uart
+  io.mbus <> m_brg.io.mbus
+  io.uart <> m_ctrl.io.uart
 
-  memBrg.io.sram <> regTop.io.sram
-  regTop.io.r2c <> ctrl.io.r2c
+  m_brg.io.sram <> m_reg.io.sram
+  m_reg.io.r2c <> m_ctrl.io.r2c
 }

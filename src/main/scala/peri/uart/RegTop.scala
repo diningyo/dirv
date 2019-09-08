@@ -59,26 +59,26 @@ class StatReg extends UartReg {
   val frameError = UInt(1.W)
   val overrunError = UInt(1.W)
   val intrEnabled = UInt(1.W)
-  val txFifoFull = UInt(1.W)
-  val txFifoEmpty = UInt(1.W)
-  val rxFifoFull = UInt(1.W)
-  val rxFifoValidData = UInt(1.W)
+  val txfifo_full = UInt(1.W)
+  val txfifo_empty = UInt(1.W)
+  val rxfifo_full = UInt(1.W)
+  val rxfifo_valid = UInt(1.W)
 
   def write(v: UInt): Unit = {
     parrityError := v(7)
     frameError := v(6)
     overrunError := v(5)
     intrEnabled := v(4)
-    txFifoFull := v(3)
-    txFifoEmpty := v(2)
-    rxFifoFull := v(1)
-    rxFifoValidData := v(0)
+    txfifo_full := v(3)
+    txfifo_empty := v(2)
+    rxfifo_full := v(1)
+    rxfifo_valid := v(0)
   }
   def read(): UInt = Cat(
     parrityError, frameError,
     overrunError, intrEnabled,
-    txFifoFull, txFifoEmpty,
-    rxFifoFull, rxFifoValidData
+    txfifo_full, txfifo_empty,
+    rxfifo_full, rxfifo_valid
   )
 
 }
@@ -93,50 +93,50 @@ class RegTop(p: RAMIOParams)(debug: Boolean = false) extends Module {
 
   val fifoDepth = 16
 
-  val rxFifo = Module(new Fifo(fifoDepth))
-  val txFifo = Module(new Fifo(fifoDepth))
-  val ctrl = WireInit(0.U.asTypeOf(new CtrlReg))
-  val stat = WireInit(0.U.asTypeOf(new StatReg))
+  val m_rx_fifo = Module(new Fifo(fifoDepth))
+  val m_tx_fifo = Module(new Fifo(fifoDepth))
+  val bw_ctrl = WireInit(0.U.asTypeOf(new CtrlReg))
+  val bw_stat = WireInit(0.U.asTypeOf(new StatReg))
 
   // write
-  val rdselRxFifo = (io.sram.addr === RegInfo.rxFifo.U) && io.sram.rden.get
-  val wrselTxFifo = (io.sram.addr === RegInfo.txFifo.U) && io.sram.wren.get
-  val rdselStat = (io.sram.addr === RegInfo.stat.U) && io.sram.rden.get
-  val wrselCtrl = (io.sram.addr === RegInfo.ctrl.U) && io.sram.wren.get
+  val w_rdsel_rxfifo = (io.sram.addr === RegInfo.rxFifo.U) && io.sram.rden.get
+  val w_rdsel_txfifo = (io.sram.addr === RegInfo.txFifo.U) && io.sram.wren.get
+  val w_rdsel_stat = (io.sram.addr === RegInfo.stat.U) && io.sram.rden.get
+  val w_wrsel_ctrl = (io.sram.addr === RegInfo.ctrl.U) && io.sram.wren.get
 
 
   // stat
-  stat.txFifoEmpty := txFifo.io.rd.empty
-  stat.txFifoFull := !txFifo.io.rd.empty
-  stat.rxFifoFull := rxFifo.io.full
-  stat.rxFifoValidData := !rxFifo.io.rd.empty
+  bw_stat.txfifo_empty := m_tx_fifo.io.rd.empty
+  bw_stat.txfifo_full := !m_tx_fifo.io.rd.empty
+  bw_stat.rxfifo_full := m_rx_fifo.io.full
+  bw_stat.rxfifo_valid := !m_rx_fifo.io.rd.empty
 
   // ctrl
-  when (wrselCtrl) {
-    ctrl.write(io.sram.wrdata.get)
+  when (w_wrsel_ctrl) {
+    bw_ctrl.write(io.sram.wrdata.get)
   }
 
   // read
-  io.sram.rddv.get := RegNext(rdselRxFifo || rdselStat, false.B)
+  io.sram.rddv.get := RegNext(w_rdsel_rxfifo || w_rdsel_stat, false.B)
   io.sram.rddata.get := RegNext(MuxCase(0.U, Seq(
-    rdselRxFifo -> rxFifo.io.rd.data,
-    rdselStat -> stat.read())), 0.U)
+    w_rdsel_rxfifo -> m_rx_fifo.io.rd.data,
+    w_rdsel_stat -> bw_stat.read())), 0.U)
 
-  io.r2c.tx <> txFifo.io.rd
-  txFifo.io.rst := wrselCtrl & ctrl.rstTxFifo
-  txFifo.io.wr.enable := wrselTxFifo
-  txFifo.io.wr.data := io.sram.wrdata.get
+  io.r2c.tx <> m_tx_fifo.io.rd
+  m_tx_fifo.io.rst := w_wrsel_ctrl & bw_ctrl.rstTxFifo
+  m_tx_fifo.io.wr.enable := w_rdsel_txfifo
+  m_tx_fifo.io.wr.data := io.sram.wrdata.get
 
-  io.r2c.rx <> rxFifo.io.wr
-  rxFifo.io.rst := wrselCtrl & ctrl.rstTxFifo
-  rxFifo.io.rd.enable := rdselRxFifo
+  io.r2c.rx <> m_rx_fifo.io.wr
+  m_rx_fifo.io.rst := w_wrsel_ctrl & bw_ctrl.rstTxFifo
+  m_rx_fifo.io.rd.enable := w_rdsel_rxfifo
 
   // debug
   if (debug) {
     val dbg = io.dbg.get
-    dbg.rxFifo := rxFifo.io.rd.data
-    dbg.txFifo := txFifo.io.wr.data
-    dbg.stat := stat.read()
-    dbg.ctrl := ctrl.read()
+    dbg.rxFifo := m_rx_fifo.io.rd.data
+    dbg.txFifo := m_tx_fifo.io.wr.data
+    dbg.stat := bw_stat.read()
+    dbg.ctrl := bw_ctrl.read()
   }
 }

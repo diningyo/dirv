@@ -28,8 +28,8 @@ class FifoWrIO extends Bundle {
   */
 class dbgFifoIO(depth: Int) extends Bundle {
   val depthBits = log2Ceil(depth)
-  val rdPtr = Output(UInt(depthBits.W))
-  val wrPtr = Output(UInt(depthBits.W))
+  val rdptr = Output(UInt(depthBits.W))
+  val wrptr = Output(UInt(depthBits.W))
   val count = Output(UInt((depthBits + 1).W))
   val fifo = Output(Vec(depth, UInt(32.W)))
 }
@@ -62,50 +62,50 @@ class Fifo(depth: Int=16, debug: Boolean=false) extends Module {
   val depthBits = log2Ceil(depth)
 
   val fifo = RegInit(VecInit(Seq.fill(depth)(0.U(8.W))))
-  val rdPtr = RegInit(0.U(depthBits.W))
-  val wrPtr = RegInit(0.U(depthBits.W))
-  val dataCount = RegInit(0.U((depthBits + 1).W))
+  val r_rdptr = RegInit(0.U(depthBits.W))
+  val r_wrptr = RegInit(0.U(depthBits.W))
+  val r_data_ctr = RegInit(0.U((depthBits + 1).W))
 
   when(io.rst) {
-    wrPtr := 0.U
+    r_wrptr := 0.U
   }.elsewhen(io.wr.enable) {
-    fifo(wrPtr) := io.wr.data
-    wrPtr := Mux(wrPtr === (depth - 1).U, 0.U, wrPtr + 1.U)
+    fifo(r_wrptr) := io.wr.data
+    r_wrptr := Mux(r_wrptr === (depth - 1).U, 0.U, r_wrptr + 1.U)
   }
 
   when(io.rst) {
-    rdPtr := 0.U
+    r_rdptr := 0.U
   }.elsewhen(io.rd.enable) {
-    rdPtr := Mux(rdPtr === (depth - 1).U, 0.U, rdPtr + 1.U)
+    r_rdptr := Mux(r_rdptr === (depth - 1).U, 0.U, r_rdptr + 1.U)
   }
 
   when (io.rst) {
-    dataCount := 0.U
+    r_data_ctr := 0.U
   } .elsewhen (io.wr.enable && io.rd.enable) {
-    dataCount := dataCount
+    r_data_ctr := r_data_ctr
   } .otherwise {
     when (io.wr.enable) {
-      when (dataCount === depth.U) {
-        dataCount := 0.U
+      when (r_data_ctr === depth.U) {
+        r_data_ctr := 0.U
       } .otherwise {
-        dataCount := dataCount + 1.U
+        r_data_ctr := r_data_ctr + 1.U
       }
     }
     when (io.rd.enable) {
-      dataCount := dataCount - 1.U
+      r_data_ctr := r_data_ctr - 1.U
     }
   }
 
-  io.full := dataCount === depth.U
-  io.rd.empty := dataCount === 0.U
-  io.rd.data := fifo(rdPtr)
+  io.full := r_data_ctr === depth.U
+  io.rd.empty := r_data_ctr === 0.U
+  io.rd.data := fifo(r_rdptr)
 
   // debug
   if (debug) {
     val dbg = io.dbg.get
-    dbg.rdPtr := rdPtr
-    dbg.wrPtr := wrPtr
-    dbg.count := dataCount
+    dbg.rdptr := r_rdptr
+    dbg.wrptr := r_wrptr
+    dbg.count := r_data_ctr
     dbg.fifo := fifo
   }
 }
