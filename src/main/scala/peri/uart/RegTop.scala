@@ -4,6 +4,7 @@ package peri.uart
 
 import chisel3._
 import chisel3.util._
+import peri.mem.{RAMIO, RAMIOParams}
 
 object RegInfo {
   val rxFifo = 0x0 // 受信FIFO
@@ -82,11 +83,10 @@ class StatReg extends UartReg {
 
 }
 
-class RegTop(debug: Boolean=false) extends Module {
+class RegTop(p: RAMIOParams)(debug: Boolean = false) extends Module {
 
   val io = IO(new Bundle {
-    val regR = Flipped(new RegRdIO())
-    val regW = Flipped(new RegWrIO())
+    val sram = Flipped(new RAMIO(p))
     val r2c = new RegTop2CtrlIO()
     val dbg = if (debug) Some(new RegTopDebugIO) else None
   })
@@ -99,10 +99,10 @@ class RegTop(debug: Boolean=false) extends Module {
   val stat = WireInit(0.U.asTypeOf(new StatReg))
 
   // write
-  val rdselRxFifo = (io.regR.addr === RegInfo.rxFifo.U) && io.regR.enable
-  val wrselTxFifo = (io.regW.addr === RegInfo.txFifo.U) && io.regW.enable
-  val rdselStat = (io.regR.addr === RegInfo.stat.U) && io.regR.enable
-  val wrselCtrl = (io.regW.addr === RegInfo.ctrl.U) && io.regW.enable
+  val rdselRxFifo = (io.sram.addr === RegInfo.rxFifo.U) && io.sram.rden.get
+  val wrselTxFifo = (io.sram.addr === RegInfo.txFifo.U) && io.sram.wren.get
+  val rdselStat = (io.sram.addr === RegInfo.stat.U) && io.sram.rden.get
+  val wrselCtrl = (io.sram.addr === RegInfo.ctrl.U) && io.sram.wren.get
 
 
   // stat
@@ -113,19 +113,19 @@ class RegTop(debug: Boolean=false) extends Module {
 
   // ctrl
   when (wrselCtrl) {
-    ctrl.write(io.regW.data)
+    ctrl.write(io.sram.wrdata.get)
   }
 
   // read
-  io.regR.dataValid := RegNext(rdselRxFifo || rdselStat, false.B)
-  io.regR.data := RegNext(MuxCase(0.U, Seq(
+  io.sram.rddv.get := RegNext(rdselRxFifo || rdselStat, false.B)
+  io.sram.rddata.get := RegNext(MuxCase(0.U, Seq(
     rdselRxFifo -> rxFifo.io.rd.data,
     rdselStat -> stat.read())), 0.U)
 
   io.r2c.tx <> txFifo.io.rd
   txFifo.io.rst := wrselCtrl & ctrl.rstTxFifo
   txFifo.io.wr.enable := wrselTxFifo
-  txFifo.io.wr.data := io.regW.data
+  txFifo.io.wr.data := io.sram.wrdata.get
 
   io.r2c.rx <> rxFifo.io.wr
   rxFifo.io.rst := wrselCtrl & ctrl.rstTxFifo

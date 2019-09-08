@@ -2,7 +2,7 @@
 
 import chisel3._
 import dirv.{Config, Dirv}
-import peri.mem.{MemModel, MemTop, MemTopParams}
+import peri.mem.{MemTop, MemTopParams}
 
 
 /**
@@ -13,6 +13,7 @@ import peri.mem.{MemModel, MemTop, MemTopParams}
 class SimDtm(prgHexFile: String)(implicit cfg: Config) extends Module {
   val io = IO(new Bundle {
     val fin = Output(Bool())
+    //val uart = new UartIO()
     val pc = Output(UInt(cfg.arch.xlen.W))
     val xregs = Output(Vec(cfg.arch.regNum, UInt(cfg.arch.xlen.W)))
     val zero = Output(UInt(cfg.arch.xlen.W))
@@ -53,11 +54,17 @@ class SimDtm(prgHexFile: String)(implicit cfg: Config) extends Module {
 
   // module instances
   val mem = Module(new MemTop(mp))
+  //val uart = Module(new UartTop(9600, 50))
   val dut = Module(new Dirv)
 
   // connect mem and dut
+  //io.uart <> uart.io.uart
   mem.io.imem <> dut.io.imem
+
+  // selected by address
+  //dut.io.dmem.
   mem.io.dmem <> dut.io.dmem
+  //dut.io.dmem <> uart.io.mem
 
   //
   // check riscv-tests finish condition
@@ -114,4 +121,22 @@ class SimDtm(prgHexFile: String)(implicit cfg: Config) extends Module {
   io.t4 := xregs(29)
   io.t5 := xregs(30)
   io.t6 := xregs(31)
+}
+
+
+class A extends Module {
+  val io = IO(new Bundle{
+    val a = Input(Bool())
+    val b = Output(Bool())
+  })
+
+  when (io.a) {
+    io.b := false.B
+  } otherwise {
+    io.b := true.B
+  }
+}
+
+object ElaborateA extends App {
+  Driver.execute(args, () => new A)
 }

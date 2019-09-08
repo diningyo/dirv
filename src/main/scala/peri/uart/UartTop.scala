@@ -6,19 +6,21 @@ import chisel3._
 import mbus._
 
 class UartTop(bardrate: Int, clockFreq: Int) extends Module {
+
+  val sp = MbusSramBridgeParams(MbusRW, 4, 32)
+
   val io = IO(new Bundle {
-    val mem = Flipped(new MbusIO(MbusRW, 4, 32))
+    val mbus = Flipped(new MbusIO(sp.ioAttr, sp.addrBits, sp.dataBits))
     val uart= new UartIO
   })
 
-  val memBrg = Module(new Mem2Sram)
-  val regTop = Module(new RegTop)
+  val memBrg = Module(new MbusSramBridge(MbusSramBridgeParams(MbusRW, 4, 32)))
+  val regTop = Module(new RegTop(sp.ramIOParams)())
   val ctrl = Module(new TxRxCtrl(bardrate, clockFreq))
 
-  io.mem <> memBrg.io.mem
+  io.mbus <> memBrg.io.mbus
   io.uart <> ctrl.io.uart
 
-  memBrg.io.regR <> regTop.io.regR
-  memBrg.io.regW <> regTop.io.regW
+  memBrg.io.sram <> regTop.io.sram
   regTop.io.r2c <> ctrl.io.r2c
 }
