@@ -81,7 +81,7 @@ class Ifu(implicit cfg: Config) extends Module {
   when (qInstFlush) {
     qInst(0) := dirv.Constants.nop
   } .elsewhen (qInstWren) {
-    qInst(qInstWrPtr) := io.ifu2ext.r.get.data
+    qInst(qInstWrPtr) := io.ifu2ext.r.get.bits.data
   }
 
   when (qInstFlush) {
@@ -124,10 +124,10 @@ class Ifu(implicit cfg: Config) extends Module {
   }
 
   // External <-> IF
-  io.ifu2ext.valid := (fsm === sFetch)
-  io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
-  io.ifu2ext.cmd := MbusCmd.rd.U
-  io.ifu2ext.size := MbusSize.word.U
+  io.ifu2ext.c.valid := (fsm === sFetch)
+  io.ifu2ext.c.bits.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
+  io.ifu2ext.c.bits.cmd := MbusCmd.rd.U
+  io.ifu2ext.c.bits.size := MbusSize.word.U
   io.ifu2ext.r.get.ready := !qInstIsFull
 
   // IFU <-> IDU

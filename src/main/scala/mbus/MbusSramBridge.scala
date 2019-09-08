@@ -54,19 +54,7 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   //
   // Mbus : Command
   //
-  class CmdData extends Bundle {
-    val cmd = chiselTypeOf(io.mbus.cmd)
-    val addr = chiselTypeOf(io.mbus.addr)
-    val size = chiselTypeOf(io.mbus.size)
-  }
-
-  val w_mbus_cmd = Wire(Flipped(Decoupled(new CmdData)))
-  w_mbus_cmd.valid := io.mbus.valid
-  w_mbus_cmd.bits.cmd := io.mbus.cmd
-  w_mbus_cmd.bits.addr := io.mbus.addr
-  w_mbus_cmd.bits.size := io.mbus.size
-
-  val m_cmd_q = Queue(w_mbus_cmd, 1, pipe = true, flow = true)
+  val m_cmd_q = Queue(io.mbus.c, 1, pipe = true, flow = true)
 
   //
   // Mbus : Write data
@@ -74,29 +62,13 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   val w_sram_wr_ready = WireInit(false.B)
 
   if (p.ioAttr != MbusRO) {
-    class WrData extends Bundle {
-      val strb = chiselTypeOf(io.mbus.w.get.strb)
-      val data = chiselTypeOf(io.mbus.w.get.data)
-      val resp = chiselTypeOf(io.mbus.w.get.resp)
-    }
-
-    val w_mbus_wr = Wire(Flipped(Decoupled(new WrData)))
-    w_mbus_wr.valid := io.mbus.w.get.valid
-    w_mbus_wr.bits.strb := io.mbus.w.get.strb
-    w_mbus_wr.bits.data := io.mbus.w.get.data
-    w_mbus_wr.bits.resp := MbusResp.ok.U
-
-    val m_wr_q = Queue(w_mbus_wr, 1, pipe = true, flow = true)
+    val m_wr_q = Queue(io.mbus.w.get, 1, pipe = true, flow = true)
 
     val w_sram_wr_req = m_cmd_q.valid && (m_cmd_q.bits.cmd === MbusCmd.wr.U)
     w_sram_wr_ready := w_sram_wr_req && m_wr_q.valid
-
     m_wr_q.ready := w_sram_wr_ready
 
-    io.mbus.w.get.ready := w_mbus_wr.ready
-    io.mbus.w.get.resp := w_mbus_wr.bits.resp
-
-    io.sram.wren.get := m_cmd_q.fire() && (m_cmd_q.bits.cmd === MbusCmd.wr.U)
+    io.sram.wren.get := w_sram_wr_ready
     io.sram.wrstrb.get := m_wr_q.bits.strb
     io.sram.wrdata.get := m_wr_q.bits.data
   }
@@ -104,17 +76,12 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   //
   // Mbus : Read data
   //
-  class RdData extends Bundle {
-    val data = chiselTypeOf(io.mbus.r.get.data)
-    val resp = chiselTypeOf(io.mbus.r.get.resp)
-  }
+  val w_rd_enq = Wire(chiselTypeOf(io.mbus.r.get))
+  w_rd_enq.valid := io.sram.rddv.get
+  w_rd_enq.bits.data := io.sram.rddata.get
+  w_rd_enq.bits.resp := MbusResp.ok.U
 
-  val w_sram_rd = Wire(Flipped(Decoupled(new RdData)))
-  w_sram_rd.valid := io.sram.rddv.get
-  w_sram_rd.bits.data := io.sram.rddata.get
-  w_sram_rd.bits.resp := MbusResp.ok.U
-
-  val m_rd_q = Queue(w_sram_rd, 1, pipe = true, flow = true)
+  val m_rd_q = Queue(w_rd_enq, 1, pipe = true, flow = true)
   m_rd_q.ready := io.mbus.r.get.ready
 
   val w_sram_read_req = m_cmd_q.valid && m_cmd_q.bits.cmd === MbusCmd.rd.U
@@ -127,10 +94,10 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   //
   // Mbus I/O
   //
-  io.mbus.ready := w_mbus_cmd.ready
+  io.mbus.c.ready := m_cmd_q.ready
   io.mbus.r.get.valid := m_rd_q.valid
-  io.mbus.r.get.data := m_rd_q.bits.data
-  io.mbus.r.get.resp := m_rd_q.bits.resp
+  io.mbus.r.get.bits.data := m_rd_q.bits.data
+  io.mbus.r.get.bits.resp := m_rd_q.bits.resp
 
   //
   // Sram I/O

@@ -3,6 +3,7 @@
 package mbus
 
 import chisel3._
+import chisel3.util._
 
 /**
   * Mbus access command
@@ -36,15 +37,18 @@ object MbusResp {
   * Memory base I/O
   * @param addrBits address bit width
   */
-class MemBaseIO(addrBits: Int) extends Bundle {
-  val addr = Output(UInt(addrBits.W))
-  val cmd = Output(UInt(MbusCmd.bits.W))
-  val size = Output(UInt(MbusSize.bits.W))
-  val valid = Output(Bool())
-  val ready = Input(Bool())
+class MbusCmdIO(addrBits: Int) extends Bundle {
+  val addr = UInt(addrBits.W)
+  val cmd = UInt(MbusCmd.bits.W)
+  val size = UInt(MbusSize.bits.W)
 
-  override def cloneType: MemBaseIO.this.type =
-    new MemBaseIO(addrBits).asInstanceOf[this.type]
+  override def cloneType: MbusCmdIO.this.type =
+    new MbusCmdIO(addrBits).asInstanceOf[this.type]
+}
+
+object MbusCmdIO {
+  def apply(addrBits: Int): DecoupledIO[MbusCmdIO] =
+    DecoupledIO(new MbusCmdIO(addrBits))
 }
 
 /**
@@ -54,11 +58,14 @@ class MemBaseIO(addrBits: Int) extends Bundle {
 class MbusRIO(dataBits: Int) extends Bundle {
   val resp = Input(UInt(MbusResp.bits.W))
   val data = Input(UInt(dataBits.W))
-  val valid = Input(Bool())
-  val ready = Output(Bool())
 
   override def cloneType: MbusRIO.this.type =
     new MbusRIO(dataBits).asInstanceOf[this.type]
+}
+
+object MbusRIO {
+  def apply(dataBits: Int): DecoupledIO[MbusRIO] =
+    Flipped(DecoupledIO(new MbusRIO(dataBits)))
 }
 
 /**
@@ -66,15 +73,19 @@ class MbusRIO(dataBits: Int) extends Bundle {
   * @param dataBits data bit width
   */
 class MbusWIO(dataBits: Int) extends Bundle {
-  val strb = Output(UInt((dataBits / 8).W))
-  val data = Output(UInt(dataBits.W))
-  val resp = Input(UInt(MbusResp.bits.W))
-  val valid = Output(Bool())
-  val ready = Input(Bool())
+  val strb = UInt((dataBits / 8).W)
+  val data = UInt(dataBits.W)
+  //val resp = Input(UInt(MbusResp.bits.W))
 
   override def cloneType: MbusWIO.this.type =
     new MbusWIO(dataBits).asInstanceOf[this.type]
 }
+
+object MbusWIO {
+  def apply(dataBits: Int): DecoupledIO[MbusWIO] =
+    DecoupledIO(new MbusWIO(dataBits))
+}
+
 
 /**
   * Dirv's memory I/O
@@ -82,14 +93,16 @@ class MbusWIO(dataBits: Int) extends Bundle {
   * @param addrBits address bit width
   * @param dataBits data bit width
   */
-class MbusIO(ioType: MbusIOAttr, addrBits: Int, dataBits: Int) extends MemBaseIO(addrBits) {
+class MbusIO(ioType: MbusIOAttr, addrBits: Int, dataBits: Int) extends Bundle {
+  val c = MbusCmdIO(addrBits)
+
   val w = ioType match {
     case MbusRO => None
-    case _ => Some(new MbusWIO(dataBits))
+    case _ => Some(MbusWIO(dataBits))
   }
   val r = ioType match {
     case MbusWO => None
-    case _ => Some(new MbusRIO(dataBits))
+    case _ => Some(MbusRIO(dataBits))
   }
 
   override def cloneType: MbusIO.this.type =
@@ -100,5 +113,6 @@ class MbusIO(ioType: MbusIOAttr, addrBits: Int, dataBits: Int) extends MemBaseIO
   * Companion object for MemIO class
   */
 object MbusIO {
-  def apply(ioType: MbusIOAttr, addrBits: Int, dataBits: Int): MbusIO = new MbusIO(ioType, addrBits, dataBits)
+  def apply(ioType: MbusIOAttr, addrBits: Int, dataBits: Int): MbusIO =
+    new MbusIO(ioType, addrBits, dataBits)
 }

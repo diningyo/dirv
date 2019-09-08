@@ -92,7 +92,7 @@ class Lsu(implicit cfg: Config) extends Module {
 
   // bits -> bytes
   (0 until byteNum).foreach(i => {
-    loadData(i) := extR.data(((i + 1) * 8) - 1, i * 8)
+    loadData(i) := extR.bits.data(((i + 1) * 8) - 1, i * 8)
     wrdataVec(i) := io.exu2lsu.memWrdata(((i + 1) * 8) - 1, i * 8)
   })
 
@@ -111,8 +111,8 @@ class Lsu(implicit cfg: Config) extends Module {
   // fsm
   switch (fsm) {
     is (sIdle) {
-      when (ext.valid) {
-        when (ext.ready) {
+      when (ext.c.valid) {
+        when (ext.c.ready) {
           when(inst.storeValid && !(extW.valid && extW.ready)) {
             fsm := sWriteWait
           } .elsewhen (inst.loadValid && !(extR.valid && extR.ready)) {
@@ -125,7 +125,7 @@ class Lsu(implicit cfg: Config) extends Module {
     }
 
     is (sCmdWait) {
-      when (ext.valid && ext.ready) {
+      when (ext.c.valid && ext.c.ready) {
         when(inst.storeValid && !(extW.valid && extW.ready)) {
           fsm := sWriteWait
         } .elsewhen (inst.loadValid && !(extR.valid && extR.ready)) {
@@ -161,12 +161,12 @@ class Lsu(implicit cfg: Config) extends Module {
   ))
 
   // lsu -> external
-  ext.valid := extAccessReq && ((fsm === sIdle) || (fsm === sCmdWait))
-  ext.addr := io.exu2lsu.memAddr
-  ext.size := size
-  ext.cmd := Mux(inst.loadValid, MbusCmd.rd.U, MbusCmd.wr.U)
-  extW.data := wrdata
-  extW.strb := strb
+  ext.c.valid := extAccessReq && ((fsm === sIdle) || (fsm === sCmdWait))
+  ext.c.bits.addr := io.exu2lsu.memAddr
+  ext.c.bits.size := size
+  ext.c.bits.cmd := Mux(inst.loadValid, MbusCmd.rd.U, MbusCmd.wr.U)
+  extW.bits.data := wrdata
+  extW.bits.strb := strb
   extW.valid := io.exu2lsu.inst.storeValid
   extR.ready := true.B
 }
