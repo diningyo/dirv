@@ -74,7 +74,8 @@ class Ifu(implicit cfg: Config) extends Module {
   }
 
   // Instruction FIFO
-  qInstWren := io.ifu2ext.r.get.valid && io.ifu2ext.r.get.ready
+  val qInstIsFull = Wire(Bool())
+  qInstWren := io.ifu2ext.r.get.valid && (!qInstIsFull)
   qInstRden := io.ifu2idu.valid && io.ifu2idu.ready
 
   when (qInstFlush) {
@@ -105,6 +106,7 @@ class Ifu(implicit cfg: Config) extends Module {
     qInstDataNum := qInstDataNum + 1.U
   }
 
+  qInstIsFull := (qInstDataNum === 1.U) && !qInstRden
   qInstHasData := qInstDataNum =/= 0.U
 
   // state
@@ -126,7 +128,7 @@ class Ifu(implicit cfg: Config) extends Module {
   io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
   io.ifu2ext.cmd := MemCmd.rd.U
   io.ifu2ext.size := MemSize.word.U
-  io.ifu2ext.r.get.ready := io.ifu2idu.ready
+  io.ifu2ext.r.get.ready := !qInstIsFull
 
   // IFU <-> IDU
   io.ifu2idu.valid := qInstHasData
