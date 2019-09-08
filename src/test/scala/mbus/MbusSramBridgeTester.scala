@@ -15,7 +15,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
   val sram = c.io.dut.sram
 
   def idle(cycle: Int = 1): Unit = {
-    poke(mbus.valid, false)
+    poke(mbus.c.valid, false)
     poke(mbus.w.get.valid, false)
     poke(mbus.r.get.ready, true)
     poke(sram.rddv.get, false)
@@ -27,9 +27,9 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
     * @param addr Address to write
     */
   def write_req(addr: Int): Unit = {
-    poke(mbus.valid, true)
-    poke(mbus.addr, addr)
-    poke(mbus.cmd, MbusCmd.wr)
+    poke(mbus.c.valid, true)
+    poke(mbus.c.bits.addr, addr)
+    poke(mbus.c.bits.cmd, MbusCmd.wr)
   }
 
   /**
@@ -39,8 +39,8 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
     */
   def write_data(strb: Int,  data: Int): Unit = {
     poke(mbus.w.get.valid, true)
-    poke(mbus.w.get.strb, strb)
-    poke(mbus.w.get.data, data)
+    poke(mbus.w.get.bits.strb, strb)
+    poke(mbus.w.get.bits.data, data)
   }
 
   /**
@@ -63,7 +63,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
         write_data(strb, data)
       }
 
-      if ((peek(mbus.valid) & peek(mbus.ready)) == 1) {
+      if ((peek(mbus.c.valid) & peek(mbus.c.ready)) == 1) {
         cmd_fire = 1
       }
       if ((peek(mbus.w.get.valid) & peek(mbus.w.get.ready)) == 1) {
@@ -87,7 +87,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       count += 1
 
       if (cmd_fire == 0x1) {
-        poke(mbus.valid, false)
+        poke(mbus.c.valid, false)
       }
       if (w_fire == 0x1) {
         poke(mbus.w.get.valid, false)
@@ -101,9 +101,9 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
     * @param addr Address to read
     */
   def read_req(addr: Int): Unit = {
-    poke(mbus.valid, true)
-    poke(mbus.addr, addr)
-    poke(mbus.cmd, MbusCmd.rd)
+    poke(mbus.c.valid, true)
+    poke(mbus.c.bits.addr, addr)
+    poke(mbus.c.bits.cmd, MbusCmd.rd)
   }
 
   /**
@@ -125,7 +125,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
 
     var cmd_ready = BigInt(0)
     while (cmd_ready != 1) {
-      cmd_ready = peek(mbus.ready)
+      cmd_ready = peek(mbus.c.ready)
 
       if (cmd_ready == 1) {
         expect(sram.addr, addr)
@@ -137,7 +137,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       if (rdDataLatency == 0) {
         return_read_data(exp)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, exp)
+        expect(mbus.r.get.bits.data, exp)
       } else {
         expect(mbus.r.get.valid, false)
       }
@@ -145,7 +145,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       step(1)
 
       if (cmd_ready == 0x1) {
-        poke(mbus.valid, false)
+        poke(mbus.c.valid, false)
       }
     }
 
@@ -156,7 +156,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
         if (count == rdDataLatency) {
           return_read_data(exp)
           expect(mbus.r.get.valid, true)
-          expect(mbus.r.get.data, exp)
+          expect(mbus.r.get.bits.data, exp)
         }
 
         r_valid = peek(mbus.r.get.valid)
@@ -181,7 +181,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
 
     var cmd_ready = BigInt(0)
     while (cmd_ready != 1) {
-      cmd_ready = peek(mbus.ready)
+      cmd_ready = peek(mbus.c.ready)
 
       if (cmd_ready == 1) {
         expect(sram.addr, addr)
@@ -193,7 +193,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       if (readyLatency == 0) {
         return_read_data(exp)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, exp)
+        expect(mbus.r.get.bits.data, exp)
       } else {
         expect(mbus.r.get.valid, false)
       }
@@ -201,7 +201,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
       step(1)
 
       if (cmd_ready == 0x1) {
-        poke(mbus.valid, false)
+        poke(mbus.c.valid, false)
       }
     }
 
@@ -213,7 +213,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
         if (count == readyLatency) {
           poke(mbus.r.get.ready, true)
           expect(mbus.r.get.valid, true)
-          expect(mbus.r.get.data, exp)
+          expect(mbus.r.get.bits.data, exp)
         }
 
         r_valid = peek(mbus.r.get.valid)
@@ -325,44 +325,44 @@ class MbusSramBridgeTester extends BaseTester {
       c => new MbusSramBridgeUnitTester(c) {
         idle(10)
         var data = intToUnsignedBigInt(0xf0008093)
-        poke(mbus.valid, true)
-        poke(mbus.cmd, MbusCmd.rd)
-        poke(mbus.addr, 0x1108)
+        poke(mbus.c.valid, true)
+        poke(mbus.c.bits.cmd, MbusCmd.rd)
+        poke(mbus.c.bits.addr, 0x1108)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, true)
         poke(sram.rddata.get, data)
-        expect(mbus.ready, true)
+        expect(mbus.c.ready, true)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, data)
+        expect(mbus.r.get.bits.data, data)
         expect(sram.rden.get, true)
         expect(sram.wren.get, false)
         step(1)
 
         data = intToUnsignedBigInt(0x00008f03)
-        poke(mbus.valid, true)
-        poke(mbus.cmd, MbusCmd.rd)
-        poke(mbus.addr, 0x110c)
+        poke(mbus.c.valid, true)
+        poke(mbus.c.bits.cmd, MbusCmd.rd)
+        poke(mbus.c.bits.addr, 0x110c)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, true)
         poke(sram.rddata.get, data)
-        expect(mbus.ready, true)
+        expect(mbus.c.ready, true)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, data)
+        expect(mbus.r.get.bits.data, data)
         expect(sram.rden.get, true)
         expect(sram.wren.get, false)
         step(1)
 
         // change ready signal to LOW, so mbus read data will be kept in next cycle.
         data = intToUnsignedBigInt(0xfff00e93)
-        poke(mbus.valid, true)
-        poke(mbus.cmd, MbusCmd.rd)
-        poke(mbus.addr, 0x1110)
+        poke(mbus.c.valid, true)
+        poke(mbus.c.bits.cmd, MbusCmd.rd)
+        poke(mbus.c.bits.addr, 0x1110)
         poke(mbus.r.get.ready, false)
         poke(sram.rddv.get, true)
         poke(sram.rddata.get, data)
-        expect(mbus.ready, true)
+        expect(mbus.c.ready, true)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, data)
+        expect(mbus.r.get.bits.data, data)
         expect(sram.rden.get, false)
         expect(sram.wren.get, false)
         step(1)
@@ -370,29 +370,29 @@ class MbusSramBridgeTester extends BaseTester {
         // This bug regeneration pattern expose that
         // mbus read data doesn't keep the value in previous cycle.
         val setData = intToUnsignedBigInt(0xf0008093)
-        poke(mbus.valid, true)
-        poke(mbus.cmd, MbusCmd.rd)
-        poke(mbus.addr, 0x1110)
+        poke(mbus.c.valid, true)
+        poke(mbus.c.bits.cmd, MbusCmd.rd)
+        poke(mbus.c.bits.addr, 0x1110)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, false)
         poke(sram.rddata.get, setData)
-        expect(mbus.ready, true)
+        expect(mbus.c.ready, true)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, data)
+        expect(mbus.r.get.bits.data, data)
         expect(sram.rden.get, true)
         expect(sram.wren.get, false)
         step(1)
 
         data = intToUnsignedBigInt(0x00200193)
-        poke(mbus.valid, true)
-        poke(mbus.cmd, MbusCmd.rd)
-        poke(mbus.addr, 0x1114)
+        poke(mbus.c.valid, true)
+        poke(mbus.c.bits.cmd, MbusCmd.rd)
+        poke(mbus.c.bits.addr, 0x1114)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, true)
         poke(sram.rddata.get, data)
-        expect(mbus.ready, true)
+        expect(mbus.c.ready, true)
         expect(mbus.r.get.valid, true)
-        expect(mbus.r.get.data, data)
+        expect(mbus.r.get.bits.data, data)
         expect(sram.rden.get, true)
         expect(sram.wren.get, false)
         step(1)

@@ -24,7 +24,7 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
   var i = 0
 
   def idle(): Unit = {
-    poke(c.io.mbus.valid, false)
+    poke(c.io.mbus.c.valid, false)
     poke(c.io.mbus.w.get.valid, false)
     poke(c.io.mbus.r.get.ready, true)
     poke(c.io.uart.rx, true)
@@ -33,16 +33,16 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
 
   def waitCmdRdy(): Unit = {
     i = 0
-    while (peek(c.io.mbus.ready) != 0) {
+    while (peek(c.io.mbus.c.ready) != 0) {
       step(1)
       i += 1
     }
   }
 
   def issueRdCmd(addr: Int): Unit = {
-    poke(c.io.mbus.cmd, MbusCmd.rd)
-    poke(c.io.mbus.addr, addr)
-    poke(c.io.mbus.valid, true)
+    poke(c.io.mbus.c.bits.cmd, MbusCmd.rd)
+    poke(c.io.mbus.c.bits.addr, addr)
+    poke(c.io.mbus.c.valid, true)
   }
 
   def waitR(exp: BigInt, cmp: Boolean): BigInt = {
@@ -52,22 +52,22 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
       step(1)
       i += 1
     }
-    if (cmp) expect(c.io.mbus.r.get.data, exp)
-    val rddata = peek(c.io.mbus.r.get.data)
+    if (cmp) expect(c.io.mbus.r.get.bits.data, exp)
+    val rddata = peek(c.io.mbus.r.get.bits.data)
     step(1)
     rddata
   }
 
   def issueWrCmd(addr: Int): Unit = {
-    poke(c.io.mbus.cmd, MbusCmd.wr)
-    poke(c.io.mbus.addr, addr)
-    poke(c.io.mbus.valid, true)
+    poke(c.io.mbus.c.bits.cmd, MbusCmd.wr)
+    poke(c.io.mbus.c.bits.addr, addr)
+    poke(c.io.mbus.c.valid, true)
   }
 
   def issueW(data: Int, strb: Int): Unit = {
     poke(c.io.mbus.w.get.valid, true)
-    poke(c.io.mbus.w.get.data, data)
-    poke(c.io.mbus.w.get.strb, strb)
+    poke(c.io.mbus.w.get.bits.data, data)
+    poke(c.io.mbus.w.get.bits.strb, strb)
   }
 
   /**
@@ -79,12 +79,12 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
     println(f"[HOST] write(0x$addr%02x) : 0x$data%08x")
     issueWrCmd(addr)
     issueW(data, 0xf)
-    while (((peek(c.io.mbus.ready) == 0) || (peek(c.io.mbus.w.get.ready) == 0)) && (i < memAccLimit)) {
+    while (((peek(c.io.mbus.c.ready) == 0) || (peek(c.io.mbus.w.get.ready) == 0)) && (i < memAccLimit)) {
       step(1)
       i += 1
     }
     step(1)
-    poke(c.io.mbus.valid, false)
+    poke(c.io.mbus.c.valid, false)
     poke(c.io.mbus.w.get.valid, false)
     step(1)
   }
@@ -92,7 +92,7 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
   def readReg(addr: Int, exp: BigInt, cmp: Boolean = true): BigInt = {
     issueRdCmd(addr)
     step(1)
-    poke(c.io.mbus.valid, false)
+    poke(c.io.mbus.c.valid, false)
     val data = waitR(exp, cmp)
     println(f"[HOST] read (0x$addr%02x) : 0x$data%08x")
     data

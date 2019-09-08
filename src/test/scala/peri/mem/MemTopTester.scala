@@ -16,9 +16,9 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
   val dmem = c.io.dut.dmem
 
   def idle(cycle: Int = 1): Unit = {
-    poke(imem.valid, false)
+    poke(imem.c.valid, false)
     poke(imem.r.get.ready, true)
-    poke(dmem.valid, false)
+    poke(dmem.c.valid, false)
     poke(dmem.w.get.valid, false)
     poke(dmem.r.get.ready, true)
     step(cycle)
@@ -29,9 +29,9 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     * @param addr Address to write
     */
   def d_write_req(addr: Int): Unit = {
-    poke(dmem.valid, true)
-    poke(dmem.addr, addr)
-    poke(dmem.cmd, MbusCmd.wr)
+    poke(dmem.c.valid, true)
+    poke(dmem.c.bits.addr, addr)
+    poke(dmem.c.bits.cmd, MbusCmd.wr)
   }
 
   /**
@@ -41,8 +41,8 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     */
   def d_write_data(strb: Int,  data: Int): Unit = {
     poke(dmem.w.get.valid, true)
-    poke(dmem.w.get.strb, strb)
-    poke(dmem.w.get.data, intToUnsignedBigInt(data))
+    poke(dmem.w.get.bits.strb, strb)
+    poke(dmem.w.get.bits.data, intToUnsignedBigInt(data))
   }
 
   /**
@@ -65,7 +65,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
         d_write_data(strb, data)
       }
 
-      if ((peek(dmem.valid) & peek(dmem.ready)) == 1) {
+      if ((peek(dmem.c.valid) & peek(dmem.c.ready)) == 1) {
         cmd_fire = 1
       }
       if ((peek(dmem.w.get.valid) & peek(dmem.w.get.ready)) == 1) {
@@ -79,7 +79,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
       count += 1
 
       if (cmd_fire == 0x1) {
-        poke(dmem.valid, false)
+        poke(dmem.c.valid, false)
       }
       if (w_fire == 0x1) {
         poke(dmem.w.get.valid, false)
@@ -93,9 +93,9 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     * @param addr Address to read
     */
   def read_req(port: MbusIO, addr: Int): Unit = {
-    poke(port.valid, true)
-    poke(port.addr, addr)
-    poke(port.cmd, MbusCmd.rd)
+    poke(port.c.valid, true)
+    poke(port.c.bits.addr, addr)
+    poke(port.c.bits.cmd, MbusCmd.rd)
   }
 
   /**
@@ -108,12 +108,12 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
 
     var cmd_ready = BigInt(0)
     while (cmd_ready != 1) {
-      cmd_ready = peek(port.ready)
+      cmd_ready = peek(port.c.ready)
 
       // This check is for Zero sram read latency.
       if (rdDataLatency == 0) {
         expect(port.r.get.valid, true)
-        expect(port.r.get.data, exp)
+        expect(port.r.get.bits.data, exp)
       } else {
         expect(port.r.get.valid, false)
       }
@@ -121,7 +121,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
       step(1)
 
       if (cmd_ready == 0x1) {
-        poke(port.valid, false)
+        poke(port.c.valid, false)
       }
     }
 
@@ -131,7 +131,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
       while (r_valid != 1) {
         if (count == rdDataLatency) {
           expect(port.r.get.valid, true)
-          expect(port.r.get.data, exp)
+          expect(port.r.get.bits.data, exp)
         }
 
         r_valid = peek(port.r.get.valid)
@@ -149,9 +149,9 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     * @param ready Value to be set in imem.ready
     */
   def set_imem(valid: Boolean, addr: BigInt, cmd: Int, ready: Boolean): Unit = {
-    poke(imem.valid, valid)
-    poke(imem.addr, addr)
-    poke(imem.cmd, cmd)
+    poke(imem.c.valid, valid)
+    poke(imem.c.bits.addr, addr)
+    poke(imem.c.bits.cmd, cmd)
     poke(imem.r.get.ready, ready)
   }
 
@@ -163,10 +163,10 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     * @param exp_r_resp Expected value of imem.r.get.resp
     */
   def comp_imem(exp_ready: Boolean, exp_r_valid: Boolean, exp_r_data: Int, exp_r_resp: Int): Unit = {
-    expect(imem.ready, exp_ready)
+    expect(imem.c.ready, exp_ready)
     expect(imem.r.get.valid, exp_r_valid)
-    expect(imem.r.get.data, intToUnsignedBigInt(exp_r_data))
-    expect(imem.r.get.resp, exp_r_resp)
+    expect(imem.r.get.bits.data, intToUnsignedBigInt(exp_r_data))
+    expect(imem.r.get.bits.resp, exp_r_resp)
  }
 
   /**
@@ -180,12 +180,12 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     */
   def set_dmem(valid: Boolean, addr: BigInt, cmd: Int, ready: Boolean,
               w_valid: Boolean, w_data: BigInt): Unit = {
-    poke(dmem.valid, valid)
-    poke(dmem.addr, addr)
-    poke(dmem.cmd, cmd)
+    poke(dmem.c.valid, valid)
+    poke(dmem.c.bits.addr, addr)
+    poke(dmem.c.bits.cmd, cmd)
     poke(dmem.r.get.ready, ready)
     poke(dmem.w.get.valid, w_valid)
-    poke(dmem.w.get.data, w_data)
+    poke(dmem.w.get.bits.data, w_data)
   }
 
   /**
@@ -200,12 +200,12 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
   def comp_dmem(exp_ready: Boolean, exp_r_valid: Boolean, exp_r_data: Int, exp_r_resp: Int,
                exp_w_ready: Boolean,  exp_w_resp: Int
                ): Unit = {
-    expect(dmem.ready, exp_ready)
+    expect(dmem.c.ready, exp_ready)
     expect(dmem.r.get.valid, exp_r_valid)
-    expect(dmem.r.get.data, intToUnsignedBigInt(exp_r_data))
-    expect(dmem.r.get.resp, exp_r_resp)
+    expect(dmem.r.get.bits.data, intToUnsignedBigInt(exp_r_data))
+    expect(dmem.r.get.bits.resp, exp_r_resp)
     expect(dmem.w.get.valid, exp_w_ready)
-    expect(dmem.w.get.data, exp_w_resp)
+    expect(dmem.w.get.bits.data, exp_w_resp)
   }
 }
 
