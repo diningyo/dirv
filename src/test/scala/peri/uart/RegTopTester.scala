@@ -3,14 +3,15 @@ package peri.uart
 
 import scala.math.{floor, random}
 import chisel3.iotesters._
+import mbus.{MbusRW, MbusSramBridgeParams}
 import test.util.BaseTester
 
 
 class RegTopUnitTester(c: RegTop) extends PeekPokeTester(c) {
 
   def idle(cycle: Int = 1): Unit = {
-    poke(c.io.regR.enable, false)
-    poke(c.io.regW.enable, false)
+    poke(c.io.sram.wren.get, false)
+    poke(c.io.sram.rden.get, false)
     step(cycle)
   }
 
@@ -20,10 +21,9 @@ class RegTopUnitTester(c: RegTop) extends PeekPokeTester(c) {
     * @param data register write data
     */
   def hwrite(addr: Int, data: Int): Unit = {
-    poke(c.io.regW.addr, addr)
-    poke(c.io.regW.enable, true)
-    poke(c.io.regW.strb, 0xf)
-    poke(c.io.regW.data, data)
+    poke(c.io.sram.addr, addr)
+    poke(c.io.sram.wren.get, true)
+    poke(c.io.sram.wrdata.get, data)
     step(1)
   }
 
@@ -33,11 +33,11 @@ class RegTopUnitTester(c: RegTop) extends PeekPokeTester(c) {
     * @param exp expect value for read register
     */
   def hread(addr: Int, exp: Int): Unit = {
-    poke(c.io.regR.addr, addr)
-    poke(c.io.regR.enable, true)
+    poke(c.io.sram.addr, addr)
+    poke(c.io.sram.rden.get, true)
     step(1)
-    expect(c.io.regR.dataValid, true)
-    expect(c.io.regR.data, exp)
+    expect(c.io.sram.rddv.get, true)
+    expect(c.io.sram.rddata.get, exp)
   }
 
   /**
@@ -68,6 +68,8 @@ class RegTopTester extends BaseTester {
 
   behavior of dutName
 
+  val sp = MbusSramBridgeParams(MbusRW, 4, 32)
+
   it should "be able to write TxFifo register from Host" in {
 
     val outDir = dutName + "-txfifo"
@@ -76,7 +78,7 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(true)) {
+    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
       c => new RegTopUnitTester(c) {
         val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
 
@@ -97,7 +99,7 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(true)) {
+    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
       c => new RegTopUnitTester(c) {
         val txData = 0xff
 
@@ -125,7 +127,7 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(true)) {
+    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
       c => new RegTopUnitTester(c) {
         val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
 
@@ -146,7 +148,7 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(true)) {
+    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
       c => new RegTopUnitTester(c) {
         val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
 

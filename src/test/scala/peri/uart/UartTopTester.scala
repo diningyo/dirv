@@ -24,50 +24,50 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
   var i = 0
 
   def idle(): Unit = {
-    poke(c.io.mem.valid, false)
-    poke(c.io.mem.w.get.valid, false)
-    poke(c.io.mem.r.get.ready, true)
+    poke(c.io.mbus.valid, false)
+    poke(c.io.mbus.w.get.valid, false)
+    poke(c.io.mbus.r.get.ready, true)
     poke(c.io.uart.rx, true)
     step(1)
   }
 
   def waitCmdRdy(): Unit = {
     i = 0
-    while (peek(c.io.mem.ready) != 0) {
+    while (peek(c.io.mbus.ready) != 0) {
       step(1)
       i += 1
     }
   }
 
   def issueRdCmd(addr: Int): Unit = {
-    poke(c.io.mem.cmd, MemCmd.rd)
-    poke(c.io.mem.addr, addr)
-    poke(c.io.mem.valid, true)
+    poke(c.io.mbus.cmd, MemCmd.rd)
+    poke(c.io.mbus.addr, addr)
+    poke(c.io.mbus.valid, true)
   }
 
   def waitR(exp: BigInt, cmp: Boolean): BigInt = {
     var i = 0
-    poke(c.io.mem.r.get.ready, true)
-    while ((peek(c.io.mem.r.get.valid) == 0) && (i < memAccLimit)) {
+    poke(c.io.mbus.r.get.ready, true)
+    while ((peek(c.io.mbus.r.get.valid) == 0) && (i < memAccLimit)) {
       step(1)
       i += 1
     }
-    if (cmp) expect(c.io.mem.r.get.data, exp)
-    val rddata = peek(c.io.mem.r.get.data)
+    if (cmp) expect(c.io.mbus.r.get.data, exp)
+    val rddata = peek(c.io.mbus.r.get.data)
     step(1)
     rddata
   }
 
   def issueWrCmd(addr: Int): Unit = {
-    poke(c.io.mem.cmd, MemCmd.wr)
-    poke(c.io.mem.addr, addr)
-    poke(c.io.mem.valid, true)
+    poke(c.io.mbus.cmd, MemCmd.wr)
+    poke(c.io.mbus.addr, addr)
+    poke(c.io.mbus.valid, true)
   }
 
   def issueW(data: Int, strb: Int): Unit = {
-    poke(c.io.mem.w.get.valid, true)
-    poke(c.io.mem.w.get.data, data)
-    poke(c.io.mem.w.get.strb, strb)
+    poke(c.io.mbus.w.get.valid, true)
+    poke(c.io.mbus.w.get.data, data)
+    poke(c.io.mbus.w.get.strb, strb)
   }
 
   /**
@@ -79,20 +79,20 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
     println(f"[HOST] write(0x$addr%02x) : 0x$data%08x")
     issueWrCmd(addr)
     issueW(data, 0xf)
-    while (((peek(c.io.mem.ready) == 0) || (peek(c.io.mem.w.get.ready) == 0)) && (i < memAccLimit)) {
+    while (((peek(c.io.mbus.ready) == 0) || (peek(c.io.mbus.w.get.ready) == 0)) && (i < memAccLimit)) {
       step(1)
       i += 1
     }
     step(1)
-    poke(c.io.mem.valid, false)
-    poke(c.io.mem.w.get.valid, false)
+    poke(c.io.mbus.valid, false)
+    poke(c.io.mbus.w.get.valid, false)
     step(1)
   }
 
   def readReg(addr: Int, exp: BigInt, cmp: Boolean = true): BigInt = {
     issueRdCmd(addr)
     step(1)
-    poke(c.io.mem.valid, false)
+    poke(c.io.mbus.valid, false)
     val data = waitR(exp, cmp)
     println(f"[HOST] read (0x$addr%02x) : 0x$data%08x")
     data
@@ -257,7 +257,8 @@ class UartTopTester extends BaseTester {
     } should be (true)
   }
 
-  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data. [peri.uart-tx-101]" in {
+  it should "negate TxEmpty bit and assert TxFifoFull bit " +
+    "in Stat register when peri.uart.Top send data. [peri.uart-tx-101]" in {
     val outDir = dutName + "_uart-tx-101"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -267,7 +268,7 @@ class UartTopTester extends BaseTester {
     Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
       c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
 
-        val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 10).map(_ => floor(random * 25).toInt)
 
         idle()
 
@@ -306,7 +307,7 @@ class UartRxTester extends BaseTester {
       c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
-        val rxData = Range(0, 256)
+        val rxData = Range(0, 25)
 
         idle()
 
@@ -338,7 +339,7 @@ class UartRxTester extends BaseTester {
       c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
-        val rxData = Range(0, 256)
+        val rxData = Range(0, 25)
 
         idle()
 
