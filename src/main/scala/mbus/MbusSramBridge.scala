@@ -2,18 +2,15 @@
 
 package mbus
 
-import java.nio.channels.FileLockInterruptionException
-
 import chisel3._
 import chisel3.util._
-import dirv.io._
 import peri.mem.{RAMIO, RAMIOParams, RAMRO, RAMRW, RAMWO}
 
 // TODO : move to mbus
 sealed trait MbusIOAttr
-case object ROMbusIO extends MbusIOAttr
-case object WOMbusIO extends MbusIOAttr
-case object RWMbusIO extends MbusIOAttr
+case object MbusRO extends MbusIOAttr
+case object MbusWO extends MbusIOAttr
+case object MbusRW extends MbusIOAttr
 
 /**
   * parameter class for MbusSramBridge
@@ -27,17 +24,10 @@ case class MbusSramBridgeParams
   addrBits: Int,
   dataBits: Int
 ) {
-
-  val memIOAttr = ioAttr match {
-    case ROMbusIO => MemRIO
-    case WOMbusIO => MemWIO
-    case RWMbusIO => MemRWIO
-  }
-
   val ramIOAttr = ioAttr match {
-    case ROMbusIO => RAMRO
-    case WOMbusIO => RAMWO
-    case RWMbusIO => RAMRW
+    case MbusRO => RAMRO
+    case MbusWO => RAMWO
+    case MbusRW => RAMRW
   }
   val ramIOParams = RAMIOParams(ramIOAttr, addrBits, dataBits, hasRddv = true)
 }
@@ -47,7 +37,7 @@ case class MbusSramBridgeParams
   * @param p Instance of MbusSramBridgeParams
   */
 class MbusSramBridgeIO(p: MbusSramBridgeParams) extends Bundle {
-  val mbus = Flipped(MemIO(p.memIOAttr, p.addrBits, p.dataBits))
+  val mbus = Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits))
   val sram = new RAMIO(p.ramIOParams)
 
   override def cloneType: this.type =
@@ -83,7 +73,7 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   //
   val w_sram_wr_ready = WireInit(false.B)
 
-  if (p.memIOAttr != MemRIO) {
+  if (p.ioAttr != MbusRO) {
     class WrData extends Bundle {
       val strb = chiselTypeOf(io.mbus.w.get.strb)
       val data = chiselTypeOf(io.mbus.w.get.data)

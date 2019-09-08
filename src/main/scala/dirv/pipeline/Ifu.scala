@@ -5,7 +5,7 @@ package dirv.pipeline
 import chisel3._
 import chisel3.util._
 import dirv.Config
-import dirv.io.{MemCmd, MemIO, MemSize}
+import mbus._
 
 
 /**
@@ -35,7 +35,7 @@ class Ifu2exuIO(implicit cfg: Config) extends Bundle {
   * @param cfg dirv's configuration parameter.
   */
 class IfuIO(implicit cfg: Config) extends Bundle {
-  val ifu2ext = MemIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
+  val ifu2ext = MbusIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
   val ifu2idu = new Ifu2IduIO()
  // val ifu2exu = new Ifu2exuIO()
   val exu2ifu = Flipped(new Exu2IfuIO())
@@ -79,7 +79,7 @@ class Ifu(implicit cfg: Config) extends Module {
   qInstRden := io.ifu2idu.valid && io.ifu2idu.ready
 
   when (qInstFlush) {
-    qInst(0) := dirv.Consts.nop
+    qInst(0) := dirv.Constants.nop
   } .elsewhen (qInstWren) {
     qInst(qInstWrPtr) := io.ifu2ext.r.get.data
   }

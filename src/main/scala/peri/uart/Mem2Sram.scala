@@ -4,8 +4,7 @@ package peri.uart
 
 import chisel3._
 import chisel3.util._
-
-import dirv.io._
+import mbus._
 
 class RegRdIO() extends Bundle {
   val addr = Output(UInt(4.W))
@@ -23,7 +22,7 @@ class RegWrIO() extends Bundle {
 
 class Mem2Sram extends Module {
   val io = IO(new Bundle {
-    val mem = Flipped(new MemIO(MemRWIO, 32, 32))
+    val mem = Flipped(new MbusIO(MbusRW, 32, 32))
     val regR = new RegRdIO()
     val regW = new RegWrIO()
   })

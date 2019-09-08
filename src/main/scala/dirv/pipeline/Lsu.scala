@@ -5,8 +5,7 @@ package dirv.pipeline
 import chisel3._
 import chisel3.util._
 import dirv.Config
-import dirv.io.{MemCmd, MemIO, MemSize}
-
+import mbus._
 /**
   * Load store unit <-> Execution unit I/O
   * @param cfg dirv's configuration parameter.
@@ -27,7 +26,7 @@ class Lsu2ExuIO(implicit val cfg: Config) extends Bundle {
 class LsuIO(implicit val cfg: Config) extends Bundle {
   val exu2lsu = Flipped(new Exu2LsuIO)
   val lsu2exu = new Lsu2ExuIO
-  val lsu2ext = MemIO(cfg.dmemIOType, cfg.addrBits, cfg.dataBits)
+  val lsu2ext = MbusIO(cfg.dmemIOType, cfg.addrBits, cfg.dataBits)
 }
 
 

@@ -3,8 +3,7 @@
 package peri.mem
 
 import chisel3._
-import dirv.io.{MemIO, MemRIO, MemRWIO}
-import mbus.{MbusSramBridge, MbusSramBridgeParams, ROMbusIO, RWMbusIO}
+import mbus._
 
 /**
   * parameter for MemTop
@@ -19,8 +18,8 @@ case class MemTopParams
   initHexFile: String = ""
 ) {
   val ramParams = RAMParams(VerilogRAM, numOfMemBytes, dataBits, initHexFile)
-  val iBrgParams = MbusSramBridgeParams(ROMbusIO, ramParams.addrBits, ramParams.dataBits)
-  val dBrgParams = MbusSramBridgeParams(RWMbusIO, ramParams.addrBits, ramParams.dataBits)
+  val iBrgParams = MbusSramBridgeParams(MbusRO, ramParams.addrBits, ramParams.dataBits)
+  val dBrgParams = MbusSramBridgeParams(MbusRW, ramParams.addrBits, ramParams.dataBits)
 }
 
 /**
@@ -29,8 +28,8 @@ case class MemTopParams
   */
 class MemTopIO(p: MemTopParams) extends Bundle {
   val rp = p.ramParams
-  val imem = Flipped(MemIO(MemRIO, rp.addrBits, rp.dataBits))
-  val dmem = Flipped(MemIO(MemRWIO, rp.addrBits, rp.dataBits))
+  val imem = Flipped(MbusIO(MbusRO, rp.addrBits, rp.dataBits))
+  val dmem = Flipped(MbusIO(MbusRW, rp.addrBits, rp.dataBits))
 
   override def cloneType: this.type = new MemTopIO(p).asInstanceOf[this.type]
 }

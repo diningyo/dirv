@@ -3,7 +3,6 @@
 package mbus
 
 import chisel3.iotesters._
-import dirv.io.MemCmd
 import test.util.BaseTester
 
 /**
@@ -236,7 +235,7 @@ class MbusSramBridgeTester extends BaseTester {
   behavior of dutName
 
   val timeoutCycle = 1000
-  val base_p = MbusSramBridgeParams(RWMbusIO, 32, 32)
+  val base_p = MbusSramBridgeParams(MbusRW, 32, 32)
 
   it should "be able to convert Mbus write access to Sram write access" in {
 

@@ -4,7 +4,7 @@ package peri.uart
 
 import scala.math.{floor, random}
 import chisel3.iotesters._
-import dirv.io.{MemCmd, MemSize}
+import mbus._
 import test.util.BaseTester
 
 

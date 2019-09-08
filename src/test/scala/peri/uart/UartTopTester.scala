@@ -3,7 +3,7 @@
 package peri.uart
 
 import chisel3.iotesters._
-import dirv.io.MemCmd
+import mbus._
 import test.util.BaseTester
 
 import scala.math.{floor, pow, random, round}

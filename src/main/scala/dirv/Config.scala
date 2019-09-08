@@ -4,8 +4,9 @@ package dirv
 
 import chisel3._
 import chisel3.util.log2Ceil
+import mbus.{MbusRO, MbusRW}
 
-case object Consts {
+case object Constants {
   val rv32Xlen = 32
   val rviRegNum = 32
   val rveRegNum = 16
@@ -19,12 +20,12 @@ sealed trait RVArch {
   def mpfrBits: Int = log2Ceil(regNum)
 }
 case object RV32I extends RVArch {
-  override def xlen: Int = Consts.rv32Xlen
-  override def regNum: Int = Consts.rviRegNum
+  override def xlen: Int = Constants.rv32Xlen
+  override def regNum: Int = Constants.rviRegNum
 }
 case object RV32E extends RVArch {
-  override def xlen: Int = Consts.rv32Xlen
-  override def regNum: Int = Consts.rveRegNum
+  override def xlen: Int = Constants.rv32Xlen
+  override def regNum: Int = Constants.rveRegNum
 }
 
 case object defaultConfig {
@@ -48,8 +49,8 @@ case class Config(
     hartId: BigInt = defaultConfig.hartId,
     dbg: Boolean = true
 ) {
-  val imemIOType = MemRIO
-  val dmemIOType = MemRWIO
+  val imemIOType = MbusRO
+  val dmemIOType = MbusRW
 }
 
 

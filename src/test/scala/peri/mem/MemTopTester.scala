@@ -3,8 +3,7 @@
 package peri.mem
 
 import chisel3.iotesters._
-import dirv.MemCmd
-import dirv.io.{MemIO, MemResp}
+import mbus._
 import test.util.BaseTester
 
 /**
@@ -93,7 +92,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     * MemIO read request
     * @param addr Address to read
     */
-  def read_req(port: MemIO, addr: Int): Unit = {
+  def read_req(port: MbusIO, addr: Int): Unit = {
     poke(port.valid, true)
     poke(port.addr, addr)
     poke(port.cmd, MemCmd.rd)
@@ -104,7 +103,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
     * @param addr Address to write
     * @param exp expect value for read register
     */
-  def single_read(port: MemIO, addr: Int, exp: Int, rdDataLatency: Int = 0): Unit = {
+  def single_read(port: MbusIO, addr: Int, exp: Int, rdDataLatency: Int = 0): Unit = {
     read_req(port, addr)
 
     var cmd_ready = BigInt(0)
