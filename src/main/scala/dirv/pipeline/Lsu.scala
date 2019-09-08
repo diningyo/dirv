@@ -50,8 +50,8 @@ class Lsu(implicit cfg: Config) extends Module {
     val uaAddr = addr(uaMsb - 1, 0)
 
     val excReq = MuxCase(false.B, Seq(
-      (size === MemSize.half.U) -> uaAddr(0).toBool(),
-      (size === MemSize.word.U) -> (uaAddr =/= "b00".U)
+      (size === MbusSize.half.U) -> uaAddr(0).toBool(),
+      (size === MbusSize.word.U) -> (uaAddr =/= "b00".U)
     ))
 
     val ret = Wire(new ExcMa())
@@ -72,9 +72,9 @@ class Lsu(implicit cfg: Config) extends Module {
 
   val inst = io.exu2lsu.inst
   val size = Mux1H(Seq(
-    (inst.sb || inst.lb || inst.lbu) -> MemSize.byte.U,
-    (inst.sh || inst.lh || inst.lhu) -> MemSize.half.U,
-    (inst.sw || inst.lw) -> MemSize.word.U
+    (inst.sb || inst.lb || inst.lbu) -> MbusSize.byte.U,
+    (inst.sh || inst.lh || inst.lhu) -> MbusSize.half.U,
+    (inst.sw || inst.lw) -> MbusSize.word.U
   ))
 
   // make strobe signal
@@ -82,9 +82,9 @@ class Lsu(implicit cfg: Config) extends Module {
   val uaMsb = log2Ceil(byteNum)
   val unaligedAddr = io.exu2lsu.memAddr(uaMsb - 1, 0)
   val strb = Mux1H(Seq(
-    inst.sb -> Fill(0x1 << MemSize.byte, 1.U),
-    inst.sh -> Fill(0x1 << MemSize.half, 1.U),
-    inst.sw -> Fill(0x1 << MemSize.word, 1.U)
+    inst.sb -> Fill(0x1 << MbusSize.byte, 1.U),
+    inst.sh -> Fill(0x1 << MbusSize.half, 1.U),
+    inst.sw -> Fill(0x1 << MbusSize.word, 1.U)
   )) << unaligedAddr
 
   val wrdataVec = Wire(Vec(byteNum, UInt(8.W)))
@@ -164,7 +164,7 @@ class Lsu(implicit cfg: Config) extends Module {
   ext.valid := extAccessReq && ((fsm === sIdle) || (fsm === sCmdWait))
   ext.addr := io.exu2lsu.memAddr
   ext.size := size
-  ext.cmd := Mux(inst.loadValid, MemCmd.rd.U, MemCmd.wr.U)
+  ext.cmd := Mux(inst.loadValid, MbusCmd.rd.U, MbusCmd.wr.U)
   extW.data := wrdata
   extW.strb := strb
   extW.valid := io.exu2lsu.inst.storeValid

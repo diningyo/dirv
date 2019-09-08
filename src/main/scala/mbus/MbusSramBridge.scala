@@ -84,11 +84,11 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
     w_mbus_wr.valid := io.mbus.w.get.valid
     w_mbus_wr.bits.strb := io.mbus.w.get.strb
     w_mbus_wr.bits.data := io.mbus.w.get.data
-    w_mbus_wr.bits.resp := MemResp.ok.U
+    w_mbus_wr.bits.resp := MbusResp.ok.U
 
     val m_wr_q = Queue(w_mbus_wr, 1, pipe = true, flow = true)
 
-    val w_sram_wr_req = m_cmd_q.valid && (m_cmd_q.bits.cmd === MemCmd.wr.U)
+    val w_sram_wr_req = m_cmd_q.valid && (m_cmd_q.bits.cmd === MbusCmd.wr.U)
     w_sram_wr_ready := w_sram_wr_req && m_wr_q.valid
 
     m_wr_q.ready := w_sram_wr_ready
@@ -96,7 +96,7 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
     io.mbus.w.get.ready := w_mbus_wr.ready
     io.mbus.w.get.resp := w_mbus_wr.bits.resp
 
-    io.sram.wren.get := m_cmd_q.fire() && (m_cmd_q.bits.cmd === MemCmd.wr.U)
+    io.sram.wren.get := m_cmd_q.fire() && (m_cmd_q.bits.cmd === MbusCmd.wr.U)
     io.sram.wrstrb.get := m_wr_q.bits.strb
     io.sram.wrdata.get := m_wr_q.bits.data
   }
@@ -112,12 +112,12 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   val w_sram_rd = Wire(Flipped(Decoupled(new RdData)))
   w_sram_rd.valid := io.sram.rddv.get
   w_sram_rd.bits.data := io.sram.rddata.get
-  w_sram_rd.bits.resp := MemResp.ok.U
+  w_sram_rd.bits.resp := MbusResp.ok.U
 
   val m_rd_q = Queue(w_sram_rd, 1, pipe = true, flow = true)
   m_rd_q.ready := io.mbus.r.get.ready
 
-  val w_sram_read_req = m_cmd_q.valid && m_cmd_q.bits.cmd === MemCmd.rd.U
+  val w_sram_read_req = m_cmd_q.valid && m_cmd_q.bits.cmd === MbusCmd.rd.U
 
   //
   // Queue : read connection

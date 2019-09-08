@@ -5,18 +5,18 @@ package mbus
 import chisel3._
 
 /**
-  * Memory access command
+  * Mbus access command
   */
-object MemCmd {
+object MbusCmd {
   val bits = 1
   val rd = 0x0
   val wr = 0x1
 }
 
 /**
-  * Memory access size
+  * Mbus access size
   */
-object MemSize {
+object MbusSize {
   val bits = 2
   val byte = 0x0
   val half = 0x1
@@ -24,9 +24,9 @@ object MemSize {
 }
 
 /**
-  * Memory access response
+  * Mbus access response
   */
-object MemResp {
+object MbusResp {
   val bits = 1
   val ok = 0x0
   val err = 0x1
@@ -38,8 +38,8 @@ object MemResp {
   */
 class MemBaseIO(addrBits: Int) extends Bundle {
   val addr = Output(UInt(addrBits.W))
-  val cmd = Output(UInt(MemCmd.bits.W))
-  val size = Output(UInt(MemSize.bits.W))
+  val cmd = Output(UInt(MbusCmd.bits.W))
+  val size = Output(UInt(MbusSize.bits.W))
   val valid = Output(Bool())
   val ready = Input(Bool())
 
@@ -52,7 +52,7 @@ class MemBaseIO(addrBits: Int) extends Bundle {
   * @param dataBits data bit width
   */
 class MbusRIO(dataBits: Int) extends Bundle {
-  val resp = Input(UInt(MemResp.bits.W))
+  val resp = Input(UInt(MbusResp.bits.W))
   val data = Input(UInt(dataBits.W))
   val valid = Input(Bool())
   val ready = Output(Bool())
@@ -68,7 +68,7 @@ class MbusRIO(dataBits: Int) extends Bundle {
 class MbusWIO(dataBits: Int) extends Bundle {
   val strb = Output(UInt((dataBits / 8).W))
   val data = Output(UInt(dataBits.W))
-  val resp = Input(UInt(MemResp.bits.W))
+  val resp = Input(UInt(MbusResp.bits.W))
   val valid = Output(Bool())
   val ready = Input(Bool())
 

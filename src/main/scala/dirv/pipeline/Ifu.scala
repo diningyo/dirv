@@ -126,8 +126,8 @@ class Ifu(implicit cfg: Config) extends Module {
   // External <-> IF
   io.ifu2ext.valid := (fsm === sFetch)
   io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
-  io.ifu2ext.cmd := MemCmd.rd.U
-  io.ifu2ext.size := MemSize.word.U
+  io.ifu2ext.cmd := MbusCmd.rd.U
+  io.ifu2ext.size := MbusSize.word.U
   io.ifu2ext.r.get.ready := !qInstIsFull
 
   // IFU <-> IDU

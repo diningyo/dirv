@@ -29,7 +29,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
   def write_req(addr: Int): Unit = {
     poke(mbus.valid, true)
     poke(mbus.addr, addr)
-    poke(mbus.cmd, MemCmd.wr)
+    poke(mbus.cmd, MbusCmd.wr)
   }
 
   /**
@@ -103,7 +103,7 @@ class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c
   def read_req(addr: Int): Unit = {
     poke(mbus.valid, true)
     poke(mbus.addr, addr)
-    poke(mbus.cmd, MemCmd.rd)
+    poke(mbus.cmd, MbusCmd.rd)
   }
 
   /**
@@ -326,7 +326,7 @@ class MbusSramBridgeTester extends BaseTester {
         idle(10)
         var data = intToUnsignedBigInt(0xf0008093)
         poke(mbus.valid, true)
-        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.cmd, MbusCmd.rd)
         poke(mbus.addr, 0x1108)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, true)
@@ -340,7 +340,7 @@ class MbusSramBridgeTester extends BaseTester {
 
         data = intToUnsignedBigInt(0x00008f03)
         poke(mbus.valid, true)
-        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.cmd, MbusCmd.rd)
         poke(mbus.addr, 0x110c)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, true)
@@ -355,7 +355,7 @@ class MbusSramBridgeTester extends BaseTester {
         // change ready signal to LOW, so mbus read data will be kept in next cycle.
         data = intToUnsignedBigInt(0xfff00e93)
         poke(mbus.valid, true)
-        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.cmd, MbusCmd.rd)
         poke(mbus.addr, 0x1110)
         poke(mbus.r.get.ready, false)
         poke(sram.rddv.get, true)
@@ -371,7 +371,7 @@ class MbusSramBridgeTester extends BaseTester {
         // mbus read data doesn't keep the value in previous cycle.
         val setData = intToUnsignedBigInt(0xf0008093)
         poke(mbus.valid, true)
-        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.cmd, MbusCmd.rd)
         poke(mbus.addr, 0x1110)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, false)
@@ -385,7 +385,7 @@ class MbusSramBridgeTester extends BaseTester {
 
         data = intToUnsignedBigInt(0x00200193)
         poke(mbus.valid, true)
-        poke(mbus.cmd, MemCmd.rd)
+        poke(mbus.cmd, MbusCmd.rd)
         poke(mbus.addr, 0x1114)
         poke(mbus.r.get.ready, true)
         poke(sram.rddv.get, true)

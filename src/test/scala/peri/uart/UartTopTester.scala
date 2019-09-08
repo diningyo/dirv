@@ -40,7 +40,7 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
   }
 
   def issueRdCmd(addr: Int): Unit = {
-    poke(c.io.mbus.cmd, MemCmd.rd)
+    poke(c.io.mbus.cmd, MbusCmd.rd)
     poke(c.io.mbus.addr, addr)
     poke(c.io.mbus.valid, true)
   }
@@ -59,7 +59,7 @@ class UartTopUnitTester(c: UartTop, baudrate: Int, clockFreq: Int) extends PeekP
   }
 
   def issueWrCmd(addr: Int): Unit = {
-    poke(c.io.mbus.cmd, MemCmd.wr)
+    poke(c.io.mbus.cmd, MbusCmd.wr)
     poke(c.io.mbus.addr, addr)
     poke(c.io.mbus.valid, true)
   }

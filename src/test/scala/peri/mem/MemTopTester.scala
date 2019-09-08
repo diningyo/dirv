@@ -31,7 +31,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
   def d_write_req(addr: Int): Unit = {
     poke(dmem.valid, true)
     poke(dmem.addr, addr)
-    poke(dmem.cmd, MemCmd.wr)
+    poke(dmem.cmd, MbusCmd.wr)
   }
 
   /**
@@ -95,7 +95,7 @@ class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
   def read_req(port: MbusIO, addr: Int): Unit = {
     poke(port.valid, true)
     poke(port.addr, addr)
-    poke(port.cmd, MemCmd.rd)
+    poke(port.cmd, MbusCmd.rd)
   }
 
   /**
@@ -301,26 +301,26 @@ class MemTopTester extends BaseTester {
         }
 
         var data = wrData(0)
-        set_imem(true, 0x4, MemCmd.rd, true)
+        set_imem(true, 0x4, MbusCmd.rd, true)
         step(1)
 
-        set_imem(true, 0x8,MemCmd.rd,  true)
-        comp_imem(true, true, wrData(1), MemResp.ok)
+        set_imem(true, 0x8,MbusCmd.rd,  true)
+        comp_imem(true, true, wrData(1), MbusResp.ok)
         step(1)
 
         // change ready signal to LOW, so mbus read data will be kept in next cycle.
-        set_imem(true, 0xc, MemCmd.rd, false)
-        comp_imem(true, true, wrData(2), MemResp.ok)
+        set_imem(true, 0xc, MbusCmd.rd, false)
+        comp_imem(true, true, wrData(2), MbusResp.ok)
         step(1)
 
         // This bug regeneration pattern expose that
         // mbus read data doesn't keep the value in previous cycle.
-        set_imem(true, 0xc, MemCmd.rd, true)
-        comp_imem(true, true, wrData(2), MemResp.ok)
+        set_imem(true, 0xc, MbusCmd.rd, true)
+        comp_imem(true, true, wrData(2), MbusResp.ok)
         step(1)
 
-        set_imem(true, 0x10, MemCmd.rd, true)
-        comp_imem(true, true, wrData(3), MemResp.ok)
+        set_imem(true, 0x10, MbusCmd.rd, true)
+        comp_imem(true, true, wrData(3), MbusResp.ok)
         step(1)
 
         idle(10)
