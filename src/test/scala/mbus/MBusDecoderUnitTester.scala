@@ -132,4 +132,24 @@ class MbusDecoderTester extends BaseTester {
       }
     } should be (true)
   }
+
+  it should "be able to choose right output port by cmd.bits.addr, when Master issue read command." in {
+
+    val outDir = dutName + "-100"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
+      c => new MbusDecoderUnitTester(c) {
+        for ((addr, _) <- base_p.addrMap) {
+          idle(10)
+          read_req(addr)
+          step(1)
+          idle(10)
+        }
+      }
+    } should be (true)
+  }
 }
