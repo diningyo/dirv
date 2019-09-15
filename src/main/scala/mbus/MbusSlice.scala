@@ -24,11 +24,13 @@ class MbusSlice
 
   if (ioAttr != MbusWO) {
     val m_rd_q = Queue(io.out.r.get, 1, !rSlice, !rSlice)
+    m_rd_q.suggestName("m_rd_q")
     io.in.r.get <> m_rd_q
   }
 
   if (ioAttr != MbusRO) {
     val m_wr_q = Queue(io.in.w.get, 1, !wSlice, !wSlice)
+    m_wr_q.suggestName("m_wr_q")
     io.out.w.get <> m_wr_q
   }
 }
