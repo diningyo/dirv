@@ -10,7 +10,7 @@ import test.util._
   * @param limit Maximum cycles of simulation.
   * @param abortEn True if simulation will finish, when timeout is occurred.
   */
-class SimDTMMbusDecoder(p: MbusDecoderParams)
+class SimDTMMbusDecoder(val p: MbusDecoderParams)
                        (
   limit: Int,
   abortEn: Boolean = true
