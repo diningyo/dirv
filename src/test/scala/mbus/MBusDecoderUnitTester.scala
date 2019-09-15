@@ -123,9 +123,18 @@ class MbusDecoderTester extends BaseTester {
     Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
       c => new MbusDecoderUnitTester(c) {
 
-        for (((addr, _), idx) <- base_p.addrMap.zipWithIndex) {
+        for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           idle(10)
           write_req(addr)
+          for (chk_port <- 0 until base_p.addrMap.length) {
+            if (dst_port == chk_port) {
+              expect(out(dst_port).c.valid, true)
+            } else {
+              expect(out(dst_port).c.valid, false)
+            }
+            expect(out(dst_port).c.bits.addr, addr)
+            expect(out(dst_port).c.bits.cmd, MbusCmd.wr)
+          }
           step(1)
           idle(10)
         }
@@ -143,9 +152,18 @@ class MbusDecoderTester extends BaseTester {
 
     Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
       c => new MbusDecoderUnitTester(c) {
-        for ((addr, _) <- base_p.addrMap) {
+        for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           idle(10)
           read_req(addr)
+          for (chk_port <- 0 until base_p.addrMap.length) {
+            if (dst_port == chk_port) {
+              expect(out(dst_port).c.valid, true)
+            } else {
+              expect(out(dst_port).c.valid, false)
+            }
+            expect(out(dst_port).c.bits.addr, addr)
+            expect(out(dst_port).c.bits.cmd, MbusCmd.rd)
+          }
           step(1)
           idle(10)
         }
