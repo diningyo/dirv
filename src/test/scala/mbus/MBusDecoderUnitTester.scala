@@ -128,12 +128,12 @@ class MbusDecoderTester extends BaseTester {
           write_req(addr)
           for (chk_port <- 0 until base_p.addrMap.length) {
             if (dst_port == chk_port) {
-              expect(out(dst_port).c.valid, true)
+              expect(out(chk_port).c.valid, true)
             } else {
-              expect(out(dst_port).c.valid, false)
+              expect(out(chk_port).c.valid, false)
             }
-            expect(out(dst_port).c.bits.addr, addr)
-            expect(out(dst_port).c.bits.cmd, MbusCmd.wr)
+            expect(out(chk_port).c.bits.addr, addr)
+            expect(out(chk_port).c.bits.cmd, MbusCmd.wr)
           }
           step(1)
           idle(10)
@@ -157,12 +157,12 @@ class MbusDecoderTester extends BaseTester {
           read_req(addr)
           for (chk_port <- 0 until base_p.addrMap.length) {
             if (dst_port == chk_port) {
-              expect(out(dst_port).c.valid, true)
+              expect(out(chk_port).c.valid, true)
             } else {
-              expect(out(dst_port).c.valid, false)
+              expect(out(chk_port).c.valid, false)
             }
-            expect(out(dst_port).c.bits.addr, addr)
-            expect(out(dst_port).c.bits.cmd, MbusCmd.rd)
+            expect(out(chk_port).c.bits.addr, addr)
+            expect(out(chk_port).c.bits.cmd, MbusCmd.rd)
           }
           step(1)
           idle(10)
