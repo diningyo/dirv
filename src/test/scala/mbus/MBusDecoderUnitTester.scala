@@ -16,10 +16,17 @@ class MbusDecoderUnitTester(c: SimDTMMbusDecoder) extends PeekPokeTester(c) {
   val in_r = in.r.get
   val in_w = in.w.get
 
+  val out = c.io.dut.out
+
   def idle(cycle: Int = 1): Unit = {
     poke(in_c.valid, false)
     poke(in_w.valid, false)
     poke(in_r.ready, true)
+    for (i <- 0 until c.p.addrMap.length) {
+      poke(out(i).c.ready, true)
+      poke(out(i).w.get.ready, true)
+      poke(out(i).r.get.valid, false)
+    }
     step(cycle)
   }
 
@@ -105,7 +112,7 @@ class MbusDecoderTester extends BaseTester {
       (0x1000, 0x100)
     ), 32)
 
-  it should "" in {
+  it should "be able to choose right output port by cmd.bits.addr, when Master issue write command." in {
 
     val outDir = dutName + "-000"
     val args = getArgs(Map(
@@ -115,10 +122,13 @@ class MbusDecoderTester extends BaseTester {
 
     Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
       c => new MbusDecoderUnitTester(c) {
-        idle(10)
-        single_write(0x1, 0xf, 0x12345678)
-        idle(10)
 
+        for (((addr, _), idx) <- base_p.addrMap.zipWithIndex) {
+          idle(10)
+          write_req(addr)
+          step(1)
+          idle(10)
+        }
       }
     } should be (true)
   }
