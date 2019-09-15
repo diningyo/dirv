@@ -60,7 +60,7 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
   def checkAddress(dst_addr: UInt, addrMap: (Int, Int)): Bool = {
     val start = addrMap._1
     val end = addrMap._2
-    (start.U <= dst_addr) && (dst_addr <= end.U)
+    (start.U <= dst_addr) && (dst_addr < end.U)
   }
 
   val io = IO(new MbusDecoderIO(p))
