@@ -48,7 +48,7 @@ class MbusDecoderIO(p: MbusDecoderParams) extends Bundle {
   * Mbus Decoder
   * @param p
   */
-@chiselName
+//@chiselName
 class MbusDecoder(p: MbusDecoderParams) extends Module {
 
   /**
@@ -69,8 +69,6 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
   val m_rd_q = Queue(io.out(0).r.get, 1, true, true)
   val m_wr_q = Queue(io.in.w.get, 1, true, true)
 
-  io := DontCare
-
   for ((out_port, info) <- io.out zip p.addrMap) {
     out_port.c <> m_cmd_q
     out_port.w.get <> m_wr_q
@@ -87,6 +85,9 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
     val w_wr_valid = w_port_sel || r_wr_sel
 
     out_port.w.get.valid := w_wr_valid
+
+    // out(N).r.get.ready reflects io.in.r.get.ready
+    out_port.r.get.ready := io.in.r.get.ready
   }
 
   m_rd_q.ready := io.in.r.get.ready
