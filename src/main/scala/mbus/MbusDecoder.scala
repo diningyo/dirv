@@ -4,7 +4,6 @@ package mbus
 
 import chisel3._
 import chisel3.core.dontTouch
-import chisel3.internal.naming.chiselName
 import chisel3.util._
 
 
@@ -94,7 +93,7 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
     val w_wr_valid = dontTouch(w_wr_req || r_wr_sel)
     w_wr_valid.suggestName(s"w_wr_valid_${idx}")
 
-    out_port.w.get.valid := w_wr_valid
+    out_port.w.get.valid := Mux(w_wr_valid, m_in_slice.io.out.w.get.valid, false.B)
 
     // out(N).r.get.ready reflects m_in_slice.io.out.r.get.ready
     out_port.r.get.ready := m_in_slice.io.out.r.get.ready
