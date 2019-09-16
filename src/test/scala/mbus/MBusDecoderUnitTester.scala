@@ -143,10 +143,40 @@ class MbusDecoderTester extends BaseTester {
     } should be (true)
   }
 
-  it should "be able to choose right output port by cmd.bits.addr, " +
-    "when Master issue write command. [wr:001]" in {
+  it should "be able to transfer write data, when write data is delayed. [wr:001]" in {
 
     val outDir = dutName + "-001"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
+      c => new MbusDecoderUnitTester(c) {
+
+        for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
+          val wrData = intToUnsignedBigInt(r.nextInt())
+          idle(10)
+          write_req(addr)
+          expect(out(dst_port).c.valid, true)
+          expect(out(dst_port).w.get.valid, false)
+          step(1)
+          poke(in.c.valid, false)
+          write_data(0xf, wrData)
+          expect(out(dst_port).w.get.valid, true)
+          expect(out(dst_port).w.get.bits.data, wrData)
+          expect(out(dst_port).w.get.bits.strb, 0xf)
+          step(1)
+          idle(10)
+        }
+      }
+    } should be (true)
+  }
+
+  it should "be able to choose right output port by cmd.bits.addr, " +
+    "when Master issue write command. [wr:002]" in {
+
+    val outDir = dutName + "-002"
     val args = getArgs(Map(
       "--top-name" -> dutName,
       "--target-dir" -> s"test_run_dir/$outDir"
