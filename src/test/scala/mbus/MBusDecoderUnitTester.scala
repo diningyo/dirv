@@ -154,20 +154,23 @@ class MbusDecoderTester extends BaseTester {
     Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
       c => new MbusDecoderUnitTester(c) {
 
-        for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
-          val wrData = intToUnsignedBigInt(r.nextInt())
-          idle(10)
-          write_req(addr)
-          expect(out(dst_port).c.valid, true)
-          expect(out(dst_port).w.get.valid, false)
-          step(1)
-          poke(in.c.valid, false)
-          write_data(0xf, wrData)
-          expect(out(dst_port).w.get.valid, true)
-          expect(out(dst_port).w.get.bits.data, wrData)
-          expect(out(dst_port).w.get.bits.strb, 0xf)
-          step(1)
-          idle(10)
+        for (delay <- 1 until 10) {
+          for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
+            val wrData = intToUnsignedBigInt(r.nextInt())
+            idle(10)
+            write_req(addr)
+            expect(out(dst_port).c.valid, true)
+            expect(out(dst_port).w.get.valid, false)
+            step(1)
+            poke(in.c.valid, false)
+            step(delay - 1)
+            write_data(0xf, wrData)
+            expect(out(dst_port).w.get.valid, true)
+            expect(out(dst_port).w.get.bits.data, wrData)
+            expect(out(dst_port).w.get.bits.strb, 0xf)
+            step(1)
+            idle(10)
+          }
         }
       }
     } should be (true)
@@ -204,7 +207,7 @@ class MbusDecoderTester extends BaseTester {
     } should be (true)
   }
 
-  it should "be able to choose right output port by cmd.bits.addr, when Master issue read command. [rd:100]" in {
+  it should "be able to transfer write data, when read data is delayed. [rd:100]" in {
 
     val outDir = dutName + "-100"
     val args = getArgs(Map(
@@ -234,10 +237,47 @@ class MbusDecoderTester extends BaseTester {
     } should be (true)
   }
 
-  it should "be able to choose right output port by cmd.bits.addr, " +
-    "when Master issue read command. [rd:101]" in {
+  it should "be able to choose right output port by cmd.bits.addr, when Master issue read command. [rd:101]" in {
 
     val outDir = dutName + "-101"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
+      c => new MbusDecoderUnitTester(c) {
+
+        for (delay <- 1 until 10) {
+          for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
+            val rdData = intToUnsignedBigInt(r.nextInt())
+
+            idle(10)
+            read_req(addr)
+            expect(in.r.get.valid, false)
+            step(1)
+            poke(in.c.valid, false)
+            step(delay)
+            return_read_data(dst_port, rdData)
+            expect(in.r.get.valid, true)
+            expect(in.r.get.bits.data, rdData)
+
+            // When command is read, out(N).w.get.valid is never asserted.
+            for (out_port <- 0 until base_p.addrMap.length) {
+              expect(out(out_port).w.get.valid, false)
+            }
+            step(1)
+            idle(10)
+          }
+        }
+      }
+    } should be (true)
+  }
+
+  it should "be able to choose right output port by cmd.bits.addr, " +
+    "when Master issue read command. [rd:102]" in {
+
+    val outDir = dutName + "-102"
     val args = getArgs(Map(
       "--top-name" -> dutName,
       "--target-dir" -> s"test_run_dir/$outDir"
