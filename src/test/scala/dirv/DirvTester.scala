@@ -2,8 +2,8 @@
 
 import chisel3.iotesters._
 import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap, ParallelTestExecution}
-
 import dirv.Config
+import test.util.BaseTester
 
 /**
   * Object for parameter of riscv-tests
@@ -199,5 +199,31 @@ class DirvRV32ITester extends DirvBaseTester {
 
   for ((subTestGroup, subTestList) <- testList; test <- subTestList) {
     runRiscvTests(subTestGroup, test)
+  }
+}
+
+/**
+  * Test module for Dirv accessing UartTop
+  */
+class DirvUartAccessTester extends BaseTester {
+
+  val dutName = "Dirv"
+
+  behavior of dutName
+
+  implicit val cfg: Config = Config()
+
+  val testFilePath = "test.hex"
+
+  it must f"be able to access UartTop modules - [dirv-uart-tests:000]" in {
+
+    val args = getArgs(Map(
+      "--top-name" -> "uart-tests",
+      "--target-dir" -> s"test_run_dir/dirv-uart/uart-000"
+    ))
+
+    Driver.execute(args, () => new SimDtm(testFilePath)) {
+      c => new DirvUnitTester(c)
+    } should be (true)
   }
 }

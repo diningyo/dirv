@@ -95,6 +95,7 @@ class Exu(implicit cfg: Config) extends Module{
     (instExe.mret || instExe.wfi) -> csrf.io.mepc,
     instExe.jal -> (currPc + instExe.immJ),
     instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
+    instExe.fenceI -> (currPc + 4.U),
     condBranchValid -> (currPc + instExe.immB)
   ))(cfg.addrBits - 1, 0)
 
@@ -103,7 +104,7 @@ class Exu(implicit cfg: Config) extends Module{
   val excReq = illegal || excDataMaReq || instExe.ecall || instExe.ebreak || excInstMaReq
 
   val jmpPcReq = instExe.ebreak || instExe.jal || instExe.jalr ||
-    condBranchValid || instExe.mret || instExe.wfi || excReq
+    condBranchValid || instExe.mret || instExe.wfi || excReq || instExe.fenceI
   val jmpPc = Mux(excReq, csrf.io.mtvec, branchPc)
 
   // connect Mpfr

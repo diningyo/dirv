@@ -5,7 +5,7 @@ package dirv.pipeline
 import chisel3._
 import chisel3.util._
 import dirv.Config
-import dirv.io.{MemCmd, MemIO, MemSize}
+import mbus._
 
 
 /**
@@ -35,7 +35,7 @@ class Ifu2exuIO(implicit cfg: Config) extends Bundle {
   * @param cfg dirv's configuration parameter.
   */
 class IfuIO(implicit cfg: Config) extends Bundle {
-  val ifu2ext = MemIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
+  val ifu2ext = MbusIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
   val ifu2idu = new Ifu2IduIO()
  // val ifu2exu = new Ifu2exuIO()
   val exu2ifu = Flipped(new Exu2IfuIO())
@@ -74,13 +74,14 @@ class Ifu(implicit cfg: Config) extends Module {
   }
 
   // Instruction FIFO
-  qInstWren := io.ifu2ext.r.get.valid && io.ifu2ext.r.get.ready
+  val qInstIsFull = Wire(Bool())
+  qInstWren := io.ifu2ext.r.get.valid && (!qInstIsFull)
   qInstRden := io.ifu2idu.valid && io.ifu2idu.ready
 
   when (qInstFlush) {
-    qInst(0) := dirv.Consts.nop
+    qInst(0) := dirv.Constants.nop
   } .elsewhen (qInstWren) {
-    qInst(qInstWrPtr) := io.ifu2ext.r.get.data
+    qInst(qInstWrPtr) := io.ifu2ext.r.get.bits.data
   }
 
   when (qInstFlush) {
@@ -105,6 +106,7 @@ class Ifu(implicit cfg: Config) extends Module {
     qInstDataNum := qInstDataNum + 1.U
   }
 
+  qInstIsFull := (qInstDataNum === 1.U) && !qInstRden
   qInstHasData := qInstDataNum =/= 0.U
 
   // state
@@ -122,11 +124,11 @@ class Ifu(implicit cfg: Config) extends Module {
   }
 
   // External <-> IF
-  io.ifu2ext.valid := (fsm === sFetch)
-  io.ifu2ext.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
-  io.ifu2ext.cmd := MemCmd.rd.U
-  io.ifu2ext.size := MemSize.word.U
-  io.ifu2ext.r.get.ready := io.ifu2idu.ready
+  io.ifu2ext.c.valid := (fsm === sFetch)
+  io.ifu2ext.c.bits.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
+  io.ifu2ext.c.bits.cmd := MbusCmd.rd.U
+  io.ifu2ext.c.bits.size := MbusSize.word.U
+  io.ifu2ext.r.get.ready := !qInstIsFull
 
   // IFU <-> IDU
   io.ifu2idu.valid := qInstHasData
