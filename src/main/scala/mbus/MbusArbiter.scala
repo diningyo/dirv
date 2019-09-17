@@ -57,7 +57,7 @@ class MbusArbiter(p: MbusArbiterParams) extends Module {
 
   m_out_slice.io.in.w.get <> io.in(m_issued_q.io.deq.bits).w.get
   m_out_slice.io.in.w.get.valid := m_issued_q.io.deq.valid && io.in(m_issued_q.io.deq.bits).w.get.valid
-  m_issued_q.io.deq.ready := m_out_slice.io.in.w.get.ready || m_out_slice.io.in.r.get.valid
+  m_issued_q.io.deq.ready := m_out_slice.io.in.w.get.fire() || m_out_slice.io.in.r.get.fire()
 
   for ((io_in, idx) <- io.in.zipWithIndex) {
     io_in.r.get <> m_out_slice.io.in.r.get
