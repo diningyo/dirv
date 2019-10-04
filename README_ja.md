@@ -248,7 +248,7 @@ AXIとの違いは以下の通りです：
 
 本リポジトリにはDIGILENT社のARTY 35T向けのFPGAのプロジェクトが含まれています。このデザインは以下にブロック図の示す通り、DirvにメモリとUARTが接続されており、サンプルのプログラムではUARTを使った"Hello, World"が実行可能です。
 
-![SysUartのブロック図](./img/fpga_block_diagram.svg)
+![SysUartのブロック図](./img/SysUart_block_diagram.svg)
 
 以下に示す手順で動作確認が可能です。
 
