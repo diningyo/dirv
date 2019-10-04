@@ -14,6 +14,11 @@ Chiselで書いたRISC-Vのお試し実装
 - UCバークレーで開発されたハードウェア構築言語であるChiselで実装
   - Chiselの詳細については[公式のウェブサイト](https://chisel.eecs.berkeley.edu/)を参照ください。
 
+## デモ
+
+Arty 35Tで以下のように動作することを確認しています。
+
+![Arty 35TでのHello World](./img/SysUart_demo.gif)
 
 ## 動作に必要なもの
 
@@ -268,7 +273,7 @@ vivado fpga/arty/dirv-arty.xpr
 minicom -D /dev/ttyUSB1 -b 9600
 ```
 
-リセットボタンを押すと、ターミナルに"Hello, World!!"と表示される
+リセットボタンを押すと、[デモ](##デモ)の通り、ターミナルに"Hello, World!!"と表示される
 
 ![Arty 35Tのボタン設定](./img/Arty_reset_assign.png)
 
