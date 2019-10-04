@@ -3,9 +3,6 @@
 package mbus
 
 import chisel3._
-import chisel3.core.dontTouch
-import chisel3.util._
-
 
 /**
   * parameter class for MbusIC

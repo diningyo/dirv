@@ -63,7 +63,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
     }
   })
 
-  val stm = Module(new CtrlStateMachine)
+  val m_stm = Module(new CtrlStateMachine)
   val r_duration_ctr = RegInit(durationCount.U)
   val r_bit_idx = RegInit(0.U(3.W))
 
@@ -80,9 +80,9 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   }
 
   val w_update_req = r_duration_ctr === (durationCount - 1).U
-  val fin = stm.io.stop && w_update_req
+  val fin = m_stm.io.stop && w_update_req
 
-  when (stm.io.idle ) {
+  when (m_stm.io.idle ) {
     when (w_start_req) {
       r_duration_ctr := initDurationCount.U
     } .otherwise {
@@ -96,7 +96,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
     }
   }
 
-  when (stm.io.data) {
+  when (m_stm.io.data) {
     when (w_update_req) {
       r_bit_idx := r_bit_idx + 1.U
     }
@@ -109,19 +109,19 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
       val reg = io.reg.asInstanceOf[FifoRdIO]
 
       io.uart := MuxCase(1.U, Seq(
-        stm.io.start -> 0.U,
-        stm.io.data -> reg.data(r_bit_idx)
+        m_stm.io.start -> 0.U,
+        m_stm.io.data -> reg.data(r_bit_idx)
       ))
 
-      reg.enable := stm.io.stop && w_update_req
+      reg.enable := m_stm.io.stop && w_update_req
 
     case UartRx =>
       val reg = io.reg.asInstanceOf[FifoWrIO]
       val rxData = RegInit(0.U)
 
-      when (stm.io.idle && w_start_req) {
+      when (m_stm.io.idle && w_start_req) {
         rxData := 0.U
-      } .elsewhen (stm.io.data) {
+      } .elsewhen (m_stm.io.data) {
         when (w_update_req) {
           rxData := rxData | (io.uart << r_bit_idx).asUInt()
         }
@@ -131,10 +131,10 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
   }
 
   // txStm <-> ctrl
-  stm.io.start_req := w_start_req
-  stm.io.data_req := stm.io.start && w_update_req
-  stm.io.stop_req := stm.io.data && w_update_req && (r_bit_idx === 7.U)
-  stm.io.fin := fin
+  m_stm.io.start_req := w_start_req
+  m_stm.io.data_req := m_stm.io.start && w_update_req
+  m_stm.io.stop_req := m_stm.io.data && w_update_req && (r_bit_idx === 7.U)
+  m_stm.io.fin := fin
 }
 
 /**

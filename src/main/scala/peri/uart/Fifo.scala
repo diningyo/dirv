@@ -61,7 +61,7 @@ class Fifo(depth: Int=16, debug: Boolean=false) extends Module {
   // parameter
   val depthBits = log2Ceil(depth)
 
-  val fifo = RegInit(VecInit(Seq.fill(depth)(0.U(8.W))))
+  val r_fifo = RegInit(VecInit(Seq.fill(depth)(0.U(8.W))))
   val r_rdptr = RegInit(0.U(depthBits.W))
   val r_wrptr = RegInit(0.U(depthBits.W))
   val r_data_ctr = RegInit(0.U((depthBits + 1).W))
@@ -69,7 +69,7 @@ class Fifo(depth: Int=16, debug: Boolean=false) extends Module {
   when(io.rst) {
     r_wrptr := 0.U
   }.elsewhen(io.wr.enable) {
-    fifo(r_wrptr) := io.wr.data
+    r_fifo(r_wrptr) := io.wr.data
     r_wrptr := Mux(r_wrptr === (depth - 1).U, 0.U, r_wrptr + 1.U)
   }
 
@@ -98,7 +98,7 @@ class Fifo(depth: Int=16, debug: Boolean=false) extends Module {
 
   io.full := r_data_ctr === depth.U
   io.rd.empty := r_data_ctr === 0.U
-  io.rd.data := fifo(r_rdptr)
+  io.rd.data := r_fifo(r_rdptr)
 
   // debug
   if (debug) {
@@ -106,6 +106,6 @@ class Fifo(depth: Int=16, debug: Boolean=false) extends Module {
     dbg.rdptr := r_rdptr
     dbg.wrptr := r_wrptr
     dbg.count := r_data_ctr
-    dbg.fifo := fifo
+    dbg.fifo := r_fifo
   }
 }

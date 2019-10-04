@@ -7,10 +7,10 @@ import chisel3.util._
 import peri.mem.{RAMIO, RAMIOParams}
 
 object RegInfo {
-  val rxFifo = 0x0 // 受信FIFO
-  val txFifo = 0x4 // 送信FIFO
-  val stat = 0x8   // ステータス
-  val ctrl = 0xc   // 制御
+  val rxFifo = 0x0 // RX FIFO
+  val txFifo = 0x4 // TX FIFO
+  val stat = 0x8   // Status
+  val ctrl = 0xc   // Control
 }
 
 /**
@@ -42,41 +42,41 @@ class FifoReg extends UartReg {
 }
 
 class CtrlReg extends UartReg {
-  val enableIntr = UInt(1.W)
+  val enableInt = UInt(1.W)
   val rstRxFifo = UInt(1.W)
   val rstTxFifo = UInt(1.W)
   def write(v: UInt): Unit = {
-    enableIntr := v(4)
+    enableInt := v(4)
     rstRxFifo := v(1)
     rstTxFifo := v(0)
   }
 
-  def read(): UInt = Cat(enableIntr, 0.U(1.W), rstRxFifo, rstTxFifo)
+  def read(): UInt = Cat(enableInt, 0.U(1.W), rstRxFifo, rstTxFifo)
 }
 
 class StatReg extends UartReg {
-  val parrityError = UInt(1.W)
-  val frameError = UInt(1.W)
-  val overrunError = UInt(1.W)
-  val intrEnabled = UInt(1.W)
+  val parrity_error = UInt(1.W)
+  val frame_error = UInt(1.W)
+  val overrun_error = UInt(1.W)
+  val int_enabled = UInt(1.W)
   val txfifo_full = UInt(1.W)
   val txfifo_empty = UInt(1.W)
   val rxfifo_full = UInt(1.W)
   val rxfifo_valid = UInt(1.W)
 
   def write(v: UInt): Unit = {
-    parrityError := v(7)
-    frameError := v(6)
-    overrunError := v(5)
-    intrEnabled := v(4)
+    parrity_error := v(7)
+    frame_error := v(6)
+    overrun_error := v(5)
+    int_enabled := v(4)
     txfifo_full := v(3)
     txfifo_empty := v(2)
     rxfifo_full := v(1)
     rxfifo_valid := v(0)
   }
   def read(): UInt = Cat(
-    parrityError, frameError,
-    overrunError, intrEnabled,
+    parrity_error, frame_error,
+    overrun_error, int_enabled,
     txfifo_full, txfifo_empty,
     rxfifo_full, rxfifo_valid
   )
@@ -103,7 +103,6 @@ class RegTop(p: RAMIOParams)(debug: Boolean = false) extends Module {
   val w_rdsel_txfifo = (io.sram.addr === RegInfo.txFifo.U) && io.sram.wren.get
   val w_rdsel_stat = (io.sram.addr === RegInfo.stat.U) && io.sram.rden.get
   val w_wrsel_ctrl = (io.sram.addr === RegInfo.ctrl.U) && io.sram.wren.get
-
 
   // stat
   bw_stat.txfifo_empty := m_tx_fifo.io.rd.empty

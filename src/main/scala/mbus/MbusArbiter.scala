@@ -65,7 +65,7 @@ class MbusArbiter(p: MbusArbiterParams) extends Module {
 
   for ((io_in, idx) <- io.in.zipWithIndex) {
     val w_dport_sel = (m_issued_q.io.deq.bits === idx.U) && m_issued_q.io.deq.valid
-    w_dport_sel.suggestName(s"w_dport_sel_${idx}")
+    w_dport_sel.suggestName(s"w_dport_sel_$idx")
     io_in.r.get <> m_out_slice.io.in.r.get
     io_in.r.get.valid := w_dport_sel && m_out_slice.io.in.r.get.valid
     io_in.w.get.ready := w_dport_sel && m_out_slice.io.in.w.get.ready
