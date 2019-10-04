@@ -13,7 +13,7 @@ case object MbusWO extends MbusIOAttr
 case object MbusRW extends MbusIOAttr
 
 /**
-  * parameter class for MbusSramBridge
+  * Parameter class for MbusSramBridge
   * @param ioAttr IO port access attribute.
   * @param addrBits Address bus width.
   * @param dataBits Data bus width.

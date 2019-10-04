@@ -5,6 +5,15 @@ package mbus
 import chisel3._
 import chisel3.util._
 
+/**
+  * MbusSlice
+  * @param ioAttr IO port access attribute.
+  * @param addrBits Address bus width.
+  * @param dataBits Data bus width.
+  * @param cSlice True if command channel has register slice.
+  * @param rSlice True if read channel has register slice.
+  * @param wSlice True if write channel has register slice.
+  */
 class MbusSlice
 (
   ioAttr: MbusIOAttr,

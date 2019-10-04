@@ -7,10 +7,10 @@ import chisel3.util._
 
 
 /**
-  * parameter class for MbusArbiter
-  * @param ioAttr IO port access attribute.
-  * @param addrBits Address bus width.
-  * @param dataBits Data bus width.
+  * Parameter class for MbusArbiter
+  * @param ioAttr Mbus IO attribute.
+  * @param masterInfos Master memory maps.
+  * @param dataBits Data bits.
   */
 case class MbusArbiterParams
 (
@@ -41,6 +41,10 @@ class MbusArbiterIO(p: MbusArbiterParams) extends Bundle {
     new MbusArbiterIO(p).asInstanceOf[this.type]
 }
 
+/**
+  * MbusArbiter
+  * @param p Paramter object for MbusArbiter (MbusArbiterParams).
+  */
 class MbusArbiter(p: MbusArbiterParams) extends Module {
   val io = IO(new MbusArbiterIO(p))
 

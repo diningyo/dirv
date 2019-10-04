@@ -26,6 +26,7 @@ case class MbusICParams
   val decParams = Seq.fill(numOfMasters)(MbusDecoderParams(MbusRW, slaveInfos, dataBits))
   val arbParams = Seq.fill(numOfSlaves)(MbusArbiterParams(MbusRW, masterInfos, dataBits))
 }
+
 /**
   * MbusIC I/O
   * @param p Instance of MbusICParams
@@ -39,8 +40,8 @@ class MbusICIO(p: MbusICParams) extends Bundle {
 }
 
 /**
-  * Mbus Decoder
-  * @param p
+  * Mbus Interconnect
+  * @param p Instance of MbusICParams
   */
 //@chiselName
 class MbusIC(p: MbusICParams) extends Module {

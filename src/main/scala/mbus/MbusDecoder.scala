@@ -15,7 +15,7 @@ case class MbusPortParams
 )
 
 /**
-  * parameter class for MbusDecoder
+  * Parameter class for MbusDecoder
   * @param ioAttr IO port access attribute.
   * @param slaveInfos Slave module information. It contains base address and size.
   * @param dataBits Data bus width.
@@ -46,7 +46,7 @@ class MbusDecoderIO(p: MbusDecoderParams) extends Bundle {
 
 /**
   * Mbus Decoder
-  * @param p
+  * @param p Instance of MbusDecoderParams
   */
 //@chiselName
 class MbusDecoder(p: MbusDecoderParams) extends Module {
@@ -55,7 +55,7 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
     * Check destination address is in range or not.
     * @param dst_addr Input destination address.
     * @param addrMap Port address range.
-    * @return
+    * @return True if dst_addr is in the range of A and B.
     */
   def checkAddress(dst_addr: UInt, addrMap: (Int, Int)): Bool = {
     val start = addrMap._1
