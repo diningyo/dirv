@@ -1,5 +1,7 @@
 // See LICENSE for license details.
 
+import java.nio.file.Paths
+
 import chisel3._
 import dirv.{Config, Dirv}
 import mbus.{MbusIC, MbusICParams, MbusRW}
@@ -9,6 +11,7 @@ import peri.uart.{UartIO, UartTop}
 
 /**
   * Simulation environment top module
+  * Uart baudrate is 9600 @ 50MHz
   * @param prgHexFile riscv-tests hex file path
   * @param cfg Dirv's configuration instance
   */
@@ -51,6 +54,9 @@ class SysUart(prgHexFile: String)(implicit cfg: Config) extends Module {
     val t6 = Output(UInt(cfg.arch.xlen.W))
   })
 
+  // Tmp.
+  // 0x0000 - 0x7fff : Memory
+  // 0x8000 - 0x8100 : Uart
   val base_p = MbusICParams(
     MbusRW,
     Seq(
@@ -58,8 +64,8 @@ class SysUart(prgHexFile: String)(implicit cfg: Config) extends Module {
       (0x0,   0x1000)
     ),
     Seq(
-      (0x0,   32 * 1024),
-      (32 * 1024, 0x100)
+      (0x0,   32 * 1024), // MemTop (32KBytes)
+      (32 * 1024, 0x100)  // Uart
     ), 32)
 
   val mp = MemTopParams(64 * 1024, 32, prgHexFile)
@@ -121,15 +127,18 @@ class SysUart(prgHexFile: String)(implicit cfg: Config) extends Module {
   io.t6 := xregs(31)
 }
 
+/**
+  * Create SysUart RTL
+  */
 object ElaborateSysUart extends App {
 
-  implicit val cfg = Config(initAddr = BigInt("240", 16))
-  val file = "/home/diningyo/prj/risc-v/dirv/src/main/resources/csrc/build/sysuart.hex"
+  implicit val cfg = Config(initAddr = BigInt("200", 16))
+  val file = Paths.get(args(0))
 
   Driver.execute(Array(
     "-tn=SysUart",
     "-td=rtl/SysUart"
   ),
-    () => new SysUart(file)
+    () => new SysUart(file.toAbsolutePath.toString)
   )
 }
