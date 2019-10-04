@@ -16,7 +16,13 @@ This is my first trial project for designing RISC-V in Chisel.
 
 ## Demo
 
-Just now, this risc-v implementation is only passed [riscv-tests](https://github.com/riscv/riscv-tests).
+On Arty 35T, dirv can access to UART device and terminal shows "Hello, World".
+
+![Arty 35TでのHello World](./img/SysUart_demo.gif)
+
+### riscv-tests
+
+This dirv is passed [riscv-tests](https://github.com/riscv/riscv-tests).
 
 ```scala
 $ sbt
@@ -86,6 +92,8 @@ sbt:dirv> test
 - sbt
 - verilator
 - Build environment for RV32I (If you want to run riscv-test suite)
+- Vivado 2018.3(To FPGA synthesis)
+- [ARTY 35T](https://japan.xilinx.com/products/boards-and-kits/arty.html)(To see demo on your FPGA)
 
 ## Usage
 
@@ -182,7 +190,7 @@ Differnces of AXI are:
 |**write data channel**|-|-|-|
 |w_valid|O|1|valid signal for write data|
 |w_ready|I|1|valid signal for write data|
-|w_resp|I|1|error response signal for write(0:OK/1:Error)|
+<!--|w_resp|I|1|error response signal for write(0:OK/1:Error)|-->
 |w_strb|O|1|strobe signals for write to select which byte-lanes is active|
 |w_data|O|32|write data|
 |**read data channel**||||
@@ -199,6 +207,60 @@ Differnces of AXI are:
 
 ![img](./img/dirv_if_write.svg)
 
+## Environment of FPGA
+
+This repository has a sample FPGA project for Arty 35T. This sample design is just connect a dirv core to 1 memory and 1 UART by MbusIC (Mbus insterconnect). And all modules are written in Chisel. When you run this sample design on your Arty 35T device, you'll see a sentence "Hello, World!!" on your terminal which connected by UART.
+
+- 1 dirv
+- 1 memory
+- 1 Uart
+
+![SysUartのブロック図](./img/SysUart_block_diagram.svg)
+
+You can run sample FPGA design following steps.
+
+### How to build sample UART program
+
+```bash
+cd src/main/resources/csrc
+make
+```
+
+When you run `make` command, "sysuart.bin" will create at "src/main.resources/csrc/build".
+
+### How to generate RTL
+
+Execute below command on SBT shell.
+
+```scala
+$ sbt
+sbt:dirv> runMain ElaborateSysUart ./src/main/resources/csrc/build/sysuart.hex
+```
+
+### Synthesis
+
+Open below Vivado procject and press the `Generate Bitstream` to generate bitstream file for SysUart.
+
+```bash
+vivado fpga/arty/dirv-arty.xpr
+```
+
+### Run
+
+Upload bitstream (fpga/arty/dirv-arty.runs/impl_1/dirv_fpga_top.bit) to Arty 35T device.
+
+Next, connect to `/dev/ttyUSB1` on your terminal.
+
+
+Example) When you uses minicom, command is:
+
+```bash
+minicom -D /dev/ttyUSB1 -b 9600
+```
+
+And you press the CPU reset button, the sentence "Hello, World!!" appres on your terminal.
+
+![Arty 35Tのボタン設定](./img/Arty_reset_assign.png)
 
 ## TODO
 
