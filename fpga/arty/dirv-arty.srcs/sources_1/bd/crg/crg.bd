@@ -1,0 +1,178 @@
+{
+  "design": {
+    "design_info": {
+      "boundary_crc": "0xD569FE14690B1F60",
+      "device": "xc7a35ticsg324-1L",
+      "name": "crg",
+      "synth_flow_mode": "Singular",
+      "tool_version": "2018.3",
+      "validated": "true"
+    },
+    "design_tree": {
+      "dirv_clock_gen": "",
+      "dirv_reset_gen": ""
+    },
+    "ports": {
+      "sys_reset_o": {
+        "type": "rst",
+        "direction": "O",
+        "left": "0",
+        "right": "0",
+        "parameters": {
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "POLARITY": {
+            "value": "ACTIVE_HIGH",
+            "value_src": "const_prop"
+          }
+        }
+      },
+      "ext_cpu_reset_i": {
+        "type": "rst",
+        "direction": "I",
+        "parameters": {
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "POLARITY": {
+            "value": "ACTIVE_LOW",
+            "value_src": "default"
+          }
+        }
+      },
+      "sys_clock_o": {
+        "type": "clk",
+        "direction": "O",
+        "parameters": {
+          "ASSOCIATED_RESET": {
+            "value": "sys_reset_o"
+          },
+          "CLK_DOMAIN": {
+            "value": "/dirv_clock_gen_clk_out1",
+            "value_src": "ip_prop"
+          },
+          "FREQ_HZ": {
+            "value": "50000000",
+            "value_src": "ip_prop"
+          },
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "PHASE": {
+            "value": "0.0",
+            "value_src": "ip_prop"
+          }
+        }
+      },
+      "ext_clock_i": {
+        "type": "clk",
+        "direction": "I",
+        "parameters": {
+          "ASSOCIATED_RESET": {
+            "value": "ext_por_i:ext_cpu_reset_i"
+          },
+          "CLK_DOMAIN": {
+            "value": "crg_ext_clk_i"
+          },
+          "FREQ_HZ": {
+            "value": "100000000"
+          },
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "PHASE": {
+            "value": "0.000",
+            "value_src": "default"
+          }
+        }
+      },
+      "ext_por_i": {
+        "type": "rst",
+        "direction": "I",
+        "parameters": {
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "POLARITY": {
+            "value": "ACTIVE_HIGH"
+          }
+        }
+      }
+    },
+    "components": {
+      "dirv_clock_gen": {
+        "vlnv": "xilinx.com:ip:clk_wiz:6.0",
+        "xci_name": "crg_clk_wiz_0_0",
+        "parameters": {
+          "CLKOUT1_JITTER": {
+            "value": "151.636"
+          },
+          "CLKOUT1_PHASE_ERROR": {
+            "value": "98.575"
+          },
+          "CLKOUT1_REQUESTED_OUT_FREQ": {
+            "value": "50.000"
+          },
+          "MMCM_CLKFBOUT_MULT_F": {
+            "value": "10.000"
+          },
+          "MMCM_CLKOUT0_DIVIDE_F": {
+            "value": "20.000"
+          },
+          "MMCM_DIVCLK_DIVIDE": {
+            "value": "1"
+          }
+        }
+      },
+      "dirv_reset_gen": {
+        "vlnv": "xilinx.com:ip:proc_sys_reset:5.0",
+        "xci_name": "crg_proc_sys_reset_0_0"
+      }
+    },
+    "nets": {
+      "clk_wiz_0_clk_out1": {
+        "ports": [
+          "dirv_clock_gen/clk_out1",
+          "dirv_reset_gen/slowest_sync_clk",
+          "sys_clock_o"
+        ]
+      },
+      "clk_wiz_0_locked": {
+        "ports": [
+          "dirv_clock_gen/locked",
+          "dirv_reset_gen/dcm_locked"
+        ]
+      },
+      "proc_sys_reset_0_peripheral_reset": {
+        "ports": [
+          "dirv_reset_gen/peripheral_reset",
+          "sys_reset_o"
+        ]
+      },
+      "ext_reset_i_1": {
+        "ports": [
+          "ext_cpu_reset_i",
+          "dirv_reset_gen/ext_reset_in"
+        ]
+      },
+      "ext_clock_i_1": {
+        "ports": [
+          "ext_clock_i",
+          "dirv_clock_gen/clk_in1"
+        ]
+      },
+      "ext_reset_i_2": {
+        "ports": [
+          "ext_por_i",
+          "dirv_clock_gen/reset"
+        ]
+      }
+    }
+  }
+}

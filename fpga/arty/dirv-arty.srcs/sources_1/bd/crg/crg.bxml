@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root MajorVersion="0" MinorVersion="36">
+  <CompositeFile CompositeFileTopName="crg" CanBeSetAsTop="false" CanDisplayChildGraph="true">
+    <Description>Composite Fileset</Description>
+    <Generation Name="SYNTHESIS" State="RESET" Timestamp="1570187579"/>
+    <Generation Name="IMPLEMENTATION" State="RESET" Timestamp="1570187579"/>
+    <Generation Name="SIMULATION" State="RESET" Timestamp="1570187579"/>
+    <Generation Name="HW_HANDOFF" State="RESET" Timestamp="1570187579"/>
+    <FileCollection Name="SOURCES" Type="SOURCES">
+      <File Name="ip/crg_clk_wiz_0_0/crg_clk_wiz_0_0.xci" Type="IP">
+        <Instance HierarchyPath="dirv_clock_gen"/>
+        <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="true" IsStatusTracked="true"/>
+        <Library Name="xil_defaultlib"/>
+        <UsedIn Val="SYNTHESIS"/>
+        <UsedIn Val="IMPLEMENTATION"/>
+        <UsedIn Val="SIMULATION"/>
+      </File>
+      <File Name="ip/crg_proc_sys_reset_0_0/crg_proc_sys_reset_0_0.xci" Type="IP">
+        <Instance HierarchyPath="dirv_reset_gen"/>
+        <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="true" IsStatusTracked="true"/>
+        <Library Name="xil_defaultlib"/>
+        <UsedIn Val="SYNTHESIS"/>
+        <UsedIn Val="IMPLEMENTATION"/>
+        <UsedIn Val="SIMULATION"/>
+      </File>
+    </FileCollection>
+  </CompositeFile>
+</Root>
