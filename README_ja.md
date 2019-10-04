@@ -51,7 +51,7 @@ sbt:dirv> runMain Elaborate
 ### riscv-testsの実行
 
 1. riscv-testsのビルド
-    1. 事前に`RISCV`
+    1. 事前にRISC-Vのクロスコンパイラの設定が必要
 
 ```bash
 $ cd src/test/resources/
