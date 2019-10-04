@@ -39,15 +39,6 @@ $ cd dirv
 $ git submodule update --init --recursive
 ```
 
-### RTLの生成
-
-sbtシェル上から以下のコマンドを実行。
-
-```scala
-$ sbt
-sbt:dirv> runMain Elaborate
-```
-
 ### riscv-testsの実行
 
 1. riscv-testsのビルド
@@ -131,6 +122,15 @@ sbt:dirv> testOnly DirvRV32ITester
 [info] Passed: Total 48, Failed 0, Errors 0, Passed 48
 ```
 
+#### RTLの生成
+
+sbtシェル上から以下のコマンドを実行。
+
+```scala
+$ sbt
+sbt:dirv> runMain Elaborate
+```
+
 #### 波形を取得したい場合
 
 ```scala
@@ -185,7 +185,7 @@ AXIとの違いは以下の通りです：
 |**ライトデータ・チャネル**|-|-|-|
 |w_valid|O|1|ライトデータのvalid信号|
 |w_ready|I|1|ライトデータのready信号|
-<!--|w_resp|I|1|ライトのエラー応答(0:OK/1:Error)|-->
+|w_resp|I|1|ライトのエラー応答(0:OK/1:Error)|
 |w_strb|O|1|ライトのstrobe信号|
 |w_data|O|32|ライトデータ|
 |**リードデータ・チャネル**||||
@@ -256,9 +256,18 @@ cd src/main/resources/csrc
 make
 ```
 
+### RTLの生成
+
+sbtシェル上から以下のコマンドを実行。
+
+```scala
+$ sbt
+sbt:dirv> runMain ElaborateSysUart ./src/main/resources/csrc/build/sysuart.hex
+```
+
 ### 合成
 
-以下のプロジェクトをVivadoで開き`Generate Bitstread`をおしてビットストリームを生成。
+以下のプロジェクトをVivadoで開き`Generate Bitstream`をおしてビットストリームを生成。
 
 ```bash
 vivado fpga/arty/dirv-arty.xpr
