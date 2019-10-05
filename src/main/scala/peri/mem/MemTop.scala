@@ -34,6 +34,10 @@ class MemTopIO(p: MemTopParams) extends Bundle {
   override def cloneType: this.type = new MemTopIO(p).asInstanceOf[this.type]
 }
 
+/**
+  * Memory top module
+  * @param p Object of MemTopParams
+  */
 class MemTop(p: MemTopParams) extends Module {
   val io = IO(new MemTopIO(p))
 
@@ -41,10 +45,13 @@ class MemTop(p: MemTopParams) extends Module {
 
   val m_imem_brg = Module(new MbusSramBridge(p.iBrgParams))
   val m_dmem_brg = Module(new MbusSramBridge(p.dBrgParams))
+  val brg_and_ports = Seq(
+    (m_imem_brg, io.imem, m_ram.io.a),
+    (m_dmem_brg, io.dmem, m_ram.io.b)
+  )
 
-  m_imem_brg.io.mbus <> io.imem
-  m_dmem_brg.io.mbus <> io.dmem
-
-  m_ram.io.a <> m_imem_brg.io.sram
-  m_ram.io.b <> m_dmem_brg.io.sram
+  for ((m_brg, mem_top_port, ram_port) <- brg_and_ports) {
+    m_brg.io.mbus <> mem_top_port
+    ram_port <> m_brg.io.sram
+  }
 }
