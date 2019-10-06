@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: Check
         run:
-          ls src/test/resources
+          ls src/test/resources/riscv-tests -l
       - name: Build verilator
         run: |
           sudo apt install verilator
