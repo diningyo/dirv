@@ -1,0 +1,29 @@
+name: Dirv-regression
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build verilator
+        run: |
+          sudo apt install verilator
+        #  sudo apt install flex bison
+        #  wget https://www.veripool.org/ftp/verilator-4.018.tgz
+        #  tar xf verilator-4.018.tgz
+        #  cd verilator-4.018
+        #  ./configure
+        #  make -j 2
+        #  sudo make install
+        #  verilator --version
+      - name: Install sbt
+        run: |
+          wget https://piccolo.link/sbt-1.2.8.tgz
+          tar xf sbt-1.2.8.tgz
+      - name: Run dirv test
+        run:
+          ./sbt/bin/sbt "testOnly DirvRV32ITester"
