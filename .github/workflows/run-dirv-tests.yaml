@@ -9,6 +9,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - name: Check
+        run:
+          ls src/test/resources
       - name: Build verilator
         run: |
           sudo apt install verilator
