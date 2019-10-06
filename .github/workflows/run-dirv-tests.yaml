@@ -9,9 +9,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Check
-        run:
-          ls src/test/resources/riscv-tests -l
       - name: Build verilator
         run: |
           sudo apt install verilator
@@ -27,6 +24,11 @@ jobs:
         run: |
           wget https://piccolo.link/sbt-1.2.8.tgz
           tar xf sbt-1.2.8.tgz
-      - name: Run dirv test
+      - name: Download and extract tests
+        run: |
+          git clone https://github.com/diningyo/misc-data.git
+          tar Jxf misc-data/isa.tar.xz
+          mv isa src/test/resources/riscv-tests/
+      - name: Run dirv tests
         run:
           ./sbt/bin/sbt "testOnly DirvRV32ITester"
