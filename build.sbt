@@ -1,4 +1,4 @@
-// See README.md for license details.
+// See LICENSE for license details.
 
 def scalacOptionsVersion(scalaVersion: String): Seq[String] = {
   Seq() ++ {
@@ -41,12 +41,11 @@ resolvers ++= Seq(
 
 // Provide a managed dependency on X if -DXVersion="" is supplied on the command line.
 val defaultVersions = Map(
-  "chisel3" -> "3.1.+",
-  "chisel-iotesters" -> "[1.2.5,1.3-SNAPSHOT[",
-  "dsptools" -> "1.1.8"
+  "chisel3" -> "3.2.0",
+  "chisel-iotesters" -> "1.3.0"
   )
 
-libraryDependencies ++= Seq("chisel3","chisel-iotesters", "dsptools").map {
+libraryDependencies ++= Seq("chisel3","chisel-iotesters").map {
   dep: String => "edu.berkeley.cs" %% dep % sys.props.getOrElse(dep + "Version", defaultVersions(dep)) }
 
 scalacOptions ++= scalacOptionsVersion(scalaVersion.value)
