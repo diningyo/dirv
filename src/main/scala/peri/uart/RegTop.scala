@@ -106,7 +106,7 @@ class RegTop(p: RAMIOParams)(debug: Boolean = false) extends Module {
 
   // stat
   bw_stat.txfifo_empty := m_tx_fifo.io.rd.empty
-  bw_stat.txfifo_full := !m_tx_fifo.io.rd.empty
+  bw_stat.txfifo_full := m_tx_fifo.io.full
   bw_stat.rxfifo_full := m_rx_fifo.io.full
   bw_stat.rxfifo_valid := !m_rx_fifo.io.rd.empty
 
