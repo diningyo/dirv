@@ -201,7 +201,8 @@ class UartTopTester extends BaseTester {
     } should be (true)
   }
 
-  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data. [peri.uart-tx-001]" in {
+  it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data." +
+    " [peri.uart-tx-001]" in {
     val outDir = dutName + "_uart-tx-001"
     val args = getArgs(Map(
       "--top-name" -> dutName,
