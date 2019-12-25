@@ -78,9 +78,7 @@ class Ifu(implicit cfg: Config) extends Module {
   qInstWren := io.ifu2ext.r.get.valid && (!qInstIsFull)
   qInstRden := io.ifu2idu.valid && io.ifu2idu.ready
 
-  when (qInstFlush) {
-    qInst(0) := dirv.Constants.nop
-  } .elsewhen (qInstWren) {
+  when (qInstWren) {
     qInst(qInstWrPtr) := io.ifu2ext.r.get.bits.data
   }
 
@@ -98,7 +96,7 @@ class Ifu(implicit cfg: Config) extends Module {
 
   when (qInstFlush) {
     qInstDataNum := 0.U
-  } .elsewhen (qInstRden && qInstRden) {
+  } .elsewhen (qInstRden && qInstWren) {
     qInstDataNum := qInstDataNum
   } .elsewhen (qInstRden) {
     qInstDataNum := qInstDataNum - 1.U
