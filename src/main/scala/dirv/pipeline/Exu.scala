@@ -50,17 +50,6 @@ class Exu(implicit cfg: Config) extends Module{
   // PC
   val currPc = RegInit(cfg.initAddr.U)
 
-  //
-  val updatePcReq = Wire(Bool())
-  val initPcSeq = Seq.fill(3)(RegInit(false.B))
-  val initPc = !initPcSeq(2) && initPcSeq(1)
-
-  when (!initPcSeq.reduce(_ && _)) {
-    (Seq(true.B) ++ initPcSeq).zip(initPcSeq).foreach{case (c, n) => n := c}
-  }
-
-  updatePcReq := initPc
-
   when (io.idu2exu.inst.valid && io.idu2exu.inst.ready) {
     when (io.exu2ifu.updatePcReq) {
       currPc := io.exu2ifu.updatePc
@@ -153,7 +142,7 @@ class Exu(implicit cfg: Config) extends Module{
   io.idu2exu.inst.ready := !io.lsu2exu.stallReq
 
   //
-  io.exu2ifu.updatePcReq := jmpPcReq || updatePcReq
+  io.exu2ifu.updatePcReq := jmpPcReq
   io.exu2ifu.updatePc := jmpPc
   io.exu2ifu.stopFetch := false.B
 
