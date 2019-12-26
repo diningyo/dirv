@@ -53,6 +53,24 @@ class Ifu(implicit cfg: Config) extends Module {
 
   val sIdle :: sFetch :: Nil = Enum(2)
 
+  //
+  val initPcSeq = Seq.fill(3)(RegInit(false.B))
+  val initPc = !initPcSeq(2) && initPcSeq(1)
+
+  when (!initPcSeq.reduce(_ && _)) {
+    (Seq(true.B) ++ initPcSeq).zip(initPcSeq).foreach{case (c, n) => n := c}
+  }
+
+  val qIssuedCtr = RegInit(0.U(2.W))
+
+  when (io.ifu2ext.c.fire && io.ifu2ext.r.get.fire) {
+    qIssuedCtr := qIssuedCtr
+  } .elsewhen(io.ifu2ext.c.fire) {
+    qIssuedCtr := qIssuedCtr + 1.U
+  } .elsewhen(io.ifu2ext.r.get.fire) {
+    qIssuedCtr := qIssuedCtr - 1.U
+  }
+
   val qInstFlush = io.exu2ifu.updatePcReq
   val qInstWren = Wire(Bool())
   val qInstRden = Wire(Bool())
@@ -62,23 +80,34 @@ class Ifu(implicit cfg: Config) extends Module {
   val qInstHasData = Wire(Bool())
   val qInst = RegInit(VecInit(Seq.fill(2)(0.U(cfg.dataBits.W))))
 
+  val qInvalidReq = RegInit(0.U(2.W))
+
   val imemAddrReg = RegInit(cfg.initAddr.U)
   val fsm = RegInit(sIdle)
 
-  when (qInstWren) {
-    when (io.exu2ifu.updatePcReq) {
-      imemAddrReg := io.exu2ifu.updatePc + 4.U
-    } .otherwise {
+  when (io.exu2ifu.updatePcReq) {
+    imemAddrReg := io.exu2ifu.updatePc
+  } .otherwise {
+    when (io.ifu2ext.c.fire) {
       imemAddrReg := imemAddrReg + 4.U
     }
   }
 
+  // for prevending invalid instruction puts qInst.
+  when (io.exu2ifu.updatePcReq) {
+    qInvalidReq := qIssuedCtr
+  } .elsewhen((qInvalidReq =/= 0.U) && io.ifu2ext.r.get.fire) {
+    qInvalidReq := qInvalidReq - 1.U
+  }
+
   // Instruction FIFO
   val qInstIsFull = Wire(Bool())
-  qInstWren := io.ifu2ext.r.get.valid && (!qInstIsFull)
+  qInstWren := io.ifu2ext.r.get.valid && (qInvalidReq === 0.U) && (!qInstIsFull)
   qInstRden := io.ifu2idu.valid && io.ifu2idu.ready
 
-  when (qInstWren) {
+  when (qInstFlush) {
+    qInst(0) := dirv.Constants.nop
+  } .elsewhen (qInstWren) {
     qInst(qInstWrPtr) := io.ifu2ext.r.get.bits.data
   }
 
@@ -110,7 +139,7 @@ class Ifu(implicit cfg: Config) extends Module {
   // state
   switch (fsm) {
     is (sIdle) {
-      when (io.exu2ifu.updatePcReq & !io.exu2ifu.stopFetch) {
+      when ((initPc || io.exu2ifu.updatePcReq) & !io.exu2ifu.stopFetch) {
         fsm := sFetch
       }
     }
@@ -123,7 +152,7 @@ class Ifu(implicit cfg: Config) extends Module {
 
   // External <-> IF
   io.ifu2ext.c.valid := (fsm === sFetch)
-  io.ifu2ext.c.bits.addr := Mux(io.exu2ifu.updatePcReq, io.exu2ifu.updatePc, imemAddrReg)
+  io.ifu2ext.c.bits.addr := imemAddrReg
   io.ifu2ext.c.bits.cmd := MbusCmd.rd.U
   io.ifu2ext.c.bits.size := MbusSize.word.U
   io.ifu2ext.r.get.ready := !qInstIsFull
