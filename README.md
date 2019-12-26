@@ -26,7 +26,7 @@ This dirv is passed [riscv-tests](https://github.com/riscv/riscv-tests).
 
 ```scala
 $ sbt
-sbt:dirv> test
+sbt:dirv> testOnly DirvRV32ITester
 [info] DirvRV32ITester:
 [info] Dirv
 [info] - must execute RISC-V instruction add        - [riscv-tests:rv32ui-000]
@@ -137,7 +137,7 @@ sbt:dirv> test
 #### To dump waveform
 
 ```scala
-sbt:dirv> testOnly dirv.DirvRV32ITester -D--generate-vcd-output=on
+sbt:dirv> testOnly dirv.DirvRV32ITester -- -D--generate-vcd-output=on
 ```
 
 #### To run specific tests
@@ -169,7 +169,7 @@ And test_name and test_no are:
 Dirv has orignal bus interface which is similar to AMBA AXI bus protocol.
 Differnces of AXI are:
 
-- A command channel is commoon both of read and write. But data channel is separate.
+- A command channel is common both of read and write. But data channel is separate.
 - NOT support burst access.
 - The command only has basic command fields describing bellow, and doesn't have extra attribute fields such as AxCache, AxProt in AXI.
   - addr
@@ -260,7 +260,7 @@ minicom -D /dev/ttyUSB1 -b 9600
 
 And you press the CPU reset button, the sentence "Hello, World!!" appres on your terminal.
 
-![Arty 35Tのボタン設定](./img/Arty_reset_assign.png)
+![Reset button assignment on Arty 35T](./img/Arty_reset_assign.png)
 
 ## TODO
 

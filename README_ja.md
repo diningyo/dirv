@@ -134,7 +134,7 @@ sbt:dirv> runMain Elaborate
 #### 波形を取得したい場合
 
 ```scala
-sbt:dirv> testOnly dirv.DirvRV32ITester -D--generate-vcd-output=on
+sbt:dirv> testOnly dirv.DirvRV32ITester -- -D--generate-vcd-output=on
 ```
 
 #### 特定のテストを実行したい場合
