@@ -37,7 +37,7 @@ module RAM1RO1RW
     // imem side
     always @(posedge clk) begin
         if (rena) begin
-            qa = mem[addra];
+            qa <= mem[addra];
         end
     end
 
@@ -45,7 +45,7 @@ module RAM1RO1RW
     always @(posedge clk) begin
         // read
         if (renb) begin
-            qb = mem[addrb];
+            qb <= mem[addrb];
         end
 
         // write
