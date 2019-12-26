@@ -89,12 +89,11 @@ class MbusSramBridge(p: MbusSramBridgeParams) extends Module {
   //
   // Queue : read connection
   //
-  m_cmd_q.ready := w_sram_wr_ready || w_sram_read_req
+  m_cmd_q.ready := w_sram_wr_ready || (w_sram_read_req && m_rd_q.ready)
 
   //
   // Mbus I/O
   //
-  io.mbus.c.ready := m_cmd_q.ready
   io.mbus.r.get.valid := m_rd_q.valid
   io.mbus.r.get.bits.data := m_rd_q.bits.data
   io.mbus.r.get.bits.resp := m_rd_q.bits.resp
