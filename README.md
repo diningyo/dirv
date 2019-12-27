@@ -228,6 +228,14 @@ make
 
 When you run `make` command, "sysuart.bin" will create at "src/main.resources/csrc/build".
 
+#### Test
+
+After building UART program, you can run test with "sysuart.bin"
+
+```bash
+testOnly SysUartTester
+```
+
 ### How to generate RTL
 
 Execute below command on SBT shell.
