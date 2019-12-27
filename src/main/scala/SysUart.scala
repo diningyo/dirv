@@ -15,7 +15,7 @@ import peri.uart.{UartIO, UartTop}
   * @param prgHexFile riscv-tests hex file path
   * @param cfg Dirv's configuration instance
   */
-class SysUart(prgHexFile: String)(implicit cfg: Config) extends Module {
+class SysUart(prgHexFile: String)(baudrate: Int, clockFreq: Int)(implicit cfg: Config) extends Module {
   val io = IO(new Bundle {
     val fin = Output(Bool())
     val uart = new UartIO()
@@ -74,8 +74,8 @@ class SysUart(prgHexFile: String)(implicit cfg: Config) extends Module {
   val m_mbus_ic = Module(new MbusIC(base_p))
   m_mbus_ic.io := DontCare
   val m_mem = Module(new MemTop(mp))
-  val m_uart = Module(new UartTop(9600, 50))
-  val m_dirv = Module(new Dirv)
+  val m_uart = Module(new UartTop(baudrate, clockFreq))
+  val m_dirv = Module(new Dirv())
 
   // connect mem and dut
   m_mem.io.imem <> m_dirv.io.imem
@@ -133,12 +133,14 @@ class SysUart(prgHexFile: String)(implicit cfg: Config) extends Module {
 object ElaborateSysUart extends App {
 
   implicit val cfg = Config(initAddr = BigInt("200", 16))
+  val baudrate = 9600
+  val clockFreq = 50
   val file = Paths.get(args(0))
 
   Driver.execute(Array(
     "-tn=SysUart",
     "-td=rtl/SysUart"
   ),
-    () => new SysUart(file.toAbsolutePath.toString)
+    () => new SysUart(file.toAbsolutePath.toString)(baudrate, clockFreq)
   )
 }

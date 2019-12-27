@@ -16,7 +16,9 @@ import test.util._
 class SimDTMSysUart(
   limit: Int,
   abortEn: Boolean = true
-)(prgHexFile: String)(implicit cfg: Config) extends BaseSimDTM(limit, abortEn) {
+)(prgHexFile: String)
+(baudrate: Int, clockFreq: Int)
+(implicit cfg: Config) extends BaseSimDTM(limit, abortEn) {
   val io = IO(new Bundle with BaseSimDTMIO {
     val dut = new Bundle {
       val fin = Output(Bool())
@@ -57,7 +59,7 @@ class SimDTMSysUart(
     }
   })
 
-  val dut = Module(new SysUart(prgHexFile))
+  val dut = Module(new SysUart(prgHexFile)(baudrate, clockFreq))
 
   io.dut <> dut.io
 
