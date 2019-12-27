@@ -284,7 +284,7 @@ class UartTopTester extends BaseTester {
           }
           readReg(stat, 0x4) // TxFifoEmpty
           writeReg(txFifo, data)
-          readReg(stat, 0x8) // TxFifoFull
+          readReg(stat, 0x0) // TxFifoFull
         }
       }
     } should be (true)
