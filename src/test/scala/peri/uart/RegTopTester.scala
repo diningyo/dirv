@@ -36,6 +36,7 @@ class RegTopUnitTester(c: RegTop) extends PeekPokeTester(c) {
     poke(c.io.sram.addr, addr)
     poke(c.io.sram.rden.get, true)
     step(1)
+    poke(c.io.sram.rden.get, false)
     expect(c.io.sram.rddv.get, true)
     expect(c.io.sram.rddata.get, exp)
   }
@@ -70,7 +71,7 @@ class RegTopTester extends BaseTester {
 
   val sp = MbusSramBridgeParams(MbusRW, 4, 32)
 
-  it should "be able to write TxFifo register from Host" in {
+  it should s"be able to write TxFifo register from Host [$dutName-001]" in {
 
     val outDir = dutName + "-txfifo"
     val args = getArgs(Map(
@@ -91,7 +92,7 @@ class RegTopTester extends BaseTester {
     } should be (true)
   }
 
-  it should "be asserted tx.empty when host write TxFifo register" in {
+  it should s"be asserted tx.empty when host write TxFifo register [$dutName-002]" in {
 
     val outDir = dutName + "-txfifo-txempty"
     val args = getArgs(Map(
@@ -111,16 +112,33 @@ class RegTopTester extends BaseTester {
     } should be (true)
   }
 
-  it should "be able to read Stat register from Host" in {
-    fail
+  it should s"be able to read Stat register from Host [$dutName-003]" in {
+    val outDir = dutName + "-stat"
+    val args = getArgs(Map(
+      "--top-name" -> dutName,
+      "--target-dir" -> s"test_run_dir/$outDir"
+    ))
+
+    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
+      c => new RegTopUnitTester(c) {
+        val txData = 0xff
+
+        idle()
+        hwrite(RegInfo.stat, 0xff)
+        idle()
+        hread(RegInfo.stat, 0x4)
+        idle()
+        step(5)
+      }
+    } should be (true)
   }
 
-  it should "be able to read Ctrl register from Host" in {
-    fail
+  ignore should s"be able to read Ctrl register from Host [$dutName-004]" in {
   }
 
   behavior of "RxFifo"
-  it should "be written from CtrlHost" in {
+
+  it should s"be written from CtrlHost [$dutName-101]" in {
     val outDir = dutName + "-rxfifo-write"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -140,7 +158,7 @@ class RegTopTester extends BaseTester {
     } should be (true)
   }
 
-  it should "be able to read RxFifo register from Host" in {
+  it should s"be able to read RxFifo register from Host [$dutName-102]" in {
 
     val outDir = dutName + "-rxfifo-read"
     val args = getArgs(Map(
