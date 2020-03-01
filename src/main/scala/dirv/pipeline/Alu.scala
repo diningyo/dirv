@@ -36,7 +36,7 @@ class Alu(implicit cfg: Config) extends Module {
     (inst.jal || inst.jalr) -> (io.pc + 4.U)
   ))
   val rs2 = MuxCase(io.rs2, Seq(
-    inst.csrValid -> 0.U,
+    (inst.csrValid || inst.jal || inst.jalr) -> 0.U,
     inst.storeValid -> inst.immS,
     (inst.slli || inst.srli || inst.srai) -> inst.shamt,
     (inst.aluImm || inst.loadValid) -> inst.immI,
