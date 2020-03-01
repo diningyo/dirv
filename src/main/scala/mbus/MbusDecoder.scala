@@ -3,7 +3,6 @@
 package mbus
 
 import chisel3._
-import chisel3.core.dontTouch
 import chisel3.util._
 
 
@@ -68,6 +67,8 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
   val m_in_slice = Module(new MbusSlice(p.ioAttr, p.addrBits, p.dataBits,
     cSlice = false, rSlice = false, wSlice = false))
 
+  val w_port_sels = Seq.fill(p.addrMap.length)(Wire(Bool()))
+
   m_in_slice.io.in <> io.in
 
   for (((out_port, info), idx) <- (io.out zip p.addrMap).zipWithIndex) {
@@ -75,6 +76,8 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
 
     val w_port_sel = checkAddress(m_in_slice.io.out.c.bits.addr, info)
     w_port_sel.suggestName(s"w_port_sel_$idx")
+
+    w_port_sels(idx) := w_port_sel
 
     val w_wr_req = w_port_sel && (m_in_slice.io.out.c.bits.cmd === MbusCmd.wr.U)
     w_wr_req.suggestName(s"w_wr_req_$idx")
@@ -98,6 +101,15 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
     // out(N).r.get.ready reflects m_in_slice.io.out.r.get.ready
     out_port.r.get.ready := m_in_slice.io.out.r.get.ready
   }
+
+  // write ready control
+  val w_chosen = PriorityEncoder(w_port_sels)
+  val m_chosen_q = Module(new Queue(UInt(log2Ceil(p.addrMap.length).W), 1, true, true))
+
+  m_chosen_q.io.enq.valid := m_in_slice.io.out.c.fire()
+  m_chosen_q.io.enq.bits := w_chosen
+  m_chosen_q.io.deq.ready := io.out(m_chosen_q.io.deq.bits).w.get.fire()
+  m_in_slice.io.out.w.get.ready := io.out(m_chosen_q.io.deq.bits).w.get.ready
 
   // read
   val w_rd_valid = io.out.map(_.r.get.valid)
