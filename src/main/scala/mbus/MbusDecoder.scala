@@ -62,6 +62,10 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
     (start.U <= dst_addr) && (dst_addr < end.U)
   }
 
+  p.addrMap.foreach {
+    case (s, e) => println(f"(start, end) = ($s%x, $e%x)")
+  }
+
   val io = IO(new MbusDecoderIO(p))
 
   val m_in_slice = Module(new MbusSlice(p.ioAttr, p.addrBits, p.dataBits,
@@ -79,7 +83,7 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
 
     w_port_sels(idx) := w_port_sel
 
-    val w_wr_req = w_port_sel && (m_in_slice.io.out.c.bits.cmd === MbusCmd.wr.U)
+    val w_wr_req = w_port_sel && m_in_slice.io.out.c.valid && (m_in_slice.io.out.c.bits.cmd === MbusCmd.wr.U)
     w_wr_req.suggestName(s"w_wr_req_$idx")
 
     out_port.c.valid := m_in_slice.io.out.c.valid && w_port_sel
