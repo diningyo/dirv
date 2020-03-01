@@ -26,7 +26,7 @@ class MbusDecoderUnitTester(c: SimDTMMbusDecoder) extends PeekPokeTester(c) {
     poke(in_r.ready, true)
     for (i <- 0 until c.p.addrMap.length) {
       poke(out(i).c.ready, true)
-      poke(out(i).w.get.ready, true)
+      poke(out(i).w.get.ready, false)
       poke(out(i).r.get.valid, false)
     }
     step(cycle)
@@ -132,6 +132,11 @@ class MbusDecoderTester extends BaseTester {
           idle(10)
           write_req(addr)
           write_data(0xf, wrData)
+          for (i <- base_p.addrMap.indices) {
+            val ready = if (i == dst_port) true else false
+            poke(out(i).w.get.ready, ready)
+          }
+          expect(c.io.dut.in.w.get.ready, true)
           expect(out(dst_port).c.valid, true)
           expect(out(dst_port).w.get.valid, true)
           expect(out(dst_port).w.get.bits.data, wrData)

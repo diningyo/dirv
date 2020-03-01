@@ -46,9 +46,11 @@ class MbusArbiterUnitTester(c: SimDTMMbusArbiter) extends PeekPokeTester(c) {
     * @param data Data to write
     */
   def write_data(port: Int, strb: Int,  data: BigInt): Unit = {
+    poke(c.io.dut.out.w.get.ready, true)
     poke(in(port).w.get.valid, true)
     poke(in(port).w.get.bits.data, data)
     poke(in(port).w.get.bits.strb, strb)
+    expect(in(port).w.get.ready, true)
   }
 
   /**
