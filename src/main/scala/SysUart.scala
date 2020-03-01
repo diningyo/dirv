@@ -60,12 +60,12 @@ class SysUart(prgHexFile: String)(baudrate: Int, clockFreq: Int)(implicit cfg: C
   val base_p = MbusICParams(
     MbusRW,
     Seq(
-      (0x0,   0x1000),
-      (0x0,   0x1000)
+      (0x0,    0x8000),
+      (0x8000, 0x100)
     ),
     Seq(
-      (0x0,   32 * 1024), // MemTop (32KBytes)
-      (32 * 1024, 0x100)  // Uart
+      (0x0,    0x8000), // MemTop (32KBytes)
+      (0x8000, 0x8100)  // Uart
     ), 32)
 
   val mp = MemTopParams(64 * 1024, 32, prgHexFile)
