@@ -5,6 +5,10 @@ package mbus
 import chisel3._
 import test.util._
 
+class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int) extends Module {
+  val io = MbusIO(ioType, addrBits, dataBits)
+}
+
 /**
   * Testbench top module for MbusIC
   * @param limit Maximum cycles of simulation.
