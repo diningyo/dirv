@@ -22,8 +22,9 @@ class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int)(randBits: Int, seed
   val w_rand_data = m_glfsr.io.out
 
   io.c.valid := true.B
-  io.c.bits := true.B
-
+  io.c.bits.addr := true.B
+  io.c.bits.cmd := true.B
+  io.c.bits.size := 0.U
 }
 
 /**
