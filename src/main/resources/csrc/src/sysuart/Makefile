@@ -23,7 +23,7 @@ defines := $(addprefix -D, $(user_defines))
 
 src_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 
-FLAGS = -Os
+FLAGS = -O0
 FLAGS_STR = "$(FLAGS)"
 
 VPATH += $(src_dir) $(inc_dir)
