@@ -11,6 +11,8 @@
 #define UART_CTRL    0x800c
 /* @} */
 
+#define UART_TX_FIFO_FULL 0x1 << 3
+
 /**
  * @fn void puts(char c)
  * @brief Put character.
@@ -18,6 +20,11 @@
  */
 void puts(char c)
 {
+    volatile unsigned char stat = *((char*)UART_STAT);
+    while ((stat & UART_TX_FIFO_FULL) == UART_TX_FIFO_FULL) {
+        stat = *((char*)UART_STAT);
+    }
+
     *((char*)UART_TX_FIFO) = c;
 }
 
@@ -26,7 +33,7 @@ void puts(char c)
  */
 int main()
 {
-    char *str = "Hello, World!\r\n";
+    char *str = "Hello, World! Hello, World!\r\n";
 
     while (*str != '\0') {
         puts(*str++);
