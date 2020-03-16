@@ -19,12 +19,32 @@ class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int)(randBits: Int, seed
   m_glfsr.io.seed.valid := r_rand_valid
   m_glfsr.io.seed.bits := VecInit(seed.U.asBools())
 
+  val m_cmd_q = Module(new Queue(chiselTypeOf(io.c.bits), 1, true, true))
+  val m_wr_q = Module(new Queue(chiselTypeOf(io.w.get.bits), 1, true, true))
+  val m_rd_q = Module(new Queue(chiselTypeOf(io.r.get.bits), 1, true, true))
+
   val w_rand_data = m_glfsr.io.out
 
-  io.c.valid := true.B
-  io.c.bits.addr := true.B
-  io.c.bits.cmd := true.B
-  io.c.bits.size := 0.U
+  m_cmd_q.io.enq.valid := true.B
+  m_cmd_q.io.enq.bits.addr := 0.U
+  m_cmd_q.io.enq.bits.size := 0.U
+  m_cmd_q.io.enq.bits.cmd := 0.U
+
+  m_wr_q.io.enq.valid := true.B
+  m_wr_q.io.enq.bits.data := 0.U
+
+  m_rd_q.io.enq.valid := true.B
+  m_rd_q.io.enq.bits.data := 0.U
+
+  m_cmd_q.io.enq.valid := true.B
+  m_cmd_q.io.enq.bits.addr := 0.U
+  m_cmd_q.io.enq.bits.size := 0.U
+  m_cmd_q.io.enq.bits.cmd := 0.U
+
+
+  io.c <> m_cmd_q.io.deq
+  io.w.get <> m_wr_q.io.deq
+  io.r.get <> m_rd_q.io.deq
 }
 
 /**
