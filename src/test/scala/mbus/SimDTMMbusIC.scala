@@ -34,6 +34,12 @@ class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int)(randBits: Int, seed
   m_issued_q.io.enq.valid := m_cmd_q.io.deq.fire()
   m_issued_q.io.enq.bits := m_cmd_q.io.deq.bits
 
+  when (m_issued_q.io.deq.bits.cmd === MbusCmd.rd.U) {
+    m_issued_q.io.deq.ready := m_wr_q.io.deq.valid
+  } .otherwise {
+    m_issued_q.io.deq.ready := m_rd_q.io.deq.valid
+  }
+
   m_wr_q.io.enq.valid := true.B
   m_wr_q.io.enq.bits.data := 0.U
 
