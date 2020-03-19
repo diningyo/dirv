@@ -29,7 +29,7 @@ class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int)(randBits: Int, seed
   m_cmd_q.io.enq.valid := true.B
   m_cmd_q.io.enq.bits.addr := 0.U
   m_cmd_q.io.enq.bits.size := 0.U
-  m_cmd_q.io.enq.bits.cmd := 0.U
+  m_cmd_q.io.enq.bits.cmd := w_rand_data(0)
 
   m_issued_q.io.enq.valid := m_cmd_q.io.deq.fire()
   m_issued_q.io.enq.bits := m_cmd_q.io.deq.bits
