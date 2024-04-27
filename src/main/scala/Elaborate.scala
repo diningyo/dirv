@@ -1,7 +1,7 @@
 // See LICENSE for license details.
 
 import chisel3._
-import circt.stage.ChiselStage
+import chisel3.stage.ChiselStage
 
 
 //object Elaborate extends App {

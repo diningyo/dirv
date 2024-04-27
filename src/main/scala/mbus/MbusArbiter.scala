@@ -4,7 +4,7 @@ package mbus
 
 import chisel3._
 import chisel3.util._
-import _root_.circt.stage.ChiselStage
+import chisel3.stage.ChiselStage
 
 /**
   * Parameter class for MbusArbiter
@@ -79,8 +79,7 @@ object ElaborateMbusArb extends App {
 
   println(
     ChiselStage.emitSystemVerilog(
-      gen = new MbusArbiter(p),
-      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
+      gen = new MbusArbiter(p)
     )  
   )
 }

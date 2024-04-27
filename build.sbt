@@ -4,22 +4,21 @@ version      := "0.0.1"
 organization := "diningyo"
 name         := "dirv"   
 
-val chiselVersion = "5.0.0"
+val chiselVersion = "3.5.4"
 
 lazy val root = (project in file("."))
   .settings(
     name := "%NAME%",
     libraryDependencies ++= Seq(
-      "org.chipsalliance" %% "chisel" % chiselVersion,
-      "edu.berkeley.cs" %% "chiseltest" % "5.0.0" % "test"
+      "edu.berkeley.cs" %% "chisel3" % chiselVersion,
+      "edu.berkeley.cs" %% "chiseltest" % "0.5.4" % "test"
     ),
     scalacOptions ++= Seq(
       "-language:reflectiveCalls",
       "-deprecation",
       "-feature",
       "-Xcheckinit",
-      "-Ymacro-annotations",
       "-P:chiselplugin:genBundleElements",
     ),
-    addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
+    addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % chiselVersion cross CrossVersion.full),
   )

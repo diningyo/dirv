@@ -3,7 +3,7 @@
 package mbus
 
 import chisel3._
-import circt.stage.ChiselStage
+import chisel3.stage.ChiselStage
 
 /**
   * parameter class for MbusIC
@@ -76,8 +76,7 @@ object ElaborateMbusIC extends App {
 
   println(
     ChiselStage.emitSystemVerilog(
-      gen = new MbusIC(base_p),
-      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
+      gen = new MbusIC(base_p)
     )
   )
 }

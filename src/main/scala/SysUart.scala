@@ -3,7 +3,7 @@
 import java.nio.file.Paths
 
 import chisel3._
-import circt.stage.ChiselStage
+import chisel3.stage.ChiselStage
 import dirv.{Config, Dirv}
 import mbus.{MbusIC, MbusICParams, MbusRW}
 import peri.mem.{MemTop, MemTopParams}
@@ -140,8 +140,7 @@ object ElaborateSysUart extends App {
 
   println(
     ChiselStage.emitSystemVerilog(
-      gen = new SysUart(file.toAbsolutePath.toString)(baudrate, clockFreq),
-      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
+      gen = new SysUart(file.toAbsolutePath.toString)(baudrate, clockFreq)
     )
   )
 }

@@ -1,7 +1,7 @@
 // See LICENSE for license details.
 
 import chisel3._
-import circt.stage.ChiselStage
+import chisel3.stage.ChiselStage
 import dirv.{Config, Dirv}
 import peri.mem.{MemTop, MemTopParams}
 
@@ -130,8 +130,6 @@ object Elaborate extends App {
 
   println(
     ChiselStage.emitSystemVerilog(
-      gen = new SimDtm(""),
-      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
-    )
+      gen = new SimDtm(""))
   )
 }
