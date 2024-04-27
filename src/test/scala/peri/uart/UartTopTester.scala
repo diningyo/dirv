@@ -316,8 +316,8 @@ class UartRxTester extends BaseTester {
     ))
 
     test(new UartTop(baudrate0, clockFreq0)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate0, clockFreq0) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
         val rxData = Range(0, 25)
@@ -334,8 +334,7 @@ class UartRxTester extends BaseTester {
           readReg(stat, 0x5) // TxFifoEmpty / RxDataValid
           readReg(rxFifo, data)
         }
-      }
-    }
+      })
   }
 
   var baudrate1: Int = 9600
@@ -349,8 +348,8 @@ class UartRxTester extends BaseTester {
     ))
 
     test(new UartTop(baudrate1, clockFreq1)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate1, clockFreq1) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
         val rxData = Range(0, 25)
@@ -367,7 +366,6 @@ class UartRxTester extends BaseTester {
           readReg(stat, 0x5) // TxFifoEmpty / RxDataValid
           readReg(rxFifo, data)
         }
-      }
-    }
+      })
   }
 }

@@ -248,13 +248,12 @@ class MbusSramBridgeTester extends BaseTester {
     ))
 
     test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusSramBridgeUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         idle(10)
-      }
-    }
+      })
   }
 
   it should "wait for issuing Sram write, when Mbus write data doesn't come." in {
@@ -266,13 +265,12 @@ class MbusSramBridgeTester extends BaseTester {
     ))
 
     test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusSramBridgeUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678, 1)
         idle(10)
-      }
-    }
+      })
   }
 
   it should "be able to convert Mbus read access to Sram read access" +
@@ -285,15 +283,13 @@ class MbusSramBridgeTester extends BaseTester {
     ))
 
     test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusSramBridgeUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(0x1, 0x12345678)
         idle(10)
-
-      }
-    }
+      })
   }
 
   it should "wait to assert Mbus.r.valid if sram.rddv doesn't return." in {
@@ -305,20 +301,16 @@ class MbusSramBridgeTester extends BaseTester {
     ))
 
     test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusSramBridgeUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(0x1, 0x12345678, 1)
         idle(10)
-
-      }
-    }
+      })
   }
 
-  it should
-    f"keep Mbus.r.valid high if Mbus r.ready is Low. [$dutName-BUG-200]" in {
-
+  it should f"keep Mbus.r.valid high if Mbus r.ready is Low. [$dutName-BUG-200]" in {
     val outDir = dutName + "-BUG-200"
     val args = getArgs(Map(
       "--top-name" -> dutName,
@@ -326,8 +318,8 @@ class MbusSramBridgeTester extends BaseTester {
     ))
 
     test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusSramBridgeUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         var data = intToUnsignedBigInt(0xf0008093)
         poke(mbus.c.valid, true)
@@ -402,8 +394,6 @@ class MbusSramBridgeTester extends BaseTester {
         expect(sram.wren.get, false)
         step(1)
         idle(10)
-
-      }
+      })
     }
-  }
 }

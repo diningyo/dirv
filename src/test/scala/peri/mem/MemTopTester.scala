@@ -233,13 +233,12 @@ class MemTopTester extends BaseTester {
     ))
 
     test(new SimDTMMemTop(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MemTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         idle(10)
-      }
-    }
+      })
   }
 
   it should
@@ -252,15 +251,14 @@ class MemTopTester extends BaseTester {
     ))
 
     test(new SimDTMMemTop(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MemTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         for (delay <- 0 until 5) {
           idle(2)
           single_write(delay, 0xf, 0x12345678, delay)
           idle(2)
         }
-      }
-    }
+      })
   }
 
   it should
@@ -273,14 +271,13 @@ class MemTopTester extends BaseTester {
     ))
 
     test(new SimDTMMemTop(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MemTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(dmem, 0x1, 0x12345678, 1)
         idle(10)
-      }
-    }
+      })
   }
 
   it should
@@ -293,8 +290,8 @@ class MemTopTester extends BaseTester {
     ))
 
     test(new SimDTMMemTop(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MemTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         idle(10)
 
         val wrData = Seq(
@@ -330,7 +327,6 @@ class MemTopTester extends BaseTester {
         step(1)
 
         idle(10)
-      }
-    }
+      })
   }
 }

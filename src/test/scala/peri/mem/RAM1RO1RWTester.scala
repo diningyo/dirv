@@ -95,15 +95,14 @@ class RAM1RO1RWTester extends BaseTester {
     ))
 
     test(new RAM1RO1RWWrapper(basic_p)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RAM1RO1RWUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RAM1RO1RWUnitTester(_) {
 
         idle()
         b_single_write(0x0, 0xf, 0xff)
         a_single_read(0x0, 0xff)
         step(10)
-      }
-    }
+      })
   }
 
   it should "be able to read valid data from memory when b.rden comes" in {
@@ -115,14 +114,13 @@ class RAM1RO1RWTester extends BaseTester {
     ))
 
     test(new RAM1RO1RWWrapper(basic_p)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RAM1RO1RWUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RAM1RO1RWUnitTester(_) {
 
         idle()
         b_single_write(0x0, 0xf, 0xff)
         b_single_read(0x0, 0xff)
         step(10)
-      }
-    }
+      })
   }
 }

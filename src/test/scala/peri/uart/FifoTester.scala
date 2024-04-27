@@ -129,17 +129,16 @@ class FifoTester extends BaseTester {
     ))
 
     test(new Fifo(depth, true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new FifoUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
         val txData = Range(0, 128).map(_ => floor(random() * 256).toInt)
         push(txData(0))
 
         for ((data, exp) <- txData.tail.zip(txData)) {
           pushAndPop(data, exp)
-          expect(c.io.dbg.get.count, 1)
+          expect(dut.io.dbg.get.count, 1)
         }
-      }
-    }
+      })
   }
 
   it should "overwrap their pointer when pointer reaches fifo depth" in {
@@ -150,16 +149,16 @@ class FifoTester extends BaseTester {
     ))
 
     test(new Fifo(depth, true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new FifoUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
         val txData = Range(0, 17).map(_ => floor(random() * 256).toInt)
 
         for (data <- txData) {
           push(data)
         }
-        expect(c.io.dbg.get.wrptr, 1)
-        expect(c.io.dbg.get.count, 0)
-      }
-    }
+        
+        expect(dut.io.dbg.get.wrptr, 1)
+        expect(dut.io.dbg.get.count, 0)
+      })
   }
 }

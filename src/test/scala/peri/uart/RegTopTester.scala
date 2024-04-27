@@ -82,17 +82,16 @@ class RegTopTester extends BaseTester {
     ))
 
     test(new RegTop(sp.ramIOParams)(true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RegTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RegTopUnitTester(_) {
         val txData = Range(0, 10).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- txData) {
           hwrite(RegInfo.txFifo, d)
-          expect(c.io.dbg.get.txFifo, d)
+          expect(dut.io.dbg.get.txFifo, d)
         }
-      }
-    }
+      })
   }
 
   it should s"be asserted tx.empty when host write TxFifo register [$dutName-002]" in {
@@ -104,16 +103,15 @@ class RegTopTester extends BaseTester {
     ))
 
     test(new RegTop(sp.ramIOParams)(true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RegTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RegTopUnitTester(_) {
         val txData = 0xff
 
         idle()
-        expect(c.io.r2c.tx.empty, true)
+        expect(dut.io.r2c.tx.empty, true)
         hwrite(RegInfo.txFifo, txData)
-        expect(c.io.r2c.tx.empty, false)
-      }
-    }
+        expect(dut.io.r2c.tx.empty, false)
+      })
   }
 
   it should s"be able to read Stat register from Host [$dutName-003]" in {
@@ -124,8 +122,8 @@ class RegTopTester extends BaseTester {
     ))
 
     test(new RegTop(sp.ramIOParams)(true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RegTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RegTopUnitTester(_) {
         val txData = 0xff
 
         idle()
@@ -134,8 +132,7 @@ class RegTopTester extends BaseTester {
         hread(RegInfo.stat, 0x4)
         idle()
         step(5)
-      }
-    }
+      })
   }
 
   ignore should s"be able to read Ctrl register from Host [$dutName-004]" in {
@@ -151,17 +148,16 @@ class RegTopTester extends BaseTester {
     ))
 
     test(new RegTop(sp.ramIOParams)(true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RegTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RegTopUnitTester(_) {
         val txData = Range(0, 10).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- txData) {
           uwrite(d)
-          expect(c.io.dbg.get.rxFifo, txData(0))
+          expect(dut.io.dbg.get.rxFifo, txData(0))
         }
-      }
-    }
+      })
   }
 
   it should s"be able to read RxFifo register from Host [$dutName-102]" in {
@@ -173,16 +169,15 @@ class RegTopTester extends BaseTester {
     ))
 
     test(new RegTop(sp.ramIOParams)(true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new RegTopUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RegTopUnitTester(_) {
         val txData = Range(0, 10).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- txData) {
           hwrite(RegInfo.txFifo, d)
-          expect(c.io.dbg.get.txFifo, d)
+          expect(dut.io.dbg.get.txFifo, d)
         }
-      }
-    }
+      })
   }
 }

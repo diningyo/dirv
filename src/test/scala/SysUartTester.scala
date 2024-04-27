@@ -89,12 +89,11 @@ class SysUartTester extends BaseTester {
     println(expValues)
 
     test(new SimDTMSysUart(timeoutCycle)(file)(baudrate, clockFreq)).
-    withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new SysUartUnitTester(c)(baudrate, clockFreq) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new SysUartUnitTester(_)(baudrate, clockFreq) {
         for (expValue <- expValues) {
           receive(expValue)
         }
-      }
-    }
+      })
   }
 }

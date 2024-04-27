@@ -134,14 +134,13 @@ class MbusICTester extends BaseTester {
     ))
 
     test(new SimDTMMbusIC(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusICUnitTester(c) {
-        for (i <- c.p.masterInfos.indices) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusICUnitTester(_) {
+        for (i <- dut.p.masterInfos.indices) {
           write_req(i, 100)
           step(1)
           idle(1)
         }
-      }
-    }
+      })
   }
 }

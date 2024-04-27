@@ -179,9 +179,8 @@ abstract class DirvBaseTester extends AnyFlatSpec with ChiselScalatestTester  {
       ))
 
       test(new SimDtm(testFilePath)).
-        withAnnotations(Seq(VerilatorBackendAnnotation))  {
-        c => new DirvUnitTester(c)
-      }
+        withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new DirvUnitTester(_))
     }
   }
 }

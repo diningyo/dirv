@@ -126,8 +126,8 @@ class MbusDecoderTester extends BaseTester {
     ))
 
     test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusDecoderUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           val wrData = r.nextInt()
@@ -138,7 +138,7 @@ class MbusDecoderTester extends BaseTester {
             val ready = if (i == dst_port) true else false
             poke(out(i).w.get.ready, ready)
           }
-          expect(c.io.dut_io.in.w.get.ready, true)
+          expect(dut.io.dut_io.in.w.get.ready, true)
           expect(out(dst_port).c.valid, true)
           expect(out(dst_port).w.get.valid, true)
           expect(out(dst_port).w.get.bits.data, wrData)
@@ -146,8 +146,7 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    }
+      })
   }
 
   it should "be able to transfer write data, when write data is delayed. [wr:001]" in {
@@ -159,8 +158,8 @@ class MbusDecoderTester extends BaseTester {
     ))
 
     test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusDecoderUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (delay <- 1 until 10) {
           for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
@@ -180,8 +179,7 @@ class MbusDecoderTester extends BaseTester {
             idle(10)
           }
         }
-      }
-    }
+      })
   }
 
   it should "be able to choose right output port by cmd.bits.addr, " +
@@ -194,8 +192,8 @@ class MbusDecoderTester extends BaseTester {
     ))
 
     test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusDecoderUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           idle(10)
@@ -212,8 +210,7 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    }
+      })
   }
 
   it should "be able to transfer write data, when read data is delayed. [rd:100]" in {
@@ -225,8 +222,8 @@ class MbusDecoderTester extends BaseTester {
     ))
 
     test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusDecoderUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           val rdData = intToUnsignedBigInt(r.nextInt())
 
@@ -243,8 +240,7 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    }
+      })
   }
 
   it should "be able to choose right output port by cmd.bits.addr, when Master issue read command. [rd:101]" in {
@@ -256,8 +252,8 @@ class MbusDecoderTester extends BaseTester {
     ))
 
     test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusDecoderUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (delay <- 1 until 10) {
           for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
@@ -281,8 +277,7 @@ class MbusDecoderTester extends BaseTester {
             idle(10)
           }
         }
-      }
-    }
+      })
   }
 
   it should "be able to choose right output port by cmd.bits.addr, " +
@@ -295,8 +290,8 @@ class MbusDecoderTester extends BaseTester {
     ))
 
     test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusDecoderUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           idle(10)
           read_req(addr)
@@ -312,7 +307,6 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    }
+      })
   }
 }

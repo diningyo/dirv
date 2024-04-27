@@ -25,7 +25,7 @@ class SimDTMSysUart(
 
   val io = IO(new Bundle {
     val dut_io = chiselTypeOf(dut.io)
-    val wdt_io = chiselTypeOf(dut.io)
+    val wdt_io = chiselTypeOf(wdt.io)
     })
 
   io.dut_io <> dut.io

@@ -120,18 +120,17 @@ class TxRxCtrlTester extends BaseTester {
     ))
 
     test(new TxRxCtrl(baudrate, clockFreq)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new TxRxCtrlUnitTester(c, baudrate, clockFreq) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new TxRxCtrlUnitTester(_, baudrate, clockFreq) {
         val txData = Range(0, 100).map(_ => floor(random() * 256).toInt)
-        poke(c.io.r2c.tx.enable, true)
+        poke(dut.io.r2c.tx.enable, true)
 
         for (d <- txData) {
-          poke(c.io.r2c.tx.data, d)
+          poke(dut.io.r2c.tx.data, d)
           step(1)
           receive(d)
         }
-      }
-    }
+      })
   }
 
   it should "receive when io.peri.uart.rx.valid is low. [peri.uart-rx]" in {
@@ -142,15 +141,14 @@ class TxRxCtrlTester extends BaseTester {
     ))
 
     test(new TxRxCtrl(baudrate, clockFreq)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new TxRxCtrlUnitTester(c, baudrate, clockFreq) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new TxRxCtrlUnitTester(_, baudrate, clockFreq) {
         val rxData = Range(0, 100).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- rxData) {
           send(d)
         }
-      }
-    }
+      })
   }
 }
