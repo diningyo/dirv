@@ -77,4 +77,5 @@ class SimDTMMbusIC(val p: MbusICParams)
   })
 
   io.dut_io <> dut.io
+  io.wdt_io <> wdt.io
 }

@@ -190,8 +190,8 @@ class UartTopTester extends BaseTester {
     ))
 
     test(new UartTop(baudrate0, clockFreq0)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate0, clockFreq0) {
 
         val txData = Range(0, 100).map(_ => floor(random() * 256).toInt)
 
@@ -205,8 +205,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           receive(data)
         }
-      }
-    }
+      })
   }
 
   it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data." +
@@ -218,8 +217,8 @@ class UartTopTester extends BaseTester {
     ))
 
     test(new UartTop(baudrate0, clockFreq0)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate0, clockFreq0) {
 
         val txData = Range(0, 100).map(_ => floor(random() * 256).toInt)
 
@@ -233,8 +232,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           readReg(stat, 0x0) // TxFifoEmpty 1 -> 0
         }
-      }
-    }
+      })
   }
 
   var baudrate1: Int = 9600
@@ -248,8 +246,8 @@ class UartTopTester extends BaseTester {
     ))
 
     test(new UartTop(baudrate1, clockFreq1)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate1, clockFreq1) {
 
         val b = new scala.util.control.Breaks
         val txData = Range(0, 3).map(_ => floor(random() * 256).toInt)
@@ -264,8 +262,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           receive(data)
         }
-      }
-    }
+      })
   }
 
   it should "negate TxEmpty bit and assert TxFifoFull bit " +
@@ -277,8 +274,8 @@ class UartTopTester extends BaseTester {
     ))
 
     test(new UartTop(baudrate1, clockFreq1)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate1, clockFreq1) {
 
         val txData = Range(0, 10).map(_ => floor(random() * 25).toInt)
 
@@ -292,8 +289,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           readReg(stat, 0x0) // TxFifoFull
         }
-      }
-    }
+      })
   }
 }
 

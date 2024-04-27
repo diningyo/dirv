@@ -159,8 +159,8 @@ class MbusArbiterTester extends BaseTester {
     ))
 
     test(new SimDTMMbusArbiter(base_p)(timeoutCycle)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new MbusArbiterUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusArbiterUnitTester(_) {
         idle(10)
 
         for (delay <- 0 until 10) {
@@ -172,8 +172,7 @@ class MbusArbiterTester extends BaseTester {
         }
         idle(10)
 
-      }
-    }
+      })
   }
 
   it should "single read. [rd:100]" in {

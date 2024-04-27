@@ -74,22 +74,21 @@ class FifoTester extends BaseTester {
     ))
 
     test(new Fifo(depth, true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new FifoUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
         val setData = Range(0, 16).map(_ => floor(random() * 256).toInt)
 
-        expect(c.io.rd.empty, true)
+        expect(dut.io.rd.empty, true)
         for ((data, idx) <- setData.zipWithIndex) {
-          expect(c.io.dbg.get.wrptr, idx)
-          expect(c.io.dbg.get.count, idx)
+          expect(dut.io.dbg.get.wrptr, idx)
+          expect(dut.io.dbg.get.count, idx)
           push(data)
-          expect(c.io.rd.empty, false)
-          expect(c.io.rd.data, setData(0))
-          expect(c.io.dbg.get.fifo(idx), data)
+          expect(dut.io.rd.empty, false)
+          expect(dut.io.rd.data, setData(0))
+          expect(dut.io.dbg.get.fifo(idx), data)
         }
         idle()
-      }
-    }
+      })
   }
 
   it should "release a data from fifo when Host issues a command \"pop\"" in {
@@ -100,25 +99,24 @@ class FifoTester extends BaseTester {
     ))
 
     test(new Fifo(depth, true)).
-      withAnnotations(Seq(VerilatorBackendAnnotation)) {
-      c => new FifoUnitTester(c) {
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
         val setData = Range(0, 16).map(_ => floor(random() * 256).toInt)
 
         // data set
         for (data <- setData) {
           push(data)
-          expect(c.io.dbg.get.rdptr, 0)
+          expect(dut.io.dbg.get.rdptr, 0)
         }
         idle()
 
         // pop
         for ((data, idx) <- setData.zipWithIndex) {
-          expect(c.io.dbg.get.rdptr, idx)
+          expect(dut.io.dbg.get.rdptr, idx)
           pop(data)
         }
         idle()
-      }
-    }
+      })
   }
 
   it should "keep data count when Host issues command \"push\" and \"pop\" at the same time" in {
