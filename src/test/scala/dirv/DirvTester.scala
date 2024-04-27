@@ -1,7 +1,10 @@
 // See LICENSE for license details.
 
-import chisel3.iotesters._
-import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap, ParallelTestExecution}
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
+import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap}
+import org.scalatest.flatspec.AnyFlatSpec
 import dirv.Config
 import test.util.BaseTester
 
@@ -112,7 +115,7 @@ object RiscvTestsParams {
 /**
   * Base test module for Dirv
   */
-abstract class DirvBaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfigMap  {
+abstract class DirvBaseTester extends AnyFlatSpec with ChiselScalatestTester  {
 
   val defaultArgs = scala.collection.mutable.Map(
     "--generate-vcd-output" -> "off",
@@ -126,17 +129,17 @@ abstract class DirvBaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfi
     * Get program arguments from ConfigMap
     * @param configMap ScalaTest ConfigMap object
     */
-  override def beforeAll(configMap: ConfigMap): Unit = {
-    if (configMap.get("--backend-name").isDefined) {
-      defaultArgs("--backend-name") = configMap.get("--backend-name").fold("")(_.toString)
-    }
-    if (configMap.get("--generate-vcd-output").isDefined) {
-      defaultArgs("--generate-vcd-output") = configMap.get("--generate-vcd-output").fold("")(_.toString)
-    }
-    if (configMap.get("--is-verbose").isDefined) {
-      defaultArgs("--is-verbose") = true
-    }
-  }
+  //override def beforeAll(configMap: ConfigMap): Unit = {
+  //  if (configMap.get("--backend-name").isDefined) {
+  //    defaultArgs("--backend-name") = configMap.get("--backend-name").fold("")(_.toString)
+  //  }
+  //  if (configMap.get("--generate-vcd-output").isDefined) {
+  //    defaultArgs("--generate-vcd-output") = configMap.get("--generate-vcd-output").fold("")(_.toString)
+  //  }
+  //  if (configMap.get("--is-verbose").isDefined) {
+  //    defaultArgs("--is-verbose") = true
+  //  }
+  //}
 
   /**
     * Get argument for Driver.execute.
@@ -175,9 +178,10 @@ abstract class DirvBaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfi
         "--target-dir" -> s"test_run_dir/isa/$instruction"
       ))
 
-      Driver.execute(args, () => new SimDtm(testFilePath)) {
+      test(new SimDtm(testFilePath)).
+        withAnnotations(Seq(VerilatorBackendAnnotation))  {
         c => new DirvUnitTester(c)
-      } should be (true)
+      }
     }
   }
 }

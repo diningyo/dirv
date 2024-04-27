@@ -3,7 +3,9 @@
 package peri.uart
 
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import test.util.BaseTester
 
 import scala.math.{floor, random}
@@ -71,9 +73,10 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new FifoUnitTester(c) {
-        val setData = Range(0, 16).map(_ => floor(random * 256).toInt)
+        val setData = Range(0, 16).map(_ => floor(random() * 256).toInt)
 
         expect(c.io.rd.empty, true)
         for ((data, idx) <- setData.zipWithIndex) {
@@ -86,7 +89,7 @@ class FifoTester extends BaseTester {
         }
         idle()
       }
-    } should be (true)
+    }
   }
 
   it should "release a data from fifo when Host issues a command \"pop\"" in {
@@ -96,9 +99,10 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new FifoUnitTester(c) {
-        val setData = Range(0, 16).map(_ => floor(random * 256).toInt)
+        val setData = Range(0, 16).map(_ => floor(random() * 256).toInt)
 
         // data set
         for (data <- setData) {
@@ -114,7 +118,7 @@ class FifoTester extends BaseTester {
         }
         idle()
       }
-    } should be (true)
+    }
   }
 
   it should "keep data count when Host issues command \"push\" and \"pop\" at the same time" in {
@@ -124,9 +128,10 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new FifoUnitTester(c) {
-        val txData = Range(0, 128).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 128).map(_ => floor(random() * 256).toInt)
         push(txData(0))
 
         for ((data, exp) <- txData.tail.zip(txData)) {
@@ -134,7 +139,7 @@ class FifoTester extends BaseTester {
           expect(c.io.dbg.get.count, 1)
         }
       }
-    } should be (true)
+    }
   }
 
   it should "overwrap their pointer when pointer reaches fifo depth" in {
@@ -144,9 +149,10 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new FifoUnitTester(c) {
-        val txData = Range(0, 17).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 17).map(_ => floor(random() * 256).toInt)
 
         for (data <- txData) {
           push(data)
@@ -154,6 +160,6 @@ class FifoTester extends BaseTester {
         expect(c.io.dbg.get.wrptr, 1)
         expect(c.io.dbg.get.count, 0)
       }
-    } should be (true)
+    }
   }
 }

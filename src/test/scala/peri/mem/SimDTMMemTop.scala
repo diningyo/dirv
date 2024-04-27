@@ -14,14 +14,16 @@ class SimDTMMemTop(p: MemTopParams)
 (
   limit: Int,
   abortEn: Boolean = true
-) extends BaseSimDTM(limit, abortEn) {
-  val io = IO(new Bundle with BaseSimDTMIO {
-    val dut = new MemTopIO(p)
-  })
+) extends Module {
 
   val dut = Module(new MemTop(p))
+  val wdt = Module(new WDT(limit, abortEn))
 
-  io.dut <> dut.io
+  val io = IO(new Bundle {
+    val dut_io = chiselTypeOf(dut.io)
+    val wdt_io = chiselTypeOf(wdt.io)
+  })
 
-  connect(false.B)
+  io.dut_io <> dut.io
+  io.wdt_io <> wdt.io
 }

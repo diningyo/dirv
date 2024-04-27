@@ -2,17 +2,19 @@
 
 package mbus
 
-import chisel3.iotesters._
-import test.util.BaseTester
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
+import test.util.{IntToBigInt, BaseTester}
 
 /**
   * Unit test class for MbusSramBridge
   * @param c Instance of SimDTMMbusSramBridge
   */
-class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c) {
+class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c) with IntToBigInt {
 
-  val mbus = c.io.dut.mbus
-  val sram = c.io.dut.sram
+  val mbus = c.io.dut_io.mbus
+  val sram = c.io.dut_io.sram
 
   def idle(cycle: Int = 1): Unit = {
     poke(mbus.c.valid, false)
@@ -245,14 +247,14 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new MbusSramBridgeUnitTester(c) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         idle(10)
-
       }
-    } should be (true)
+    }
   }
 
   it should "wait for issuing Sram write, when Mbus write data doesn't come." in {
@@ -263,14 +265,14 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new MbusSramBridgeUnitTester(c) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678, 1)
         idle(10)
-
       }
-    } should be (true)
+    }
   }
 
   it should "be able to convert Mbus read access to Sram read access" +
@@ -282,7 +284,8 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new MbusSramBridgeUnitTester(c) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
@@ -290,7 +293,7 @@ class MbusSramBridgeTester extends BaseTester {
         idle(10)
 
       }
-    } should be (true)
+    }
   }
 
   it should "wait to assert Mbus.r.valid if sram.rddv doesn't return." in {
@@ -301,7 +304,8 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new MbusSramBridgeUnitTester(c) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
@@ -309,7 +313,7 @@ class MbusSramBridgeTester extends BaseTester {
         idle(10)
 
       }
-    } should be (true)
+    }
   }
 
   it should
@@ -321,7 +325,8 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new MbusSramBridgeUnitTester(c) {
         idle(10)
         var data = intToUnsignedBigInt(0xf0008093)
@@ -399,6 +404,6 @@ class MbusSramBridgeTester extends BaseTester {
         idle(10)
 
       }
-    } should be (true)
+    }
   }
 }

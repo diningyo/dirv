@@ -2,7 +2,9 @@
 package peri.uart
 
 import scala.math.{floor, random}
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import mbus.{MbusRW, MbusSramBridgeParams}
 import test.util.BaseTester
 
@@ -79,9 +81,10 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
+    test(new RegTop(sp.ramIOParams)(true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new RegTopUnitTester(c) {
-        val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 10).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- txData) {
@@ -89,7 +92,7 @@ class RegTopTester extends BaseTester {
           expect(c.io.dbg.get.txFifo, d)
         }
       }
-    } should be (true)
+    }
   }
 
   it should s"be asserted tx.empty when host write TxFifo register [$dutName-002]" in {
@@ -100,7 +103,8 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
+    test(new RegTop(sp.ramIOParams)(true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new RegTopUnitTester(c) {
         val txData = 0xff
 
@@ -109,7 +113,7 @@ class RegTopTester extends BaseTester {
         hwrite(RegInfo.txFifo, txData)
         expect(c.io.r2c.tx.empty, false)
       }
-    } should be (true)
+    }
   }
 
   it should s"be able to read Stat register from Host [$dutName-003]" in {
@@ -119,7 +123,8 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
+    test(new RegTop(sp.ramIOParams)(true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new RegTopUnitTester(c) {
         val txData = 0xff
 
@@ -130,7 +135,7 @@ class RegTopTester extends BaseTester {
         idle()
         step(5)
       }
-    } should be (true)
+    }
   }
 
   ignore should s"be able to read Ctrl register from Host [$dutName-004]" in {
@@ -145,9 +150,10 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
+    test(new RegTop(sp.ramIOParams)(true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new RegTopUnitTester(c) {
-        val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 10).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- txData) {
@@ -155,7 +161,7 @@ class RegTopTester extends BaseTester {
           expect(c.io.dbg.get.rxFifo, txData(0))
         }
       }
-    } should be (true)
+    }
   }
 
   it should s"be able to read RxFifo register from Host [$dutName-102]" in {
@@ -166,9 +172,10 @@ class RegTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new RegTop(sp.ramIOParams)(true)) {
+    test(new RegTop(sp.ramIOParams)(true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new RegTopUnitTester(c) {
-        val txData = Range(0, 10).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 10).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- txData) {
@@ -176,6 +183,6 @@ class RegTopTester extends BaseTester {
           expect(c.io.dbg.get.txFifo, d)
         }
       }
-    } should be (true)
+    }
   }
 }

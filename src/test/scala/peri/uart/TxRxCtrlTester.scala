@@ -2,7 +2,9 @@
 package peri.uart
 
 import scala.math.{floor, pow, random, round}
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import test.util.BaseTester
 
 /**
@@ -117,9 +119,10 @@ class TxRxCtrlTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new TxRxCtrl(baudrate, clockFreq)) {
+    test(new TxRxCtrl(baudrate, clockFreq)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new TxRxCtrlUnitTester(c, baudrate, clockFreq) {
-        val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 100).map(_ => floor(random() * 256).toInt)
         poke(c.io.r2c.tx.enable, true)
 
         for (d <- txData) {
@@ -128,7 +131,7 @@ class TxRxCtrlTester extends BaseTester {
           receive(d)
         }
       }
-    } should be (true)
+    }
   }
 
   it should "receive when io.peri.uart.rx.valid is low. [peri.uart-rx]" in {
@@ -138,15 +141,16 @@ class TxRxCtrlTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new TxRxCtrl(baudrate, clockFreq)) {
+    test(new TxRxCtrl(baudrate, clockFreq)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new TxRxCtrlUnitTester(c, baudrate, clockFreq) {
-        val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
+        val rxData = Range(0, 100).map(_ => floor(random() * 256).toInt)
 
         idle()
         for (d <- rxData) {
           send(d)
         }
       }
-    } should be (true)
+    }
   }
 }

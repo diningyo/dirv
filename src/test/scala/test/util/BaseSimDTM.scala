@@ -19,6 +19,7 @@ trait BaseSimDTMIO extends Bundle {
   */
 abstract class BaseSimDTM(limit: Int, abortEn: Boolean = true)
   extends Module {
+    
   val io: BaseSimDTMIO
   val wdt = Module(new WDT(limit, abortEn))
 

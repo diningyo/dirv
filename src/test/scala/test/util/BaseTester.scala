@@ -2,13 +2,31 @@
 
 package test.util
 
-import chisel3.iotesters._
+import chiseltest._
 import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap}
+import org.scalatest.flatspec.AnyFlatSpec
+
+trait IntToBigInt {
+  /**
+    * Convert an Int to unsigned (effectively 32-bit) BigInt
+    * @param x  number to be converted
+    * @return
+    */
+  def intToUnsignedBigInt(x: Int): BigInt = (BigInt(x >>> 1) << 1) | BigInt(x & 1)
+
+  /**
+    * Convert an Int to unsigned (effectively 64-bit) BigInt
+    * @param x long to be converted
+    * @return
+    */
+  def longToUnsignedBigInt(x: Long): BigInt = (BigInt(x >>> 1) << 1) | BigInt(x & 1)
+}
+
 
 /**
   * Base test module for Dirv
   */
-abstract class BaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfigMap  {
+abstract class BaseTester extends AnyFlatSpec with ChiselScalatestTester  {
 
   val defaultArgs = scala.collection.mutable.Map(
     "--generate-vcd-output" -> "on",
@@ -20,17 +38,17 @@ abstract class BaseTester extends ChiselFlatSpec with BeforeAndAfterAllConfigMap
     * Get program arguments from ConfigMap
     * @param configMap ScalaTest ConfigMap object
     */
-  override def beforeAll(configMap: ConfigMap): Unit = {
-    if (configMap.get("--backend-name").isDefined) {
-      defaultArgs("--backend-name") = configMap.get("--backend-name").fold("")(_.toString)
-    }
-    if (configMap.get("--generate-vcd-output").isDefined) {
-      defaultArgs("--generate-vcd-output") = configMap.get("--generate-vcd-output").fold("")(_.toString)
-    }
-    if (configMap.get("--is-verbose").isDefined) {
-      defaultArgs("--is-verbose") = true
-    }
-  }
+  //override def beforeAll(configMap: ConfigMap): Unit = {
+  //  if (configMap.get("--backend-name").isDefined) {
+  //    defaultArgs("--backend-name") = configMap.get("--backend-name").fold("")(_.toString)
+  //  }
+  //  if (configMap.get("--generate-vcd-output").isDefined) {
+  //    defaultArgs("--generate-vcd-output") = configMap.get("--generate-vcd-output").fold("")(_.toString)
+  //  }
+  //  if (configMap.get("--is-verbose").isDefined) {
+  //    defaultArgs("--is-verbose") = true
+  //  }
+  //}
 
   /**
     * Get argument for Driver.execute.

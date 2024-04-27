@@ -1,6 +1,9 @@
 // See LICENSE for license details.
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
+
 import dirv.Config
 import test.util.BaseTester
 
@@ -16,7 +19,7 @@ class SysUartUnitTester(c: SimDTMSysUart)
 
   val r = new Random(1)
   val duration = round(clockFreq * pow(10, 6) / baudrate).toInt
-  val uart = c.io.dut.uart
+  val uart = c.io.dut_io.uart
 
   /**
     * Uart data receive
@@ -85,12 +88,13 @@ class SysUartTester extends BaseTester {
 
     println(expValues)
 
-    Driver.execute(args, () => new SimDTMSysUart(timeoutCycle)(file)(baudrate, clockFreq)) {
+    test(new SimDTMSysUart(timeoutCycle)(file)(baudrate, clockFreq)).
+    withAnnotations(Seq(VerilatorBackendAnnotation)) {
       c => new SysUartUnitTester(c)(baudrate, clockFreq) {
         for (expValue <- expValues) {
           receive(expValue)
         }
       }
-    } should be (true)
+    }
   }
 }
