@@ -15,8 +15,6 @@ class DbgIO(implicit cfg: Config) extends Bundle {
   val pc = Output(UInt(cfg.addrBits.W))
   val inst = Output(UInt(cfg.dataBits.W))
   val xregs = Output(Vec(cfg.arch.regNum, UInt(cfg.arch.xlen.W)))
-
-  override def cloneType(): DbgIO.this.type = new DbgIO().asInstanceOf[this.type]
 }
 
 /**
@@ -34,7 +32,4 @@ class DirvIO(implicit cfg: dirv.Config) extends Bundle {
   val imem = MbusIO(cfg.imemIOType, cfg.addrBits, cfg.dataBits)
   val dmem = MbusIO(cfg.dmemIOType, cfg.addrBits, cfg.dataBits)
   val dbg = if (cfg.dbg) Some(new DbgIO) else None
-
-  override def cloneType: DirvIO.this.type =
-    new DirvIO().asInstanceOf[this.type]
 }

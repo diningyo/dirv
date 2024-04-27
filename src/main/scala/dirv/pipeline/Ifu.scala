@@ -16,8 +16,6 @@ class Ifu2IduIO(implicit cfg: Config) extends Bundle {
   val valid = Output(Bool())
   val ready = Input(Bool())
   val inst = Output(UInt(cfg.arch.xlen.W))
-
-  override def cloneType: this.type = new Ifu2IduIO().asInstanceOf[this.type]
 }
 
 /**
@@ -26,8 +24,6 @@ class Ifu2IduIO(implicit cfg: Config) extends Bundle {
   */
 class Ifu2exuIO(implicit cfg: Config) extends Bundle {
   val excInstMa = Output(new ExcMa())
-
-  override def cloneType: this.type = new Ifu2exuIO().asInstanceOf[this.type]
 }
 
 /**
@@ -39,8 +35,6 @@ class IfuIO(implicit cfg: Config) extends Bundle {
   val ifu2idu = new Ifu2IduIO()
  // val ifu2exu = new Ifu2exuIO()
   val exu2ifu = Flipped(new Exu2IfuIO())
-
-  override def cloneType: this.type = new IfuIO().asInstanceOf[this.type]
 }
 
 

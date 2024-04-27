@@ -14,8 +14,6 @@ import dirv.Config
 class RsIO(addrBits: Int, dataBits:Int) extends Bundle {
   val addr = Input(UInt(addrBits.W))
   val data = Output(UInt(dataBits.W))
-
-  override def cloneType: RsIO.this.type = new RsIO(addrBits, dataBits).asInstanceOf[this.type]
 }
 
 /**
@@ -31,8 +29,6 @@ class MpfrIO(implicit val cfg: Config) extends Bundle {
     val data = Input(UInt(cfg.dataBits.W))
   }
   val xregs = if (cfg.dbg) Some(Output(Vec(cfg.arch.regNum, UInt(cfg.arch.xlen.W)))) else None
-
-  override def cloneType: MpfrIO.this.type = new MpfrIO().asInstanceOf[this.type]
 }
 
 /**

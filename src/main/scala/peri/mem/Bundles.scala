@@ -25,7 +25,4 @@ class RAMIO(p: RAMIOParams) extends Bundle {
   val wren = if (p.attr != RAMRO) Some(Output(Bool())) else None
   val wrstrb = if (p.attr != RAMRO) Some(Output(UInt((p.dataBits / 8).W))) else None
   val wrdata = if (p.attr != RAMRO) Some(Output(UInt(p.dataBits.W))) else None
-
-  override def cloneType: this.type =
-    new RAMIO(p).asInstanceOf[this.type]
 }

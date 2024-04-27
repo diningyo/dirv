@@ -46,8 +46,6 @@ class FifoIO(depth: Int=16, debug: Boolean=false) extends Bundle {
   val rst = Input(Bool())
   val full = Output(Bool())
   val dbg = if (debug) Some(new dbgFifoIO(depth)) else None
-
-  override def cloneType: this.type = new FifoIO(depth, debug).asInstanceOf[this.type]
 }
 
 /**

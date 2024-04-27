@@ -37,8 +37,6 @@ class MbusArbiterIO(p: MbusArbiterParams) extends Bundle {
   ))*/
   val in = Vec(p.numOfMasters, Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits)))
   val out = MbusIO(p.ioAttr, p.addrBits, p.dataBits)
-  override def cloneType: this.type =
-    new MbusArbiterIO(p).asInstanceOf[this.type]
 }
 
 /**

@@ -32,9 +32,6 @@ case class MbusICParams
 class MbusICIO(p: MbusICParams) extends Bundle {
   val in = Vec(p.numOfMasters, Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits)))
   val out = Vec(p.numOfSlaves, MbusIO(p.ioAttr, p.addrBits, p.dataBits))
-
-  override def cloneType: this.type =
-    new MbusICIO(p).asInstanceOf[this.type]
 }
 
 /**

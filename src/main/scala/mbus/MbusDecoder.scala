@@ -38,9 +38,6 @@ case class MbusDecoderParams
 class MbusDecoderIO(p: MbusDecoderParams) extends Bundle {
   val in = Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits))
   val out = Vec(p.numOfSlaves, MbusIO(p.ioAttr, p.addrBits, p.dataBits))
-
-  override def cloneType: this.type =
-    new MbusDecoderIO(p).asInstanceOf[this.type]
 }
 
 /**

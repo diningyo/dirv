@@ -17,8 +17,6 @@ class AluIO(implicit cfg: Config) extends Bundle {
   val rs1 = Input(UInt(cfg.dataBits.W))
   val rs2 = Input(UInt(cfg.dataBits.W))
   val result = Output(UInt(cfg.dataBits.W))
-
-  override def cloneType: this.type = new AluIO().asInstanceOf[this.type]
 }
 
 

@@ -47,13 +47,13 @@ abstract class BaseReg extends Bundle {
     * Write register
     * @param wrData data to write register
     */
-  def write(wrData: UInt): Unit = Unit
+  def write(wrData: UInt): Unit = ()
 
   /**
     * Read register
     * @return register value
     */
-  def read: UInt = 0.U
+  def read: UInt
 
   /**
     * Initalize register
@@ -71,7 +71,6 @@ class NbitsRegRW(bits: Int) extends BaseReg {
 
   override def write(wrData: UInt): Unit = reg := wrData(bits - 1, 0)
   override def read: UInt = reg
-  override def cloneType: NbitsRegRW.this.type = new NbitsRegRW(bits).asInstanceOf[this.type]
 }
 
 /**
@@ -82,7 +81,6 @@ class NbitsRegRO(bits: Int) extends BaseReg {
   val reg = UInt(bits.W)
 
   override def read: UInt = reg
-  override def cloneType: NbitsRegRO.this.type = new NbitsRegRO(bits).asInstanceOf[this.type]
 }
 
 /**

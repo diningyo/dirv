@@ -11,17 +11,12 @@ class Exu2IfuIO(implicit cfg: Config) extends Bundle {
   val updatePcReq = Output(Bool())
   val updatePc = Output(UInt(cfg.arch.xlen.W))
   val stopFetch = Output(Bool())
-
-  override def cloneType: this.type = new Exu2IfuIO().asInstanceOf[this.type]
-
 }
 
 class Exu2LsuIO(implicit cfg: Config) extends Bundle {
   val memAddr = Output(UInt(cfg.addrBits.W))
   val memWrdata = Output(UInt(cfg.dataBits.W))
   val inst = Output(new InstRV32())
-
-  override def cloneType: this.type = new Exu2LsuIO().asInstanceOf[this.type]
 }
 
 /**
