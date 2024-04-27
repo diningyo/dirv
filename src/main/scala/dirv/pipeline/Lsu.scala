@@ -50,7 +50,7 @@ class Lsu(implicit cfg: Config) extends Module {
     val uaAddr = addr(uaMsb - 1, 0)
 
     val excReq = MuxCase(false.B, Seq(
-      (size === MbusSize.half.U) -> uaAddr(0).toBool(),
+      (size === MbusSize.half.U) -> uaAddr(0).asBool,
       (size === MbusSize.word.U) -> (uaAddr =/= "b00".U)
     ))
 
@@ -97,7 +97,7 @@ class Lsu(implicit cfg: Config) extends Module {
   })
 
   // write data
-  val shiftNum = (unaligedAddr << 3.U).asUInt()
+  val shiftNum = (unaligedAddr << 3.U).asUInt
   val wrdata = Mux1H(Seq(
     inst.sb -> io.exu2lsu.memWrdata(7, 0),
     inst.sh -> io.exu2lsu.memWrdata(15, 0),

@@ -3,6 +3,7 @@
 package mbus
 
 import chisel3._
+import circt.stage.ChiselStage
 
 /**
   * parameter class for MbusIC
@@ -76,5 +77,10 @@ object ElaborateMbusIC extends App {
 
   val base_p = MbusICParams(MbusRW, infos, infos, 32)
 
-  Driver.execute(args, () => new MbusIC(base_p))
+  println(
+    ChiselStage.emitSystemVerilog(
+      gen = new MbusIC(base_p),
+      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
+    )
+  )
 }

@@ -93,7 +93,7 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
     val r_wr_sel = RegNext(w_wr_req, false.B)
     r_wr_sel.suggestName(s"r_wr_sel_$idx")
 
-    when (!w_wr_req && m_in_slice.io.out.w.get.fire()) {
+    when (!w_wr_req && m_in_slice.io.out.w.get.fire) {
       r_wr_sel := false.B
     }
 
@@ -110,9 +110,9 @@ class MbusDecoder(p: MbusDecoderParams) extends Module {
   val w_chosen = PriorityEncoder(w_port_sels)
   val m_chosen_q = Module(new Queue(UInt(log2Ceil(p.addrMap.length).W), 1, true, true))
 
-  m_chosen_q.io.enq.valid := m_in_slice.io.out.c.fire()
+  m_chosen_q.io.enq.valid := m_in_slice.io.out.c.fire
   m_chosen_q.io.enq.bits := w_chosen
-  m_chosen_q.io.deq.ready := io.out(m_chosen_q.io.deq.bits).w.get.fire()
+  m_chosen_q.io.deq.ready := io.out(m_chosen_q.io.deq.bits).w.get.fire
   m_in_slice.io.out.w.get.ready := io.out(m_chosen_q.io.deq.bits).w.get.ready
 
   // read

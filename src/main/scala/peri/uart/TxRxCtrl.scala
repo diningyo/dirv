@@ -123,7 +123,7 @@ class Ctrl(direction: UartDirection, durationCount: Int) extends Module {
         rxData := 0.U
       } .elsewhen (m_stm.io.data) {
         when (w_update_req) {
-          rxData := rxData | (io.uart << r_bit_idx).asUInt()
+          rxData := rxData | (io.uart << r_bit_idx).asUInt
         }
       }
       reg.enable := fin

@@ -5,8 +5,8 @@ package peri.mem
 import math.pow
 
 import chisel3._
-import chisel3.util._
-import chisel3.core.{BlackBox, Bundle, IntParam, StringParam}
+import chisel3.experimental.{IntParam, StringParam}
+import chisel3.util.{log2Ceil, HasBlackBoxResource}
 
 sealed trait RAMType
 case object VerilogRAM extends RAMType
@@ -96,5 +96,5 @@ class RAM1RO1RW(p: RAMParams) extends BlackBox(
     val webb = Input(UInt(p.strbBits.W))
     val datab = Input(UInt(p.dataBits.W))
   })
-  setResource("/RAM1RO1RW.v")
+  addResource("/RAM1RO1RW.v")
 }

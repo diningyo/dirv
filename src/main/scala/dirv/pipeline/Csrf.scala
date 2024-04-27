@@ -342,7 +342,7 @@ class Csrf(implicit cfg: Config) extends Module {
   val rden = inst.csrValid
   val wren = inst.csrValid && (!io.invalidWb)
   val csrWrData = MuxCase(wrData, Seq(
-    (inst.csrrc || inst.csrrci) -> (rdData & (~wrData).asUInt()),
+    (inst.csrrc || inst.csrrci) -> (rdData & (~wrData).asUInt),
     (inst.csrrs || inst.csrrsi) -> (rdData | wrData)
   ))
 
@@ -384,7 +384,7 @@ class Csrf(implicit cfg: Config) extends Module {
   }
 
   // address decode
-  val csrSelBits = Cat(CSR.csrRegAddrs.reverse.map(_.asUInt() === inst.getCsr))
+  val csrSelBits = Cat(CSR.csrRegAddrs.reverse.map(_.asUInt === inst.getCsr))
 
   // read
   val csrRegs = Seq(
