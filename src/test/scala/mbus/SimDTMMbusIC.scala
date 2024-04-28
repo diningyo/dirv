@@ -17,7 +17,7 @@ class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int)(randBits: Int, seed
   r_rand_valid := true.B
 
   m_glfsr.io.seed.valid := r_rand_valid
-  m_glfsr.io.seed.bits := VecInit(seed.U.asBools())
+  m_glfsr.io.seed.bits := VecInit(seed.U.asBools)
 
   val m_cmd_q = Module(new Queue(chiselTypeOf(io.c.bits), 1, true, true))
   val m_issued_q = Module(new Queue(chiselTypeOf(io.c.bits), 1, true, true))

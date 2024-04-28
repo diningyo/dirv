@@ -342,3 +342,6 @@ hs_err_pid*
 .metals/
 rtl/
 petalinux/
+
+# bloop
+.bloop/
