@@ -2,8 +2,9 @@
 
 package mbus
 
-import chisel3.iotesters._
-import test.util.BaseTester
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import test.util.{IntToBigInt, BaseTester}
 
 import scala.util.Random
 
@@ -11,11 +12,11 @@ import scala.util.Random
   * Unit test class for MbusArbiter
   * @param c Instance of SimDTMMbusArbiter
   */
-class MbusArbiterUnitTester(c: SimDTMMbusArbiter) extends PeekPokeTester(c) {
+class MbusArbiterUnitTester(c: SimDTMMbusArbiter) extends PeekPokeTester(c) with IntToBigInt {
 
   val r = new Random(1)
-  val in = c.io.dut.in
-  val out = c.io.dut.out
+  val in = c.io.dut_io.in
+  val out = c.io.dut_io.out
 
   def idle(cycle: Int = 1): Unit = {
     for (idx <- c.p.addrMap.indices) {
@@ -24,8 +25,8 @@ class MbusArbiterUnitTester(c: SimDTMMbusArbiter) extends PeekPokeTester(c) {
       poke(in(idx).r.get.ready, true)
     }
 
-    poke(c.io.dut.out.r.get.valid, false)
-    poke(c.io.dut.out.w.get.ready, true)
+    poke(c.io.dut_io.out.r.get.valid, false)
+    poke(c.io.dut_io.out.w.get.ready, true)
     step(cycle)
   }
 
@@ -46,7 +47,7 @@ class MbusArbiterUnitTester(c: SimDTMMbusArbiter) extends PeekPokeTester(c) {
     * @param data Data to write
     */
   def write_data(port: Int, strb: Int,  data: BigInt): Unit = {
-    poke(c.io.dut.out.w.get.ready, true)
+    poke(c.io.dut_io.out.w.get.ready, true)
     poke(in(port).w.get.valid, true)
     poke(in(port).w.get.bits.data, data)
     poke(in(port).w.get.bits.strb, strb)
@@ -157,8 +158,9 @@ class MbusArbiterTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusArbiter(base_p)(timeoutCycle)) {
-      c => new MbusArbiterUnitTester(c) {
+    test(new SimDTMMbusArbiter(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusArbiterUnitTester(_) {
         idle(10)
 
         for (delay <- 0 until 10) {
@@ -170,8 +172,7 @@ class MbusArbiterTester extends BaseTester {
         }
         idle(10)
 
-      }
-    } should be (true)
+      })
   }
 
   it should "single read. [rd:100]" in {
@@ -182,8 +183,9 @@ class MbusArbiterTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusArbiter(base_p)(timeoutCycle)) {
-      c => new MbusArbiterUnitTester(c) {
+    test(new SimDTMMbusArbiter(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusArbiterUnitTester(_) {
         idle(10)
 
         for (delay <- 0 until 10) {
@@ -195,7 +197,6 @@ class MbusArbiterTester extends BaseTester {
         }
         idle(10)
 
-      }
-    } should be (true)
-  }
+      })
+    }
 }

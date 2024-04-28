@@ -17,8 +17,6 @@ class AluIO(implicit cfg: Config) extends Bundle {
   val rs1 = Input(UInt(cfg.dataBits.W))
   val rs2 = Input(UInt(cfg.dataBits.W))
   val result = Output(UInt(cfg.dataBits.W))
-
-  override def cloneType: this.type = new AluIO().asInstanceOf[this.type]
 }
 
 
@@ -49,7 +47,7 @@ class Alu(implicit cfg: Config) extends Module {
 
   val rv32iAlu = scala.collection.mutable.Seq(
     (add || aluThrough) -> (rs1 + rs2),
-    (inst.slti || inst.slt) -> (rs1.asSInt() < rs2.asSInt()).asUInt(),
+    (inst.slti || inst.slt) -> (rs1.asSInt < rs2.asSInt).asUInt,
     (inst.sltiu || inst.sltu) -> (rs1 < rs2),
     inst.sub -> (rs1 - rs2),
     (inst.andi || inst.and) -> (rs1 & rs2),
@@ -57,7 +55,7 @@ class Alu(implicit cfg: Config) extends Module {
     (inst.xori || inst.xor) -> (rs1 ^ rs2),
     (inst.slli || inst.sll) -> (rs1 << shamt)(cfg.arch.xlen - 1, 0),
     (inst.srli || inst.srl) -> (rs1 >> shamt),
-    (inst.srai || inst.sra) -> (rs1.asSInt() >> shamt).asUInt(),
+    (inst.srai || inst.sra) -> (rs1.asSInt >> shamt).asUInt,
     inst.lui -> inst.immU
   )
 

@@ -31,7 +31,7 @@ class RegTop2CtrlIO extends Bundle {
 }
 
 abstract class UartReg extends Bundle {
-  def write(v: UInt)
+  def write(v: UInt): Unit
   def read(): UInt
 }
 

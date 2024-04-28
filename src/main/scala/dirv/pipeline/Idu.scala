@@ -280,8 +280,6 @@ class InstRV32(xlen: Int = 32)(implicit val cfg: Config)
   def immJ: UInt = {
     Cat(Fill(13, funct7(6)), rs1, funct3, rs2(0), funct7, rs2(4, 1), 0x0.U(1.W))
   }
-
-  override def cloneType: InstRV32.this.type = new InstRV32(xlen).asInstanceOf[this.type]
 }
 
 /**
@@ -301,7 +299,6 @@ class Idu2ExuIO(implicit val cfg: Config) extends Bundle {
 class IduIO(implicit val cfg: Config) extends Bundle {
   val ifu2idu = Flipped(new Ifu2IduIO())
   val idu2exu = new Idu2ExuIO()
-  override def cloneType: IduIO.this.type = new IduIO().asInstanceOf[this.type]
 }
 
 /**

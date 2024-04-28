@@ -1,6 +1,8 @@
 // See LICENSE for license details.
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import scala.util.control.Breaks
 
 /**
@@ -38,7 +40,7 @@ class DirvUnitTester(c: SimDtm) extends PeekPokeTester(c) {
       info()
       if (peek(c.io.fin) == 0x1) {
         println("c.io.fin becomes high. **TEST SUCCEEDED**")
-        b.break
+        b.break()
       }
       step(1)
     }

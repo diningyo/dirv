@@ -3,7 +3,9 @@
 package peri.uart
 
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import test.util.BaseTester
 
 import scala.math.{floor, random}
@@ -71,22 +73,22 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
-      c => new FifoUnitTester(c) {
-        val setData = Range(0, 16).map(_ => floor(random * 256).toInt)
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
+        val setData = Range(0, 16).map(_ => floor(random() * 256).toInt)
 
-        expect(c.io.rd.empty, true)
+        expect(dut.io.rd.empty, true)
         for ((data, idx) <- setData.zipWithIndex) {
-          expect(c.io.dbg.get.wrptr, idx)
-          expect(c.io.dbg.get.count, idx)
+          expect(dut.io.dbg.get.wrptr, idx)
+          expect(dut.io.dbg.get.count, idx)
           push(data)
-          expect(c.io.rd.empty, false)
-          expect(c.io.rd.data, setData(0))
-          expect(c.io.dbg.get.fifo(idx), data)
+          expect(dut.io.rd.empty, false)
+          expect(dut.io.rd.data, setData(0))
+          expect(dut.io.dbg.get.fifo(idx), data)
         }
         idle()
-      }
-    } should be (true)
+      })
   }
 
   it should "release a data from fifo when Host issues a command \"pop\"" in {
@@ -96,25 +98,25 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
-      c => new FifoUnitTester(c) {
-        val setData = Range(0, 16).map(_ => floor(random * 256).toInt)
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
+        val setData = Range(0, 16).map(_ => floor(random() * 256).toInt)
 
         // data set
         for (data <- setData) {
           push(data)
-          expect(c.io.dbg.get.rdptr, 0)
+          expect(dut.io.dbg.get.rdptr, 0)
         }
         idle()
 
         // pop
         for ((data, idx) <- setData.zipWithIndex) {
-          expect(c.io.dbg.get.rdptr, idx)
+          expect(dut.io.dbg.get.rdptr, idx)
           pop(data)
         }
         idle()
-      }
-    } should be (true)
+      })
   }
 
   it should "keep data count when Host issues command \"push\" and \"pop\" at the same time" in {
@@ -124,17 +126,17 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
-      c => new FifoUnitTester(c) {
-        val txData = Range(0, 128).map(_ => floor(random * 256).toInt)
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
+        val txData = Range(0, 128).map(_ => floor(random() * 256).toInt)
         push(txData(0))
 
         for ((data, exp) <- txData.tail.zip(txData)) {
           pushAndPop(data, exp)
-          expect(c.io.dbg.get.count, 1)
+          expect(dut.io.dbg.get.count, 1)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "overwrap their pointer when pointer reaches fifo depth" in {
@@ -144,16 +146,17 @@ class FifoTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new Fifo(depth, true)) {
-      c => new FifoUnitTester(c) {
-        val txData = Range(0, 17).map(_ => floor(random * 256).toInt)
+    test(new Fifo(depth, true)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new FifoUnitTester(_) {
+        val txData = Range(0, 17).map(_ => floor(random() * 256).toInt)
 
         for (data <- txData) {
           push(data)
         }
-        expect(c.io.dbg.get.wrptr, 1)
-        expect(c.io.dbg.get.count, 0)
-      }
-    } should be (true)
+        
+        expect(dut.io.dbg.get.wrptr, 1)
+        expect(dut.io.dbg.get.count, 0)
+      })
   }
 }

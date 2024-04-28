@@ -4,7 +4,7 @@ package mbus
 
 import chisel3._
 import chisel3.util._
-
+import chisel3.stage.ChiselStage
 
 /**
   * Parameter class for MbusArbiter
@@ -37,8 +37,6 @@ class MbusArbiterIO(p: MbusArbiterParams) extends Bundle {
   ))*/
   val in = Vec(p.numOfMasters, Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits)))
   val out = MbusIO(p.ioAttr, p.addrBits, p.dataBits)
-  override def cloneType: this.type =
-    new MbusArbiterIO(p).asInstanceOf[this.type]
 }
 
 /**
@@ -61,7 +59,7 @@ class MbusArbiter(p: MbusArbiterParams) extends Module {
 
   m_out_slice.io.in.w.get <> io.in(m_issued_q.io.deq.bits).w.get
   m_out_slice.io.in.w.get.valid := m_issued_q.io.deq.valid && io.in(m_issued_q.io.deq.bits).w.get.valid
-  m_issued_q.io.deq.ready := m_out_slice.io.in.w.get.fire() || m_out_slice.io.in.r.get.fire()
+  m_issued_q.io.deq.ready := m_out_slice.io.in.w.get.fire || m_out_slice.io.in.r.get.fire
 
   for ((io_in, idx) <- io.in.zipWithIndex) {
     val w_dport_sel = (m_issued_q.io.deq.bits === idx.U) && m_issued_q.io.deq.valid
@@ -78,5 +76,10 @@ class MbusArbiter(p: MbusArbiterParams) extends Module {
 
 object ElaborateMbusArb extends App {
   val p = MbusArbiterParams(MbusRW, Seq((1000, 256), (2000, 256)), 32)
-  Driver.execute(args, () => new MbusArbiter(p))
+
+  println(
+    ChiselStage.emitSystemVerilog(
+      gen = new MbusArbiter(p)
+    )  
+  )
 }

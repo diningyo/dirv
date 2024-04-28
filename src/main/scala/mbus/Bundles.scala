@@ -41,9 +41,6 @@ class MbusCmdIO(addrBits: Int) extends Bundle {
   val addr = UInt(addrBits.W)
   val cmd = UInt(MbusCmd.bits.W)
   val size = UInt(MbusSize.bits.W)
-
-  override def cloneType: MbusCmdIO.this.type =
-    new MbusCmdIO(addrBits).asInstanceOf[this.type]
 }
 
 object MbusCmdIO {
@@ -58,9 +55,6 @@ object MbusCmdIO {
 class MbusRIO(dataBits: Int) extends Bundle {
   val resp = Input(UInt(MbusResp.bits.W))
   val data = Input(UInt(dataBits.W))
-
-  override def cloneType: MbusRIO.this.type =
-    new MbusRIO(dataBits).asInstanceOf[this.type]
 }
 
 object MbusRIO {
@@ -76,9 +70,6 @@ class MbusWIO(dataBits: Int) extends Bundle {
   val strb = UInt((dataBits / 8).W)
   val data = UInt(dataBits.W)
   //val resp = Input(UInt(MbusResp.bits.W))
-
-  override def cloneType: MbusWIO.this.type =
-    new MbusWIO(dataBits).asInstanceOf[this.type]
 }
 
 object MbusWIO {
@@ -104,9 +95,6 @@ class MbusIO(ioType: MbusIOAttr, addrBits: Int, dataBits: Int) extends Bundle {
     case MbusWO => None
     case _ => Some(MbusRIO(dataBits))
   }
-
-  override def cloneType: MbusIO.this.type =
-    new MbusIO(ioType, addrBits, dataBits).asInstanceOf[this.type]
 }
 
 /**

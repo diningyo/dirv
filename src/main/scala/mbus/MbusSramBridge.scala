@@ -39,9 +39,6 @@ case class MbusSramBridgeParams
 class MbusSramBridgeIO(p: MbusSramBridgeParams) extends Bundle {
   val mbus = Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits))
   val sram = new RAMIO(p.ramIOParams)
-
-  override def cloneType: this.type =
-    new MbusSramBridgeIO(p).asInstanceOf[this.type]
 }
 
 /**

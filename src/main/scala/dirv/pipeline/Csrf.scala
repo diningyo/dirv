@@ -47,13 +47,13 @@ abstract class BaseReg extends Bundle {
     * Write register
     * @param wrData data to write register
     */
-  def write(wrData: UInt): Unit = Unit
+  def write(wrData: UInt): Unit = ()
 
   /**
     * Read register
     * @return register value
     */
-  def read: UInt = 0.U
+  def read: UInt
 
   /**
     * Initalize register
@@ -71,7 +71,6 @@ class NbitsRegRW(bits: Int) extends BaseReg {
 
   override def write(wrData: UInt): Unit = reg := wrData(bits - 1, 0)
   override def read: UInt = reg
-  override def cloneType: NbitsRegRW.this.type = new NbitsRegRW(bits).asInstanceOf[this.type]
 }
 
 /**
@@ -82,7 +81,6 @@ class NbitsRegRO(bits: Int) extends BaseReg {
   val reg = UInt(bits.W)
 
   override def read: UInt = reg
-  override def cloneType: NbitsRegRO.this.type = new NbitsRegRO(bits).asInstanceOf[this.type]
 }
 
 /**
@@ -342,7 +340,7 @@ class Csrf(implicit cfg: Config) extends Module {
   val rden = inst.csrValid
   val wren = inst.csrValid && (!io.invalidWb)
   val csrWrData = MuxCase(wrData, Seq(
-    (inst.csrrc || inst.csrrci) -> (rdData & (~wrData).asUInt()),
+    (inst.csrrc || inst.csrrci) -> (rdData & (~wrData).asUInt),
     (inst.csrrs || inst.csrrsi) -> (rdData | wrData)
   ))
 
@@ -384,7 +382,7 @@ class Csrf(implicit cfg: Config) extends Module {
   }
 
   // address decode
-  val csrSelBits = Cat(CSR.csrRegAddrs.reverse.map(_.asUInt() === inst.getCsr))
+  val csrSelBits = Cat(CSR.csrRegAddrs.reverse.map(_.asUInt === inst.getCsr))
 
   // read
   val csrRegs = Seq(

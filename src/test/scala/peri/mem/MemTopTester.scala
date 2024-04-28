@@ -2,18 +2,20 @@
 
 package peri.mem
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import mbus._
-import test.util.BaseTester
+import test.util.{IntToBigInt, BaseTester}
 
 /**
   * Unit test class for MbusSramBridge
   * @param c Instance of SimDTMMbusSramBridge
   */
-class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) {
+class MemTopUnitTester(c: SimDTMMemTop) extends PeekPokeTester(c) with IntToBigInt {
 
-  val imem = c.io.dut.imem
-  val dmem = c.io.dut.dmem
+  val imem = c.io.dut_io.imem
+  val dmem = c.io.dut_io.dmem
 
   def idle(cycle: Int = 1): Unit = {
     poke(imem.c.valid, false)
@@ -230,13 +232,13 @@ class MemTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMemTop(base_p)(timeoutCycle)) {
-      c => new MemTopUnitTester(c) {
+    test(new SimDTMMemTop(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         idle(10)
-      }
-    } should be (true)
+      })
   }
 
   it should
@@ -248,15 +250,15 @@ class MemTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMemTop(base_p)(timeoutCycle)) {
-      c => new MemTopUnitTester(c) {
+    test(new SimDTMMemTop(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         for (delay <- 0 until 5) {
           idle(2)
           single_write(delay, 0xf, 0x12345678, delay)
           idle(2)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should
@@ -268,14 +270,14 @@ class MemTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMemTop(base_p)(timeoutCycle)) {
-      c => new MemTopUnitTester(c) {
+    test(new SimDTMMemTop(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(dmem, 0x1, 0x12345678, 1)
         idle(10)
-      }
-    } should be (true)
+      })
   }
 
   it should
@@ -287,8 +289,9 @@ class MemTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMemTop(base_p)(timeoutCycle)) {
-      c => new MemTopUnitTester(c) {
+    test(new SimDTMMemTop(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MemTopUnitTester(_) {
         idle(10)
 
         val wrData = Seq(
@@ -324,7 +327,6 @@ class MemTopTester extends BaseTester {
         step(1)
 
         idle(10)
-      }
-    } should be (true)
+      })
   }
 }

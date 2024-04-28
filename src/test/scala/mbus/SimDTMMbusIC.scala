@@ -31,7 +31,7 @@ class Xtor(ioType: MbusIOAttr, addrBits: Int, dataBits: Int)(randBits: Int, seed
   m_cmd_q.io.enq.bits.size := 0.U
   m_cmd_q.io.enq.bits.cmd := w_rand_data(0)
 
-  m_issued_q.io.enq.valid := m_cmd_q.io.deq.fire()
+  m_issued_q.io.enq.valid := m_cmd_q.io.deq.fire
   m_issued_q.io.enq.bits := m_cmd_q.io.deq.bits
 
   when (m_issued_q.io.deq.bits.cmd === MbusCmd.rd.U) {
@@ -66,14 +66,16 @@ class SimDTMMbusIC(val p: MbusICParams)
                   (
   limit: Int,
   abortEn: Boolean = true
-) extends BaseSimDTM(limit, abortEn) {
-  val io = IO(new Bundle with BaseSimDTMIO {
-    val dut = new MbusICIO(p)
-  })
+) extends Module {
 
   val dut = Module(new MbusIC(p))
+  val wdt = Module(new WDT(limit, abortEn))
 
-  io.dut <> dut.io
+  val io = IO(new Bundle {
+    val dut_io = chiselTypeOf(dut.io)
+    val wdt_io = chiselTypeOf(wdt.io)
+  })
 
-  connect(false.B)
+  io.dut_io <> dut.io
+  io.wdt_io <> wdt.io
 }

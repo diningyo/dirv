@@ -30,8 +30,6 @@ class MemTopIO(p: MemTopParams) extends Bundle {
   val rp = p.ramParams
   val imem = Flipped(MbusIO(MbusRO, rp.addrBits, rp.dataBits))
   val dmem = Flipped(MbusIO(MbusRW, rp.addrBits, rp.dataBits))
-
-  override def cloneType: this.type = new MemTopIO(p).asInstanceOf[this.type]
 }
 
 class MemTop(p: MemTopParams) extends Module {

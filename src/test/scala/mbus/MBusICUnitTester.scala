@@ -2,8 +2,10 @@
 
 package mbus
 
-import chisel3.iotesters._
-import test.util.BaseTester
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
+import test.util.{IntToBigInt, BaseTester}
 
 import scala.util.Random
 
@@ -11,13 +13,13 @@ import scala.util.Random
   * Unit test class for MbusIC
   * @param c Instance of SimDTMMbusIC
   */
-class MbusICUnitTester(c: SimDTMMbusIC) extends PeekPokeTester(c) {
+class MbusICUnitTester(c: SimDTMMbusIC) extends PeekPokeTester(c) with IntToBigInt {
 
   val r = new Random(1)
-  val in = c.io.dut.in
+  val in = c.io.dut_io.in
 
 
-  val out = c.io.dut.out
+  val out = c.io.dut_io.out
 
   def idle(cycle: Int = 1): Unit = {
     for (i <- c.p.masterInfos.indices) {
@@ -131,14 +133,14 @@ class MbusICTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusIC(base_p)(timeoutCycle)) {
-      c => new MbusICUnitTester(c) {
-        for (i <- c.p.masterInfos.indices) {
+    test(new SimDTMMbusIC(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusICUnitTester(_) {
+        for (i <- dut.p.masterInfos.indices) {
           write_req(i, 100)
           step(1)
           idle(1)
         }
-      }
-    } should be (true)
+      })
   }
 }

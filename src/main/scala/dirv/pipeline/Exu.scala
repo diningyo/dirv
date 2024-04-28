@@ -11,17 +11,12 @@ class Exu2IfuIO(implicit cfg: Config) extends Bundle {
   val updatePcReq = Output(Bool())
   val updatePc = Output(UInt(cfg.arch.xlen.W))
   val stopFetch = Output(Bool())
-
-  override def cloneType: this.type = new Exu2IfuIO().asInstanceOf[this.type]
-
 }
 
 class Exu2LsuIO(implicit cfg: Config) extends Bundle {
   val memAddr = Output(UInt(cfg.addrBits.W))
   val memWrdata = Output(UInt(cfg.dataBits.W))
   val inst = Output(new InstRV32())
-
-  override def cloneType: this.type = new Exu2LsuIO().asInstanceOf[this.type]
 }
 
 /**
@@ -70,8 +65,8 @@ class Exu(implicit cfg: Config) extends Module{
   condBranchValid := MuxCase(false.B, Seq(
     instExe.beq -> (mpfr.io.rs1.data === mpfr.io.rs2.data),
     instExe.bne -> (mpfr.io.rs1.data =/= mpfr.io.rs2.data),
-    instExe.blt -> (mpfr.io.rs1.data.asSInt() < mpfr.io.rs2.data.asSInt()),
-    instExe.bge -> (mpfr.io.rs1.data.asSInt() >= mpfr.io.rs2.data.asSInt()),
+    instExe.blt -> (mpfr.io.rs1.data.asSInt < mpfr.io.rs2.data.asSInt),
+    instExe.bge -> (mpfr.io.rs1.data.asSInt >= mpfr.io.rs2.data.asSInt),
     instExe.bltu -> (mpfr.io.rs1.data < mpfr.io.rs2.data),
     instExe.bgeu -> (mpfr.io.rs1.data >= mpfr.io.rs2.data)
   ))
@@ -83,7 +78,7 @@ class Exu(implicit cfg: Config) extends Module{
   val branchPc = Mux1H(Seq(
     (instExe.mret || instExe.wfi) -> csrf.io.mepc,
     instExe.jal -> (currPc + instExe.immJ),
-    instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt()),
+    instExe.jalr -> ((mpfr.io.rs1.data + instExe.immI) & (~1.U(cfg.arch.xlen.W)).asUInt),
     instExe.fenceI -> (currPc + 4.U),
     condBranchValid -> (currPc + instExe.immB)
   ))(cfg.addrBits - 1, 0)

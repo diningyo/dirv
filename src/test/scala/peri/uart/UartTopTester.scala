@@ -2,7 +2,9 @@
 
 package peri.uart
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import mbus._
 import test.util.BaseTester
 
@@ -187,10 +189,11 @@ class UartTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new UartTop(baudrate0, clockFreq0)) {
-      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
+    test(new UartTop(baudrate0, clockFreq0)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate0, clockFreq0) {
 
-        val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 100).map(_ => floor(random() * 256).toInt)
 
         idle()
 
@@ -202,8 +205,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           receive(data)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "negate TxEmpty bit and assert TxFifoFull bit in Stat register when peri.uart.Top send data." +
@@ -214,10 +216,11 @@ class UartTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new UartTop(baudrate0, clockFreq0)) {
-      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
+    test(new UartTop(baudrate0, clockFreq0)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate0, clockFreq0) {
 
-        val txData = Range(0, 100).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 100).map(_ => floor(random() * 256).toInt)
 
         idle()
 
@@ -229,8 +232,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           readReg(stat, 0x0) // TxFifoEmpty 1 -> 0
         }
-      }
-    } should be (true)
+      })
   }
 
   var baudrate1: Int = 9600
@@ -243,11 +245,12 @@ class UartTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
-      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
+    test(new UartTop(baudrate1, clockFreq1)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate1, clockFreq1) {
 
         val b = new scala.util.control.Breaks
-        val txData = Range(0, 3).map(_ => floor(random * 256).toInt)
+        val txData = Range(0, 3).map(_ => floor(random() * 256).toInt)
 
         idle()
 
@@ -259,8 +262,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           receive(data)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "negate TxEmpty bit and assert TxFifoFull bit " +
@@ -271,10 +273,11 @@ class UartTopTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
-      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
+    test(new UartTop(baudrate1, clockFreq1)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate1, clockFreq1) {
 
-        val txData = Range(0, 10).map(_ => floor(random * 25).toInt)
+        val txData = Range(0, 10).map(_ => floor(random() * 25).toInt)
 
         idle()
 
@@ -286,8 +289,7 @@ class UartTopTester extends BaseTester {
           writeReg(txFifo, data)
           readReg(stat, 0x0) // TxFifoFull
         }
-      }
-    } should be (true)
+      })
   }
 }
 
@@ -309,8 +311,9 @@ class UartRxTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new UartTop(baudrate0, clockFreq0)) {
-      c => new UartTopUnitTester(c, baudrate0, clockFreq0) {
+    test(new UartTop(baudrate0, clockFreq0)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate0, clockFreq0) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
         val rxData = Range(0, 25)
@@ -327,8 +330,7 @@ class UartRxTester extends BaseTester {
           readReg(stat, 0x5) // TxFifoEmpty / RxDataValid
           readReg(rxFifo, data)
         }
-      }
-    } should be (true)
+      })
   }
 
   var baudrate1: Int = 9600
@@ -341,8 +343,9 @@ class UartRxTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new UartTop(baudrate1, clockFreq1)) {
-      c => new UartTopUnitTester(c, baudrate1, clockFreq1) {
+    test(new UartTop(baudrate1, clockFreq1)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new UartTopUnitTester(_, baudrate1, clockFreq1) {
 
         //val rxData = Range(0, 100).map(_ => floor(random * 256).toInt)
         val rxData = Range(0, 25)
@@ -359,7 +362,6 @@ class UartRxTester extends BaseTester {
           readReg(stat, 0x5) // TxFifoEmpty / RxDataValid
           readReg(rxFifo, data)
         }
-      }
-    } should be (true)
+      })
   }
 }

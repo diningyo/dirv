@@ -3,6 +3,7 @@
 package mbus
 
 import chisel3._
+import chisel3.stage.ChiselStage
 
 /**
   * parameter class for MbusIC
@@ -31,9 +32,6 @@ case class MbusICParams
 class MbusICIO(p: MbusICParams) extends Bundle {
   val in = Vec(p.numOfMasters, Flipped(MbusIO(p.ioAttr, p.addrBits, p.dataBits)))
   val out = Vec(p.numOfSlaves, MbusIO(p.ioAttr, p.addrBits, p.dataBits))
-
-  override def cloneType: this.type =
-    new MbusICIO(p).asInstanceOf[this.type]
 }
 
 /**
@@ -76,5 +74,9 @@ object ElaborateMbusIC extends App {
 
   val base_p = MbusICParams(MbusRW, infos, infos, 32)
 
-  Driver.execute(args, () => new MbusIC(base_p))
+  println(
+    ChiselStage.emitSystemVerilog(
+      gen = new MbusIC(base_p)
+    )
+  )
 }

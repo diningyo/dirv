@@ -3,22 +3,23 @@
 package mbus
 
 import scala.util.Random
-import chisel3.iotesters._
-import test.util.BaseTester
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import test.util.{IntToBigInt, BaseTester}
 
 /**
   * Unit test class for MbusDecoder
   * @param c Instance of SimDTMMbusDecoder
   */
-class MbusDecoderUnitTester(c: SimDTMMbusDecoder) extends PeekPokeTester(c) {
+class MbusDecoderUnitTester(c: SimDTMMbusDecoder) extends PeekPokeTester(c) with IntToBigInt {
 
   val r = new Random(1)
-  val in = c.io.dut.in
+  val in = c.io.dut_io.in
   val in_c = in.c
   val in_r = in.r.get
   val in_w = in.w.get
 
-  val out = c.io.dut.out
+  val out = c.io.dut_io.out
 
   def idle(cycle: Int = 1): Unit = {
     poke(in_c.valid, false)
@@ -124,11 +125,12 @@ class MbusDecoderTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
-      c => new MbusDecoderUnitTester(c) {
+    test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
-          val wrData = intToUnsignedBigInt(r.nextInt())
+          val wrData = r.nextInt()
           idle(10)
           write_req(addr)
           write_data(0xf, wrData)
@@ -136,7 +138,7 @@ class MbusDecoderTester extends BaseTester {
             val ready = if (i == dst_port) true else false
             poke(out(i).w.get.ready, ready)
           }
-          expect(c.io.dut.in.w.get.ready, true)
+          expect(dut.io.dut_io.in.w.get.ready, true)
           expect(out(dst_port).c.valid, true)
           expect(out(dst_port).w.get.valid, true)
           expect(out(dst_port).w.get.bits.data, wrData)
@@ -144,8 +146,7 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to transfer write data, when write data is delayed. [wr:001]" in {
@@ -156,8 +157,9 @@ class MbusDecoderTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
-      c => new MbusDecoderUnitTester(c) {
+    test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (delay <- 1 until 10) {
           for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
@@ -177,8 +179,7 @@ class MbusDecoderTester extends BaseTester {
             idle(10)
           }
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to choose right output port by cmd.bits.addr, " +
@@ -190,8 +191,9 @@ class MbusDecoderTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
-      c => new MbusDecoderUnitTester(c) {
+    test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           idle(10)
@@ -208,8 +210,7 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to transfer write data, when read data is delayed. [rd:100]" in {
@@ -220,8 +221,9 @@ class MbusDecoderTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
-      c => new MbusDecoderUnitTester(c) {
+    test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           val rdData = intToUnsignedBigInt(r.nextInt())
 
@@ -238,8 +240,7 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to choose right output port by cmd.bits.addr, when Master issue read command. [rd:101]" in {
@@ -250,8 +251,9 @@ class MbusDecoderTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
-      c => new MbusDecoderUnitTester(c) {
+    test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
 
         for (delay <- 1 until 10) {
           for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
@@ -275,8 +277,7 @@ class MbusDecoderTester extends BaseTester {
             idle(10)
           }
         }
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to choose right output port by cmd.bits.addr, " +
@@ -288,8 +289,9 @@ class MbusDecoderTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusDecoder(base_p)(timeoutCycle)) {
-      c => new MbusDecoderUnitTester(c) {
+    test(new SimDTMMbusDecoder(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusDecoderUnitTester(_) {
         for (((addr, _), dst_port) <- base_p.addrMap.zipWithIndex) {
           idle(10)
           read_req(addr)
@@ -305,7 +307,6 @@ class MbusDecoderTester extends BaseTester {
           step(1)
           idle(10)
         }
-      }
-    } should be (true)
+      })
   }
 }

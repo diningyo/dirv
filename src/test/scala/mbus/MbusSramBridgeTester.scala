@@ -2,17 +2,19 @@
 
 package mbus
 
-import chisel3.iotesters._
-import test.util.BaseTester
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
+import test.util.{IntToBigInt, BaseTester}
 
 /**
   * Unit test class for MbusSramBridge
   * @param c Instance of SimDTMMbusSramBridge
   */
-class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c) {
+class MbusSramBridgeUnitTester(c: SimDTMMbusSramBridge) extends PeekPokeTester(c) with IntToBigInt {
 
-  val mbus = c.io.dut.mbus
-  val sram = c.io.dut.sram
+  val mbus = c.io.dut_io.mbus
+  val sram = c.io.dut_io.sram
 
   def idle(cycle: Int = 1): Unit = {
     poke(mbus.c.valid, false)
@@ -245,14 +247,13 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
-      c => new MbusSramBridgeUnitTester(c) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         idle(10)
-
-      }
-    } should be (true)
+      })
   }
 
   it should "wait for issuing Sram write, when Mbus write data doesn't come." in {
@@ -263,14 +264,13 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
-      c => new MbusSramBridgeUnitTester(c) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678, 1)
         idle(10)
-
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to convert Mbus read access to Sram read access" +
@@ -282,15 +282,14 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
-      c => new MbusSramBridgeUnitTester(c) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(0x1, 0x12345678)
         idle(10)
-
-      }
-    } should be (true)
+      })
   }
 
   it should "wait to assert Mbus.r.valid if sram.rddv doesn't return." in {
@@ -301,28 +300,26 @@ class MbusSramBridgeTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
-      c => new MbusSramBridgeUnitTester(c) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         single_write(0x1, 0xf, 0x12345678)
         single_read(0x1, 0x12345678, 1)
         idle(10)
-
-      }
-    } should be (true)
+      })
   }
 
-  it should
-    f"keep Mbus.r.valid high if Mbus r.ready is Low. [$dutName-BUG-200]" in {
-
+  it should f"keep Mbus.r.valid high if Mbus r.ready is Low. [$dutName-BUG-200]" in {
     val outDir = dutName + "-BUG-200"
     val args = getArgs(Map(
       "--top-name" -> dutName,
       "--target-dir" -> s"test_run_dir/$outDir"
     ))
 
-    Driver.execute(args, () => new SimDTMMbusSramBridge(base_p)(timeoutCycle)) {
-      c => new MbusSramBridgeUnitTester(c) {
+    test(new SimDTMMbusSramBridge(base_p)(timeoutCycle)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new MbusSramBridgeUnitTester(_) {
         idle(10)
         var data = intToUnsignedBigInt(0xf0008093)
         poke(mbus.c.valid, true)
@@ -397,8 +394,6 @@ class MbusSramBridgeTester extends BaseTester {
         expect(sram.wren.get, false)
         step(1)
         idle(10)
-
-      }
-    } should be (true)
-  }
+      })
+    }
 }

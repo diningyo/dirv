@@ -3,6 +3,7 @@
 import java.nio.file.Paths
 
 import chisel3._
+import chisel3.stage.ChiselStage
 import dirv.{Config, Dirv}
 import mbus.{MbusIC, MbusICParams, MbusRW}
 import peri.mem.{MemTop, MemTopParams}
@@ -137,10 +138,9 @@ object ElaborateSysUart extends App {
   val clockFreq = 50
   val file = Paths.get(args(0))
 
-  Driver.execute(Array(
-    "-tn=SysUart",
-    "-td=rtl/SysUart"
-  ),
-    () => new SysUart(file.toAbsolutePath.toString)(baudrate, clockFreq)
+  println(
+    ChiselStage.emitSystemVerilog(
+      gen = new SysUart(file.toAbsolutePath.toString)(baudrate, clockFreq)
+    )
   )
 }

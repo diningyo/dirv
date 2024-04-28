@@ -1,6 +1,7 @@
 // See LICENSE for license details.
 
 import chisel3._
+import chisel3.stage.ChiselStage
 import dirv.{Config, Dirv}
 import peri.mem.{MemTop, MemTopParams}
 
@@ -123,20 +124,12 @@ class SimDtm(prgHexFile: String)(implicit cfg: Config) extends Module {
   io.t6 := xregs(31)
 }
 
+object Elaborate extends App {
 
-class A extends Module {
-  val io = IO(new Bundle{
-    val a = Input(Bool())
-    val b = Output(Bool())
-  })
+  implicit val cfg = Config(initAddr = BigInt("200", 16))
 
-  when (io.a) {
-    io.b := false.B
-  } otherwise {
-    io.b := true.B
-  }
-}
-
-object ElaborateA extends App {
-  Driver.execute(args, () => new A)
+  println(
+    ChiselStage.emitSystemVerilog(
+      gen = new SimDtm(""))
+  )
 }

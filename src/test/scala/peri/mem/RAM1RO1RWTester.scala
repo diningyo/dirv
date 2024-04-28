@@ -2,7 +2,9 @@
 
 package peri.mem
 
-import chisel3.iotesters._
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
+import chiseltest.VerilatorBackendAnnotation
 import test.util.BaseTester
 
 
@@ -92,15 +94,15 @@ class RAM1RO1RWTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir-000"
     ))
 
-    Driver.execute(args, () => new RAM1RO1RWWrapper(basic_p)) {
-      c => new RAM1RO1RWUnitTester(c) {
+    test(new RAM1RO1RWWrapper(basic_p)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RAM1RO1RWUnitTester(_) {
 
         idle()
         b_single_write(0x0, 0xf, 0xff)
         a_single_read(0x0, 0xff)
         step(10)
-      }
-    } should be (true)
+      })
   }
 
   it should "be able to read valid data from memory when b.rden comes" in {
@@ -111,14 +113,14 @@ class RAM1RO1RWTester extends BaseTester {
       "--target-dir" -> s"test_run_dir/$outDir-001"
     ))
 
-    Driver.execute(args, () => new RAM1RO1RWWrapper(basic_p)) {
-      c => new RAM1RO1RWUnitTester(c) {
+    test(new RAM1RO1RWWrapper(basic_p)).
+      withAnnotations(Seq(VerilatorBackendAnnotation)).
+      runPeekPoke(new RAM1RO1RWUnitTester(_) {
 
         idle()
         b_single_write(0x0, 0xf, 0xff)
         b_single_read(0x0, 0xff)
         step(10)
-      }
-    } should be (true)
+      })
   }
 }
