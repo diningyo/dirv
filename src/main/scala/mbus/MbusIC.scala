@@ -3,7 +3,7 @@
 package mbus
 
 import chisel3._
-import chisel3.stage.ChiselStage
+import circt.stage.ChiselStage
 
 /**
   * parameter class for MbusIC

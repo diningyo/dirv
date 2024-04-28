@@ -4,7 +4,7 @@ package mbus
 
 import chisel3._
 import chisel3.util._
-import chisel3.stage.ChiselStage
+import _root_.circt.stage.ChiselStage
 
 /**
   * Parameter class for MbusArbiter
