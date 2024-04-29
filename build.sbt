@@ -4,14 +4,14 @@ version      := "0.0.1"
 organization := "diningyo"
 name         := "dirv"   
 
-val chiselVersion = "5.0.0"
+val chiselVersion = "5.1.0"
 
 lazy val root = (project in file("."))
   .settings(
     name := "%NAME%",
     libraryDependencies ++= Seq(
       "org.chipsalliance" %% "chisel" % chiselVersion,
-      "edu.berkeley.cs" %% "chiseltest" % "5.0.0" % "test"
+      "edu.berkeley.cs" %% "chiseltest" % "5.0.1" % "test"
     ),
     scalacOptions ++= Seq(
       "-language:reflectiveCalls",
