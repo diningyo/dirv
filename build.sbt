@@ -1,17 +1,17 @@
 // See LICENSE for license details.
-scalaVersion := "2.13.8"
+scalaVersion := "2.13.10"
 version      := "0.0.1"
 organization := "diningyo"
 name         := "dirv"   
 
-val chiselVersion = "5.1.0"
+val chiselVersion = "5.2.0"
 
 lazy val root = (project in file("."))
   .settings(
     name := "%NAME%",
     libraryDependencies ++= Seq(
       "org.chipsalliance" %% "chisel" % chiselVersion,
-      "edu.berkeley.cs" %% "chiseltest" % "5.0.1" % "test"
+      "edu.berkeley.cs" %% "chiseltest" % "5.0.2" % "test"
     ),
     scalacOptions ++= Seq(
       "-language:reflectiveCalls",
