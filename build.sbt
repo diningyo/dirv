@@ -4,7 +4,7 @@ version      := "0.0.1"
 organization := "diningyo"
 name         := "dirv"   
 
-val chiselVersion = "6.2.0"
+val chiselVersion = "6.3.0"
 
 lazy val root = (project in file("."))
   .settings(
